@@ -262,52 +262,35 @@ const PROVINCIAS = Object.keys(PROVINCIAS_LOCALIDADES).sort();
 
 // ─── NOTIFICACIONES ──────────────────────────────────────────────────────────
 const APP_START_TIME = Date.now();
-let _audioCtx = null;
-let _audioDesbloqueado = false;
 
-function _desbloquearAudio() {
-  if (_audioDesbloqueado) return;
-  _audioDesbloqueado = true;
-  try {
-    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    _audioCtx.resume();
-  } catch(e) {}
-}
+// Audio element — mismo enfoque que WhatsApp Web
+const _sonido = new Audio('/notif-cliente.wav');
+_sonido.volume = 1.0;
+let _sonidoListo = false;
 
 function pedirPermisoNotificaciones() {
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
-  // Desbloquear audio en primer gesto — click, touch y teclado
+  const primerGesto = () => {
+    if (_sonidoListo) return;
+    _sonido.volume = 0;
+    _sonido.play().then(() => {
+      _sonido.pause();
+      _sonido.currentTime = 0;
+      _sonido.volume = 1.0;
+      _sonidoListo = true;
+    }).catch(() => {});
+  };
   ['click', 'touchstart', 'keydown'].forEach(evt =>
-    document.addEventListener(evt, _desbloquearAudio, { once: true, passive: true })
+    document.addEventListener(evt, primerGesto, { once: true, passive: true })
   );
 }
 
 function tocarSonido() {
-  if (!_audioDesbloqueado || !_audioCtx) return;
-  try {
-    const ctx = _audioCtx;
-    const play = () => {
-      // Opción B: pop + tono descendente
-      const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.05), ctx.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
-      const src = ctx.createBufferSource(); src.buffer = buf;
-      const g1 = ctx.createGain(); g1.gain.setValueAtTime(0.5, ctx.currentTime);
-      src.connect(g1); g1.connect(ctx.destination); src.start();
-
-      const osc = ctx.createOscillator(); const g2 = ctx.createGain();
-      osc.connect(g2); g2.connect(ctx.destination); osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.05);
-      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.7);
-      g2.gain.setValueAtTime(0.6, ctx.currentTime + 0.05);
-      g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.0);
-      osc.start(ctx.currentTime + 0.05); osc.stop(ctx.currentTime + 1.0);
-    };
-    if (ctx.state === 'suspended') ctx.resume().then(play).catch(() => {});
-    else play();
-  } catch(e) {}
+  if (!_sonidoListo) return;
+  _sonido.currentTime = 0;
+  _sonido.play().catch(() => {});
 }
 
 function mostrarNotificacion(titulo, cuerpo) {
@@ -316,7 +299,7 @@ function mostrarNotificacion(titulo, cuerpo) {
     new Notification(titulo, {
       body: cuerpo,
       icon: '/icon-cliente-192.png',
-      // sin silent: el SO reproduce su propio sonido como respaldo
+      silent: true,
     });
   }
 }

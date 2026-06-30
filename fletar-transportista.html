@@ -382,48 +382,36 @@ function SelectorVehiculo({ vehiculo, setVehiculo }) {
 
 // ─── NOTIFICACIONES ──────────────────────────────────────────────────────────
 const APP_START_TIME = Date.now();
-let _audioCtx = null;
-let _audioDesbloqueado = false;
 
-function _desbloquearAudio() {
-  if (_audioDesbloqueado) return;
-  _audioDesbloqueado = true;
-  try {
-    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    _audioCtx.resume();
-  } catch(e) {}
-}
+// Audio element (igual que WhatsApp Web) — más confiable que AudioContext
+const _sonido = new Audio('/notif-trans.wav');
+_sonido.volume = 1.0;
+let _sonidoListo = false;
 
 function pedirPermisoNotificaciones() {
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
-  // Desbloquear audio en primer gesto (click Y touchstart para mobile/desktop)
+  // "Primear" el audio en primer gesto del usuario
+  const primerGesto = () => {
+    if (_sonidoListo) return;
+    _sonido.volume = 0;
+    _sonido.play().then(() => {
+      _sonido.pause();
+      _sonido.currentTime = 0;
+      _sonido.volume = 1.0;
+      _sonidoListo = true;
+    }).catch(() => {});
+  };
   ['click', 'touchstart', 'keydown'].forEach(evt =>
-    document.addEventListener(evt, _desbloquearAudio, { once: true, passive: true })
+    document.addEventListener(evt, primerGesto, { once: true, passive: true })
   );
 }
 
 function tocarSonido() {
-  if (!_audioDesbloqueado || !_audioCtx) return;
-  try {
-    const ctx = _audioCtx;
-    const play = () => {
-      // Tres tonos ascendentes — mismo sonido para todos los eventos
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination); osc.type = 'sine';
-      osc.frequency.setValueAtTime(440, ctx.currentTime);
-      osc.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
-      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.30);
-      gain.gain.setValueAtTime(0.7, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.9);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.9);
-    };
-    if (ctx.state === 'suspended') ctx.resume().then(play).catch(() => {});
-    else play();
-  } catch(e) {}
+  if (!_sonidoListo) return;
+  _sonido.currentTime = 0;
+  _sonido.play().catch(() => {});
 }
 
 function mostrarNotificacion(titulo, cuerpo, icono) {
@@ -432,7 +420,7 @@ function mostrarNotificacion(titulo, cuerpo, icono) {
     new Notification(titulo, {
       body: cuerpo,
       icon: icono || '/icon-chofer-192.png',
-      // sin silent: el SO reproduce su propio sonido como respaldo
+      silent: true,
     });
   }
 }
