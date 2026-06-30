@@ -380,6 +380,52 @@ function SelectorVehiculo({ vehiculo, setVehiculo }) {
   );
 }
 
+// ─── NOTIFICACIONES ──────────────────────────────────────────────────────────
+function pedirPermisoNotificaciones() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function tocarSonido(tipo) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    if (tipo === 'aceptado') {
+      // Tres tonos ascendentes — viaje aceptado
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.setValueAtTime(660, ctx.currentTime + 0.12);
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.24);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.6);
+    } else {
+      // Dos tonos — nuevo pedido
+      osc.frequency.setValueAtTime(520, ctx.currentTime);
+      osc.frequency.setValueAtTime(780, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.45);
+    }
+  } catch(e) {}
+}
+
+function mostrarNotificacion(titulo, cuerpo, tipo, icono) {
+  tocarSonido(tipo);
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(titulo, {
+      body: cuerpo,
+      icon: icono || '/icon-chofer-192.png',
+    });
+  }
+}
+
 // ─── LOGO ─────────────────────────────────────────────────────────────────────
 function FletarLogo({ size = "sm" }) {
   const iconSize = size === "lg" ? 52 : 34;
@@ -3212,6 +3258,8 @@ function HacerOferta({ onNav, cargaSeleccionada, rutas = [] }) {
       id: Date.now(),
       transportistaId: USUARIO_TRANS.id,
       cargaId: carga.id,
+      clienteId: carga.empresaId || null,
+      clienteNombre: carga.empresa || null,
       transportistaNombre: USUARIO_TRANS.nombre,
       calificacion: USUARIO_TRANS.calificacion,
       viajes: USUARIO_TRANS.viajes,
@@ -5022,6 +5070,60 @@ function App() {
   const [ratingPromedio, setRatingPromedio] = useState(USUARIO_TRANS.calificacion);
   const shownRating = useRef(new Set());
   const initialLoadDone = useRef(false);
+  const cargasVistas = useRef(null);       // null = primera carga todavía no procesada
+  const remitosAceptadosVistos = useRef(null);
+
+  // Pedir permiso de notificaciones al abrir la app
+  useEffect(() => { pedirPermisoNotificaciones(); }, []);
+
+  // Notificar nuevo pedido publicado
+  useEffect(() => {
+    return fbListen('cargas', arr => {
+      const publicadas = arr.filter(c => c.estado === 'publicada').map(c => c.id);
+      if (cargasVistas.current === null) {
+        // Primera carga: solo registrar las existentes, no notificar
+        cargasVistas.current = new Set(publicadas);
+        return;
+      }
+      publicadas.forEach(id => {
+        if (!cargasVistas.current.has(id)) {
+          cargasVistas.current.add(id);
+          const carga = arr.find(c => c.id === id);
+          mostrarNotificacion(
+            '📦 Nuevo pedido disponible',
+            `${carga?.origen || ''} → ${carga?.destino || ''}`,
+            'nuevo',
+            '/icon-chofer-192.png'
+          );
+        }
+      });
+    });
+  }, []);
+
+  // Notificar cuando el cliente acepta una oferta del transportista
+  useEffect(() => {
+    return fbListen('cargas', arr => {
+      const aceptadas = arr
+        .filter(c => c.estado === 'en-camino' && c.transportistaAsignado === USUARIO_TRANS.nombre)
+        .map(c => c.id);
+      if (remitosAceptadosVistos.current === null) {
+        remitosAceptadosVistos.current = new Set(aceptadas);
+        return;
+      }
+      aceptadas.forEach(id => {
+        if (!remitosAceptadosVistos.current.has(id)) {
+          remitosAceptadosVistos.current.add(id);
+          const carga = arr.find(c => c.id === id);
+          mostrarNotificacion(
+            '✅ ¡Oferta aceptada!',
+            `${carga?.origen || ''} → ${carga?.destino || ''}`,
+            'aceptado',
+            '/icon-chofer-192.png'
+          );
+        }
+      });
+    });
+  }, []);
 
   useEffect(() => {
     const ref = db.ref('sucursales');

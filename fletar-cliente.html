@@ -260,6 +260,50 @@ const PROVINCIAS_LOCALIDADES = {
 };
 const PROVINCIAS = Object.keys(PROVINCIAS_LOCALIDADES).sort();
 
+// ─── NOTIFICACIONES ──────────────────────────────────────────────────────────
+function pedirPermisoNotificaciones() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function tocarSonido(tipo) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    if (tipo === 'aceptado') {
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.setValueAtTime(660, ctx.currentTime + 0.12);
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.24);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.6);
+    } else {
+      osc.frequency.setValueAtTime(520, ctx.currentTime);
+      osc.frequency.setValueAtTime(780, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.45);
+    }
+  } catch(e) {}
+}
+
+function mostrarNotificacion(titulo, cuerpo, tipo) {
+  tocarSonido(tipo);
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(titulo, {
+      body: cuerpo,
+      icon: '/icon-cliente-192.png',
+    });
+  }
+}
+
 // ─── LOGO ─────────────────────────────────────────────────────────────────────
 function FletarLogo({ size = "sm", inverted = false }) {
   const iconSize = size === "lg" ? 52 : 34;
@@ -2454,6 +2498,33 @@ function App() {
   const [remitoActivo, setRemitoActivo] = useState(null);
   const [remitoACalificar, setRemitoACalificar] = useState(null);
   const shownRating = useRef(new Set());
+  const ofertasVistas = useRef(null);
+
+  // Pedir permiso de notificaciones al abrir la app
+  useEffect(() => { pedirPermisoNotificaciones(); }, []);
+
+  // Notificar cuando llega una oferta nueva para el cliente
+  useEffect(() => {
+    if (!registrado) return;
+    return fbListen('ofertas', arr => {
+      const misOfertas = arr.filter(o => o.clienteId === USUARIO_CLIENTE?.id || o.clienteNombre === USUARIO_CLIENTE?.nombre);
+      const ids = misOfertas.map(o => o.id);
+      if (ofertasVistas.current === null) {
+        ofertasVistas.current = new Set(ids);
+        return;
+      }
+      misOfertas.forEach(o => {
+        if (!ofertasVistas.current.has(o.id)) {
+          ofertasVistas.current.add(o.id);
+          mostrarNotificacion(
+            '🚛 Nueva oferta recibida',
+            `${o.transportistaNombre || 'Un transportista'} te hizo una oferta`,
+            'nuevo'
+          );
+        }
+      });
+    });
+  }, [registrado]);
 
   // Hooks siempre al tope — no pueden ir después de un return condicional
   useEffect(() => {
