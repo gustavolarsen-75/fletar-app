@@ -383,49 +383,56 @@ function SelectorVehiculo({ vehiculo, setVehiculo }) {
 // ─── NOTIFICACIONES ──────────────────────────────────────────────────────────
 const APP_START_TIME = Date.now();
 let _audioCtx = null;
+let _audioDesbloqueado = false;
+
+function _desbloquearAudio() {
+  if (_audioDesbloqueado) return;
+  _audioDesbloqueado = true;
+  try {
+    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    _audioCtx.resume();
+  } catch(e) {}
+}
 
 function pedirPermisoNotificaciones() {
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
-  // Pre-crear AudioContext en primer gesto para que no quede bloqueado en desktop
-  document.addEventListener('click', function initAudio() {
-    try {
-      if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (_audioCtx.state === 'suspended') _audioCtx.resume();
-    } catch(e) {}
-    document.removeEventListener('click', initAudio);
-  }, { once: true });
+  // Desbloquear audio en primer gesto (click Y touchstart para mobile/desktop)
+  ['click', 'touchstart', 'keydown'].forEach(evt =>
+    document.addEventListener(evt, _desbloquearAudio, { once: true, passive: true })
+  );
 }
 
-function tocarSonido(tipo) {
+function tocarSonido() {
+  if (!_audioDesbloqueado || !_audioCtx) return;
   try {
-    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const ctx = _audioCtx;
     const play = () => {
-      // Mismo sonido para ambos eventos: tres tonos ascendentes
+      // Tres tonos ascendentes — mismo sonido para todos los eventos
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination); osc.type = 'sine';
       osc.frequency.setValueAtTime(440, ctx.currentTime);
-      osc.frequency.setValueAtTime(660, ctx.currentTime + 0.12);
-      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.24);
-      gain.gain.setValueAtTime(0.6, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+      osc.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.30);
+      gain.gain.setValueAtTime(0.7, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.9);
       osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.8);
+      osc.stop(ctx.currentTime + 0.9);
     };
-    if (ctx.state === 'suspended') ctx.resume().then(play); else play();
+    if (ctx.state === 'suspended') ctx.resume().then(play).catch(() => {});
+    else play();
   } catch(e) {}
 }
 
-function mostrarNotificacion(titulo, cuerpo, tipo, icono) {
-  tocarSonido(tipo);
+function mostrarNotificacion(titulo, cuerpo, icono) {
+  tocarSonido();
   if ('Notification' in window && Notification.permission === 'granted') {
     new Notification(titulo, {
       body: cuerpo,
       icon: icono || '/icon-chofer-192.png',
-      silent: true,  // solo usamos nuestro sonido custom, no el del SO
+      // sin silent: el SO reproduce su propio sonido como respaldo
     });
   }
 }
@@ -5080,55 +5087,48 @@ function App() {
   // Pedir permiso de notificaciones al abrir la app
   useEffect(() => { pedirPermisoNotificaciones(); }, []);
 
-  // Notificar nuevo pedido publicado
+  // Notificar nuevo pedido Y oferta aceptada — un solo listener eficiente
   useEffect(() => {
     return fbListen('cargas', arr => {
-      const publicadas = arr.filter(c => c.estado === 'publicada').map(c => c.id);
+      // Nuevo pedido: 'nueva' o 'activo' (nunca 'publicada' — ese estado no existe)
+      const disponibles = arr.filter(c => ['nueva', 'activo'].includes(c.estado)).map(c => c.id);
       if (cargasVistas.current === null) {
-        // Primera carga: solo registrar las existentes, no notificar
-        cargasVistas.current = new Set(publicadas);
-        return;
-      }
-      publicadas.forEach(id => {
-        if (!cargasVistas.current.has(id)) {
-          cargasVistas.current.add(id);
-          // Solo notificar si la carga fue creada DESPUÉS de abrir la app
-          const carga = arr.find(c => c.id === id);
-          if (id > APP_START_TIME) {
+        cargasVistas.current = new Set(disponibles);
+      } else {
+        disponibles.forEach(id => {
+          if (!cargasVistas.current.has(id) && id > APP_START_TIME) {
+            cargasVistas.current.add(id);
+            const carga = arr.find(c => c.id === id);
             mostrarNotificacion(
               '📦 Nuevo pedido disponible',
               `${carga?.origen || ''} → ${carga?.destino || ''}`,
-              'nuevo',
               '/icon-chofer-192.png'
             );
+          } else {
+            cargasVistas.current.add(id);
           }
-        }
-      });
-    });
-  }, []);
+        });
+      }
 
-  // Notificar cuando el cliente acepta una oferta del transportista
-  useEffect(() => {
-    return fbListen('cargas', arr => {
+      // Oferta aceptada: carga pasó a 'en-camino' con este transportista
       const aceptadas = arr
         .filter(c => c.estado === 'en-camino' && c.transportistaAsignado === USUARIO_TRANS.nombre)
         .map(c => c.id);
       if (remitosAceptadosVistos.current === null) {
         remitosAceptadosVistos.current = new Set(aceptadas);
-        return;
+      } else {
+        aceptadas.forEach(id => {
+          if (!remitosAceptadosVistos.current.has(id)) {
+            remitosAceptadosVistos.current.add(id);
+            const carga = arr.find(c => c.id === id);
+            mostrarNotificacion(
+              '✅ ¡Oferta aceptada!',
+              `${carga?.origen || ''} → ${carga?.destino || ''}`,
+              '/icon-chofer-192.png'
+            );
+          }
+        });
       }
-      aceptadas.forEach(id => {
-        if (!remitosAceptadosVistos.current.has(id)) {
-          remitosAceptadosVistos.current.add(id);
-          const carga = arr.find(c => c.id === id);
-          mostrarNotificacion(
-            '✅ ¡Oferta aceptada!',
-            `${carga?.origen || ''} → ${carga?.destino || ''}`,
-            'aceptado',
-            '/icon-chofer-192.png'
-          );
-        }
-      });
     });
   }, []);
 
