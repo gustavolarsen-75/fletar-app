@@ -381,15 +381,27 @@ function SelectorVehiculo({ vehiculo, setVehiculo }) {
 }
 
 // ─── NOTIFICACIONES ──────────────────────────────────────────────────────────
+const APP_START_TIME = Date.now();
+let _audioCtx = null;
+
 function pedirPermisoNotificaciones() {
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
+  // Pre-crear AudioContext en primer gesto para que no quede bloqueado en desktop
+  document.addEventListener('click', function initAudio() {
+    try {
+      if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (_audioCtx.state === 'suspended') _audioCtx.resume();
+    } catch(e) {}
+    document.removeEventListener('click', initAudio);
+  }, { once: true });
 }
 
 function tocarSonido(tipo) {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = _audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
@@ -422,6 +434,7 @@ function mostrarNotificacion(titulo, cuerpo, tipo, icono) {
     new Notification(titulo, {
       body: cuerpo,
       icon: icono || '/icon-chofer-192.png',
+      silent: true,  // solo usamos nuestro sonido custom, no el del SO
     });
   }
 }
@@ -5088,13 +5101,16 @@ function App() {
       publicadas.forEach(id => {
         if (!cargasVistas.current.has(id)) {
           cargasVistas.current.add(id);
+          // Solo notificar si la carga fue creada DESPUÉS de abrir la app
           const carga = arr.find(c => c.id === id);
-          mostrarNotificacion(
-            '📦 Nuevo pedido disponible',
-            `${carga?.origen || ''} → ${carga?.destino || ''}`,
-            'nuevo',
-            '/icon-chofer-192.png'
-          );
+          if (id > APP_START_TIME) {
+            mostrarNotificacion(
+              '📦 Nuevo pedido disponible',
+              `${carga?.origen || ''} → ${carga?.destino || ''}`,
+              'nuevo',
+              '/icon-chofer-192.png'
+            );
+          }
         }
       });
     });

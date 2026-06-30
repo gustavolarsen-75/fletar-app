@@ -261,15 +261,27 @@ const PROVINCIAS_LOCALIDADES = {
 const PROVINCIAS = Object.keys(PROVINCIAS_LOCALIDADES).sort();
 
 // ─── NOTIFICACIONES ──────────────────────────────────────────────────────────
+const APP_START_TIME = Date.now();
+let _audioCtx = null;
+
 function pedirPermisoNotificaciones() {
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
+  // Pre-crear AudioContext en primer gesto para que no quede bloqueado
+  document.addEventListener('click', function initAudio() {
+    try {
+      if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (_audioCtx.state === 'suspended') _audioCtx.resume();
+    } catch(e) {}
+    document.removeEventListener('click', initAudio);
+  }, { once: true });
 }
 
 function tocarSonido(tipo) {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = _audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
@@ -300,6 +312,7 @@ function mostrarNotificacion(titulo, cuerpo, tipo) {
     new Notification(titulo, {
       body: cuerpo,
       icon: '/icon-cliente-192.png',
+      silent: true,  // solo usamos nuestro sonido custom, no el del SO
     });
   }
 }
@@ -2508,15 +2521,16 @@ function App() {
     if (!registrado) return;
     return fbListen('ofertas', arr => {
       const misOfertas = arr.filter(o => o.clienteId === USUARIO_CLIENTE?.id || o.clienteNombre === USUARIO_CLIENTE?.nombre);
-      const ids = misOfertas.map(o => o.id);
       if (ofertasVistas.current === null) {
-        ofertasVistas.current = new Set(ids);
+        // Primera carga: registrar todo lo existente, sin notificar
+        ofertasVistas.current = new Set(misOfertas.map(o => o.id));
         return;
       }
       misOfertas.forEach(o => {
         if (!ofertasVistas.current.has(o.id)) {
           ofertasVistas.current.add(o.id);
-          mostrarNotificacion(
+          // Solo notificar si la oferta fue creada DESPUÉS de abrir la app
+          if ((o.id || 0) > APP_START_TIME) mostrarNotificacion(
             '🚛 Nueva oferta recibida',
             `${o.transportistaNombre || 'Un transportista'} te hizo una oferta`,
             'nuevo'
