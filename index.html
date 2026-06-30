@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fletar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      background: #F8F7F3;
+    }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      background: #2C2C2A;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    /* ── BANDA NARANJA ── */
+    .hero-band {
+      background: linear-gradient(135deg, #E85D20 0%, #C94A14 100%);
+      padding: 20px 18px 22px;
+    }
+    .hero-tagline {
+      color: rgba(255,255,255,0.92);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* ── BODY ── */
+    .body {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 20px 16px 32px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.7px;
+      color: #bbb;
+      text-transform: uppercase;
+      margin-bottom: 9px;
+    }
+    .section-block {
+      margin-bottom: 20px;
+    }
+    .divider {
+      border-top: 1px solid #e8e6e0;
+      margin: 4px 0 18px;
+    }
+
+    .card {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      background: #fff;
+      border: 1px solid #e8e6e0;
+      border-radius: 13px;
+      padding: 14px 15px;
+      margin-bottom: 9px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: box-shadow 0.15s, transform 0.1s;
+    }
+    .card:hover {
+      box-shadow: 0 3px 14px rgba(0,0,0,0.09);
+      transform: translateY(-1px);
+    }
+    .card:active { transform: translateY(0); }
+    .card.orange { border-left: 4px solid #E85D20; }
+    .card.blue   { border-left: 4px solid #185FA5; }
+
+    .icon-wrap {
+      width: 38px;
+      height: 38px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+    }
+    .icon-orange { background: #FFF0E9; }
+    .icon-blue   { background: #EBF2FC; }
+
+    .card-text { flex: 1; }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1A1A1A;
+    }
+    .card-sub {
+      font-size: 11px;
+      color: #999;
+      margin-top: 2px;
+    }
+    .arrow-orange { color: #E85D20; font-size: 18px; }
+    .arrow-blue   { color: #185FA5; font-size: 18px; }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR con logo FLETAR real -->
+  <nav class="navbar">
+    <svg width="34" height="34" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+      <rect width="38" height="38" rx="9" fill="#E85D20"/>
+      <text font-family="Montserrat, sans-serif" font-size="26" font-weight="900" x="7" y="28" fill="white">F</text>
+      <polygon points="28,24 34,19 28,14 28,18 22,18 22,20 28,20" fill="white" opacity="0.9"/>
+    </svg>
+    <svg width="110" height="36" viewBox="0 0 110 36" xmlns="http://www.w3.org/2000/svg" style="margin-left:8px;flex-shrink:0;">
+      <defs>
+        <clipPath id="portal-cl-left">
+          <polygon points="0,36 0,0 63.8,0 39.6,36"/>
+        </clipPath>
+        <clipPath id="portal-cl-right">
+          <polygon points="63.8,0 110,0 110,36 39.6,36"/>
+        </clipPath>
+      </defs>
+      <text font-family="Montserrat, sans-serif" font-size="32" font-weight="900" y="32" clip-path="url(#portal-cl-left)" fill="#E85D20">fletar</text>
+      <text font-family="Montserrat, sans-serif" font-size="32" font-weight="900" y="32" clip-path="url(#portal-cl-right)" fill="white">fletar</text>
+    </svg>
+  </nav>
+
+  <!-- BANDA NARANJA -->
+  <div class="hero-band">
+    <div class="hero-tagline">¿Qué necesitás hacer?</div>
+  </div>
+
+  <!-- CARDS -->
+  <div class="body">
+
+    <div class="section-block">
+      <div class="section-label">Quiero enviar</div>
+
+      <a href="fletar-cliente.html" class="card orange">
+        <div class="icon-wrap icon-orange">🚛</div>
+        <div class="card-text">
+          <div class="card-title">Envío a otra ciudad</div>
+          <div class="card-sub">Transportistas · Larga distancia</div>
+        </div>
+        <div class="arrow-orange">›</div>
+      </a>
+
+      <a href="fletes-persona.html" class="card blue">
+        <div class="icon-wrap icon-blue">🏠</div>
+        <div class="card-text">
+          <div class="card-title">Flete express</div>
+          <div class="card-sub">en tu ciudad · Gratis</div>
+        </div>
+        <div class="arrow-blue">›</div>
+      </a>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-block">
+      <div class="section-label">Soy prestador</div>
+
+      <a href="fletar-transportista.html" class="card orange">
+        <div class="icon-wrap icon-orange">🪪</div>
+        <div class="card-text">
+          <div class="card-title">Soy transportista</div>
+          <div class="card-sub">Transporte de cargas · Larga distancia</div>
+        </div>
+        <div class="arrow-orange">›</div>
+      </a>
+
+      <a href="fletes-fletero.html" class="card blue">
+        <div class="icon-wrap icon-blue">🚐</div>
+        <div class="card-text">
+          <div class="card-title">Soy fletero local</div>
+          <div class="card-sub">Fletes en la ciudad · Trabajos rápidos</div>
+        </div>
+        <div class="arrow-blue">›</div>
+      </a>
+    </div>
+
+  </div>
+</body>
+</html>
