@@ -265,22 +265,24 @@ const APP_START_TIME = Date.now();
 
 // Audio element — mismo enfoque que WhatsApp Web
 const _sonido = new Audio('/notif-cliente.wav');
-_sonido.volume = 1.0;
+_sonido.preload = 'auto';
 let _sonidoListo = false;
+let _primando = false;
 
 function pedirPermisoNotificaciones() {
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
   const primerGesto = () => {
-    if (_sonidoListo) return;
+    if (_sonidoListo || _primando) return;
+    _primando = true;
     _sonido.volume = 0;
     _sonido.play().then(() => {
       _sonido.pause();
       _sonido.currentTime = 0;
       _sonido.volume = 1.0;
       _sonidoListo = true;
-    }).catch(() => {});
+    }).catch(() => { _primando = false; });
   };
   ['click', 'touchstart', 'keydown'].forEach(evt =>
     document.addEventListener(evt, primerGesto, { once: true, passive: true })
@@ -2516,8 +2518,7 @@ function App() {
       misOfertas.forEach(o => {
         if (!ofertasVistas.current.has(o.id)) {
           ofertasVistas.current.add(o.id);
-          // Solo notificar si la oferta fue creada DESPUÉS de abrir la app
-          if ((o.id || 0) > APP_START_TIME) mostrarNotificacion(
+          mostrarNotificacion(
             '🚛 Nueva oferta recibida',
             `${o.transportistaNombre || 'Un transportista'} te hizo una oferta`
           );
