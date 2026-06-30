@@ -1,8 +1,9 @@
 // Service Worker — Fletar Cliente
-const VERSION = 'fletar-cliente-v1';
+// El HTML se sirve siempre desde la red → los usuarios reciben actualizaciones automáticamente
+const VERSION = 'fletar-cliente-v2';
 
+// NO incluir HTML — se actualiza en tiempo real desde el servidor
 const ARCHIVOS_ESTATICOS = [
-  '/fletar-cliente.html',
   '/manifest-cliente.json',
   '/icon-cliente-192.png',
   '/icon-cliente-512.png',
@@ -47,7 +48,23 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Todo lo demás — caché primero, red como fallback
+  // HTML — red primero, caché como fallback offline
+  // Así cada apertura de la app recibe la versión más nueva automáticamente
+  if (e.request.destination === 'document' || url.pathname.endsWith('.html')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(response => {
+          if (response && response.status === 200) {
+            caches.open(VERSION).then(cache => cache.put(e.request, response.clone()));
+          }
+          return response;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Assets estáticos y CDN — caché primero, red como fallback
   e.respondWith(
     caches.match(e.request).then(cached => {
       const red = fetch(e.request).then(response => {

@@ -1,9 +1,9 @@
 // Service Worker — Fletar Chofer
-// Cambiar versión cada vez que se actualiza la app para limpiar caché viejo
-const VERSION = 'fletar-chofer-v4';
+// El HTML se sirve siempre desde la red → los usuarios reciben actualizaciones automáticamente
+const VERSION = 'fletar-chofer-v5';
 
+// NO incluir HTML — se actualiza en tiempo real desde el servidor
 const ARCHIVOS_ESTATICOS = [
-  '/fletar-chofer.html',
   '/manifest-chofer.json',
   '/icon-chofer-192.png',
   '/icon-chofer-512.png',
@@ -50,18 +50,30 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Archivos propios y CDN — caché primero, red como fallback
+  // HTML — red primero, caché como fallback offline
+  if (e.request.destination === 'document' || url.pathname.endsWith('.html')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(response => {
+          if (response && response.status === 200) {
+            caches.open(VERSION).then(cache => cache.put(e.request, response.clone()));
+          }
+          return response;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Assets estáticos y CDN — caché primero, red como fallback
   e.respondWith(
     caches.match(e.request).then(cached => {
       const red = fetch(e.request).then(response => {
-        // Si la respuesta es válida, actualizar caché en background
         if (response && response.status === 200 && response.type !== 'opaque') {
           caches.open(VERSION).then(cache => cache.put(e.request, response.clone()));
         }
         return response;
       }).catch(() => null);
-
-      // Devolver caché inmediatamente si existe; actualizar en background
       return cached || red;
     })
   );
