@@ -261,15 +261,18 @@ const PROVINCIAS_LOCALIDADES = {
 const PROVINCIAS = Object.keys(PROVINCIAS_LOCALIDADES).sort();
 
 // ─── LOGO ─────────────────────────────────────────────────────────────────────
-function FletarLogo({ size = "sm" }) {
+function FletarLogo({ size = "sm", inverted = false }) {
   const iconSize = size === "lg" ? 52 : 34;
   const textW = size === "lg" ? 140 : 110;
   const textH = size === "lg" ? 46 : 36;
   const fontSize = size === "lg" ? 42 : 32;
+  // inverted=true: sobre fondo naranja → texto todo blanco
+  const colorLeft = inverted ? "white" : "#E85D20";
+  const colorRight = "white";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: size === "lg" ? 12 : 8 }}>
       <svg width={iconSize} height={iconSize} viewBox="0 0 38 38">
-        <rect width="38" height="38" rx="9" fill="#E85D20"/>
+        <rect width="38" height="38" rx="9" fill={inverted ? "rgba(0,0,0,0.2)" : "#E85D20"}/>
         <text fontFamily="Montserrat, sans-serif" fontSize="26" fontWeight="900" x="7" y="28" fill="white">F</text>
         <polygon points="28,24 34,19 28,14 28,18 22,18 22,20 28,20" fill="white" opacity="0.9"/>
       </svg>
@@ -278,8 +281,8 @@ function FletarLogo({ size = "sm" }) {
           <clipPath id="cl-left"><polygon points={`0,${textH} 0,0 ${textW * 0.58},0 ${textW * 0.36},${textH}`}/></clipPath>
           <clipPath id="cl-right"><polygon points={`${textW * 0.58},0 ${textW},0 ${textW},${textH} ${textW * 0.36},${textH}`}/></clipPath>
         </defs>
-        <text fontFamily="Montserrat, sans-serif" fontSize={fontSize} fontWeight="900" y={textH - 4} clipPath="url(#cl-left)" fill="#E85D20">fletar</text>
-        <text fontFamily="Montserrat, sans-serif" fontSize={fontSize} fontWeight="900" y={textH - 4} clipPath="url(#cl-right)" fill="white">fletar</text>
+        <text fontFamily="Montserrat, sans-serif" fontSize={fontSize} fontWeight="900" y={textH - 4} clipPath="url(#cl-left)" fill={colorLeft}>fletar</text>
+        <text fontFamily="Montserrat, sans-serif" fontSize={fontSize} fontWeight="900" y={textH - 4} clipPath="url(#cl-right)" fill={colorRight}>fletar</text>
       </svg>
     </div>
   );
@@ -2190,7 +2193,7 @@ function RegistroBienvenida({ onTipo }) {
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Mitad superior — naranja */}
       <div style={{ background: "#E85D20", flex: "0 0 42%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px 48px" }}>
-        <FletarLogo size="lg" />
+        <FletarLogo size="lg" inverted={true} />
         <p style={{ fontSize: 15, color: "rgba(255,255,255,0.85)", marginTop: 16, textAlign: "center" }}>Enviá cargas, recibí ofertas</p>
       </div>
       {/* Mitad inferior — blanca */}
