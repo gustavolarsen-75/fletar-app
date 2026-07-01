@@ -1,6 +1,6 @@
 // Service Worker — Fletar Cliente
 // El HTML se sirve siempre desde la red → los usuarios reciben actualizaciones automáticamente
-const VERSION = 'fletar-cliente-v2';
+const VERSION = 'fletar-cliente-v3';
 
 // NO incluir HTML — se actualiza en tiempo real desde el servidor
 const ARCHIVOS_ESTATICOS = [
@@ -33,6 +33,17 @@ self.addEventListener('activate', e => {
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k)))
     ).then(() => clients.claim())
+  );
+});
+
+// ── NOTIFICATION CLICK ────────────────────────────────────────────────────────
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) { if ('focus' in c) return c.focus(); }
+      if (clients.openWindow) return clients.openWindow('/fletar-cliente.html');
+    })
   );
 });
 
