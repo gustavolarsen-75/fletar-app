@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Fletar — Manifiesto de viaje</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyBIhZzpTRlNEG2x9dMdNTQ3ILvcRAaSJ-o",
+      authDomain: "fletar-49e36.firebaseapp.com",
+      databaseURL: "https://fletar-49e36-default-rtdb.firebaseio.com",
+      projectId: "fletar-49e36",
+      storageBucket: "fletar-49e36.firebasestorage.app",
+      messagingSenderId: "698884616195",
+      appId: "1:698884616195:web:c42078e969cdf5268e9e36"
+    });
+    const db = firebase.database();
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F0F4F8; color: #1A1A1A; min-height: 100vh; padding-bottom: 40px; }
+
+    /* Header */
+    .header { background: #1A2E3B; padding: 14px 16px; position: sticky; top: 0; z-index: 100; }
+    .header-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .header-logo { width: 32px; height: 32px; background: #0F6E56; border-radius: 7px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 18px; }
+    .header-title { color: #fff; font-size: 16px; font-weight: 600; }
+    .header-sub { color: rgba(255,255,255,0.5); font-size: 12px; }
+    .header-vehiculo { background: rgba(15,110,86,0.3); border: 1px solid #0F6E56; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; }
+    .header-vehiculo-nombre { color: #5DD9B5; font-size: 14px; font-weight: 600; }
+    .header-vehiculo-info { color: rgba(255,255,255,0.5); font-size: 11px; }
+
+    /* Secciones */
+    .seccion { margin: 16px 12px 0; }
+    .seccion-titulo { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; padding: 0 4px; }
+    .seccion-titulo.entregas { color: #E85D20; }
+    .seccion-titulo.retiros { color: #185FA5; }
+    .seccion-count { font-size: 11px; background: currentColor; color: #fff; border-radius: 10px; padding: 1px 7px; opacity: 0.9; }
+
+    /* Tarjeta de paquete */
+    .paquete { background: #fff; border-radius: 12px; border: 1px solid #DDE3EA; padding: 14px; margin-bottom: 10px; }
+    .paquete.entregado { opacity: 0.5; }
+    .paquete.entrega { border-left: 4px solid #E85D20; }
+    .paquete.retiro { border-left: 4px solid #185FA5; }
+    .paquete-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .paquete-num { font-size: 11px; font-weight: 700; color: #888; background: #F0F4F8; padding: 2px 8px; border-radius: 4px; }
+    .paquete-estado { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+    .paquete-estado.pendiente { background: #FEF3EC; color: #C44A0F; }
+    .paquete-estado.entregado-badge { background: #E1F5EE; color: #0F6E56; }
+    .paquete-estado.retirado-badge { background: #E6F1FB; color: #185FA5; }
+    .paquete-empresa { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .paquete-ruta { font-size: 13px; color: #5A6A78; margin-bottom: 8px; }
+    .paquete-info { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .paquete-tag { font-size: 11px; background: #F0F4F8; color: #5A6A78; padding: 3px 8px; border-radius: 4px; }
+    .paquete-destinatario { background: #F8FAFC; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+    .paquete-destinatario-titulo { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; margin-bottom: 6px; }
+    .paquete-destinatario-nombre { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+    .paquete-destinatario-dir { font-size: 12px; color: #5A6A78; }
+    .paquete-actions { display: flex; gap: 8px; }
+    .btn-maps { flex: 1; background: #E6F1FB; color: #185FA5; border: none; border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none; text-align: center; display: block; }
+    .btn-tel { background: #E1F5EE; color: #0F6E56; border: none; border-radius: 8px; padding: 10px 14px; font-size: 16px; cursor: pointer; text-decoration: none; }
+    .btn-confirmar { width: 100%; margin-top: 10px; background: #0F6E56; color: #fff; border: none; border-radius: 10px; padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    .btn-confirmar.retiro { background: #185FA5; }
+    .entregado-info { margin-top: 8px; background: #E1F5EE; border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #0F6E56; }
+    .retirado-info { margin-top: 8px; background: #E6F1FB; border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #185FA5; }
+
+    /* Modal confirmación */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; display: flex; align-items: flex-end; }
+    .modal { background: #fff; border-radius: 16px 16px 0 0; padding: 24px 20px; width: 100%; }
+    .modal-titulo { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .modal-sub { font-size: 13px; color: #5A6A78; margin-bottom: 20px; }
+    .modal label { font-size: 13px; font-weight: 500; color: #444; display: block; margin-bottom: 5px; }
+    .modal input { width: 100%; padding: 12px; border: 1.5px solid #DDE3EA; border-radius: 8px; font-size: 15px; font-family: inherit; outline: none; margin-bottom: 14px; }
+    .modal input:focus { border-color: #0F6E56; }
+    .modal-btns { display: flex; gap: 10px; margin-top: 4px; }
+    .btn-cancelar { flex: 1; background: #F0F4F8; color: #5A6A78; border: none; border-radius: 10px; padding: 13px; font-size: 15px; font-weight: 500; cursor: pointer; }
+    .btn-ok { flex: 2; background: #0F6E56; color: #fff; border: none; border-radius: 10px; padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    .btn-ok.retiro { background: #185FA5; }
+
+    /* Vacío */
+    .vacio { text-align: center; padding: 32px 20px; color: #aaa; }
+    .vacio-icon { font-size: 40px; margin-bottom: 10px; }
+
+    /* Loading */
+    .loading { text-align: center; padding: 60px 20px; color: #5A6A78; }
+    .spinner { width: 36px; height: 36px; border: 3px solid #DDE3EA; border-top-color: #0F6E56; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Resumen */
+    .resumen { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 12px 12px 0; }
+    .resumen-item { background: #fff; border-radius: 10px; padding: 10px; text-align: center; border: 1px solid #DDE3EA; }
+    .resumen-num { font-size: 22px; font-weight: 700; }
+    .resumen-label { font-size: 11px; color: #888; margin-top: 2px; }
+    .resumen-num.verde { color: #0F6E56; }
+    .resumen-num.naranja { color: #E85D20; }
+    .resumen-num.azul { color: #185FA5; }
+
+    /* Desktop: centrar en pantalla grande */
+    @media (min-width: 640px) {
+      body { display: flex; flex-direction: column; align-items: center; }
+      #app { width: 100%; max-width: 520px; }
+      .header { max-width: 520px; width: 100%; border-radius: 0 0 12px 12px; }
+      .modal-overlay { justify-content: center; align-items: center; }
+      .modal { border-radius: 16px; max-width: 480px; width: 100%; }
+    }
+
+    /* Inputs 16px en móvil: evita zoom en iOS */
+    @media (max-width: 600px) {
+      input { font-size: 16px !important; }
+    }
+
+    /* Botón escanear en header */
+    .btn-scan { background: #0F6E56; color: #fff; border: none; border-radius: 8px; padding: 7px 11px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .btn-scan:active { opacity: 0.8; }
+
+    /* Panel escáner */
+    .scanner-panel { background: #111; border-radius: 12px; margin: 12px 12px 0; overflow: hidden; }
+    .scanner-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #1A2E3B; }
+    .scanner-header-title { color: #fff; font-size: 14px; font-weight: 600; }
+    .scanner-header-sub { color: rgba(255,255,255,0.5); font-size: 11px; margin-top: 2px; }
+    .btn-cancelar-scan { background: rgba(255,255,255,0.12); color: #fff; border: none; border-radius: 7px; padding: 7px 14px; font-size: 12px; font-weight: 500; cursor: pointer; }
+    #scanner-viewport { width: 100%; }
+    #scanner-viewport video { width: 100% !important; object-fit: cover; }
+
+    /* Botón depósito en header */
+    .btn-deposito { background: rgba(255,255,255,0.12); color: #fff; border: none; border-radius: 8px; padding: 7px 10px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-deposito:active { opacity: 0.8; }
+    .btn-deposito.activo { background: #185FA5; }
+
+    /* Pantalla depósito */
+    .dep-tab-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(0,0,0,0.3); border-radius: 8px; overflow: hidden; margin-top: 8px; }
+    .dep-tab { padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.07); cursor: pointer; border: none; }
+    .dep-tab.active { background: #0F6E56; color: #fff; }
+    .dep-tab.done { background: rgba(15,110,86,0.3); color: #5DD9B5; }
+
+    .dep-body { padding: 12px; }
+    .dep-nota { border-radius: 8px; padding: 8px 10px; font-size: 12px; margin-bottom: 10px; line-height: 1.4; }
+    .dep-nota.naranja { background: #FEF3EC; color: #712B13; }
+    .dep-nota.azul { background: #E6F1FB; color: #0C447C; }
+
+    /* Tarjeta en depósito con checkbox */
+    .pkg-dep { background: #fff; border-radius: 10px; border: 1px solid #DDE3EA; border-left: 3px solid #185FA5; padding: 10px 12px; margin-bottom: 7px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.1s; }
+    .pkg-dep:active { background: #F0F4F8; }
+    .pkg-dep.seleccionado { border-color: #0F6E56; border-left-color: #0F6E56; background: #F5FBF8; }
+    .pkg-dep-check { width: 22px; height: 22px; border-radius: 6px; border: 2px solid #DDE3EA; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+    .pkg-dep.seleccionado .pkg-dep-check { background: #0F6E56; border-color: #0F6E56; color: #fff; }
+    .pkg-dep-info { flex: 1; min-width: 0; }
+    .pkg-dep-nombre { font-size: 13px; font-weight: 600; color: #1A1A1A; }
+    .pkg-dep-ruta { font-size: 11px; color: #5A6A78; }
+    .pkg-dep-tag { font-size: 10px; background: #E6F1FB; color: #185FA5; padding: 2px 6px; border-radius: 4px; font-weight: 600; flex-shrink: 0; }
+
+    .btn-dep-grande { width: 100%; border: none; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 4px; }
+    .btn-dep-grande.azul { background: #185FA5; color: #fff; }
+    .btn-dep-grande.verde { background: #0F6E56; color: #fff; }
+    .btn-dep-grande:disabled { background: #DDE3EA; color: #999; cursor: default; }
+    .dep-hint { text-align: center; font-size: 11px; color: #888; margin-top: 6px; }
+
+    .dep-scan-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .dep-scan-btn { background: #E6F1FB; color: #185FA5; border: 1px solid #B5D4F4; border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+    .pkg-dep.no-cabe { opacity: 0.55; border-left-color: #C0392B; cursor: default; }
+    .pkg-dep.no-cabe .pkg-dep-check { border-color: #C0392B; color: #C0392B; }
+    .cap-bar-card { background: #fff; border-radius: 10px; border: 1px solid #DDE3EA; padding: 12px 14px; margin-bottom: 10px; }
+    .cap-bar-title { font-size: 12px; font-weight: 600; color: #1A1A1A; margin-bottom: 8px; }
+    .cap-bar-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }
+    .cap-bar-track { background: #E0E0E0; border-radius: 4px; height: 8px; overflow: hidden; margin-bottom: 4px; }
+    .cap-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+    .cap-bar-libre { font-size: 11px; font-weight: 600; color: #0F6E56; }
+
+    /* Botón global Salir a ruta */
+    .btn-ruta-global { width: 100%; background: #E85D20; color: #fff; border: none; padding: 12px 16px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-ruta-global:active { background: #C44A0F; }
+
+    /* Toast de resultado */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; z-index: 999; white-space: nowrap; animation: toastIn 0.25s ease; }
+    .toast.ok   { background: #0F6E56; color: #fff; }
+    .toast.error { background: #C44A0F; color: #fff; }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+  </style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+// ─── PARÁMETROS DE URL ────────────────────────────────────────────────────────
+function getParams() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    vehiculoId:   params.get('v') ? parseInt(params.get('v')) : null,
+    vehiculoAlias: params.get('alias') || '',
+    transportista: params.get('t') || '',
+    fecha:         params.get('fecha') || new Date().toLocaleDateString('es-AR'),
+    capacidadKg:   parseFloat(params.get('kg')) || 0,
+    capacidadM3:   parseFloat(params.get('m3')) || 0,
+  };
+}
+
+const params = getParams();
+
+// ─── ESTADO ───────────────────────────────────────────────────────────────────
+let remitos = [];
+let modalAbierto = null;         // { remitoId, tipo } 'entrega' | 'retiro'
+let modalSucursalAbierto = null; // { remitoId } — picker de sucursal destino
+let modalAutopickup     = null; // { remito } — paquete ajeno disponible para cargar
+let formNombre = '';
+let formDni = '';
+let cargando = true;
+let scannerActivo = false;
+let html5QrScanner = null;
+let sucursales = [];             // Lista de sucursales desde Firebase
+// Estado depósito
+let vistaDeposito = false;     // true = pantalla de depósito activa
+let tabDeposito = 'depositar'; // 'depositar' | 'cargar'
+let aDepositar    = new Set();   // Tab 1: IDs seleccionados para DEPOSITAR
+let seleccionados = new Set();   // Tab 2 / Vuelta: IDs seleccionados para CARGAR a ruta
+let verManifiesto = false;       // Override: mostrar manifiesto aunque todas estén entregadas
+
+// ─── FIREBASE ─────────────────────────────────────────────────────────────────
+function cargarRemitos() {
+  // Cargar sucursales para el modal "Dejé en sucursal"
+  db.ref('sucursales').on('value', snap => {
+    const val = snap.val();
+    sucursales = val ? Object.values(val) : [];
+  });
+
+  db.ref('remitos').on('value', snap => {
+    const val = snap.val();
+    cargando = false;
+    if (!val) { remitos = []; render(); return; }
+    const todos = Object.values(val);
+
+    remitos = todos
+      .filter(r => {
+        // Filtro por transportista
+        if (params.transportista && r.transportistaNombre !== params.transportista) return false;
+        if (!params.vehiculoId) return true;
+        // Retiros: vehiculoAsignado para pickup
+        const esRetiroVehiculo = r.vehiculoAsignado && r.vehiculoAsignado.id === params.vehiculoId;
+        // Entregas: vehiculoRuta para ruta de entrega
+        const esEntregaVehiculo = r.vehiculoRuta && r.vehiculoRuta.id === params.vehiculoId;
+        // Sistema anterior: vehiculoId directo
+        const delViaje = r.vehiculoId === params.vehiculoId;
+        return esRetiroVehiculo || esEntregaVehiculo || delViaje;
+      })
+      .map(r => {
+        if (!params.vehiculoId) return r;
+        // Retiro: asignado a este vehículo para pickup, pendiente de retirar
+        if (r.vehiculoAsignado && r.vehiculoAsignado.id === params.vehiculoId && r.estado === 'pendiente-retiro') {
+          return { ...r, esRetiro: true };
+        }
+        // Entrega: asignado a este vehículo para ruta, en-camino o cargando
+        if (r.vehiculoRuta && r.vehiculoRuta.id === params.vehiculoId &&
+            (r.estado === 'cargando-ruta' || r.estado === 'en-camino')) {
+          return { ...r, esEntrega: true };
+        }
+        return r;
+      });
+
+    render();
+  });
+}
+
+function confirmarEntrega(remitoId, nombre, dni) {
+  const ahora = new Date();
+  db.ref('remitos/' + remitoId).update({
+    estado: 'entregado',
+    receptor: { nombre, dni },
+    entregadoEn: ahora.toLocaleDateString('es-AR') + ' ' + ahora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
+  });
+}
+
+function confirmarAutopickup(remito) {
+  if (!params.vehiculoId) {
+    mostrarToast('No se puede identificar tu vehículo', 'error');
+    return;
+  }
+  const updates = {
+    ['remitos/' + remito.id + '/estado']: 'cargando-ruta',
+    ['remitos/' + remito.id + '/vehiculoRuta']: {
+      id:    params.vehiculoId,
+      alias: decodeURIComponent(params.vehiculoAlias || ''),
+      patente: null,
+      chofer: params.transportista || null,
+    },
+  };
+  db.ref().update(updates).then(() => {
+    mostrarToast('✓ Paquete cargado en tu móvil', 'ok');
+    modalAutopickup = null;
+    render();
+  });
+}
+
+function abrirModalSucursal(remitoId) {
+  modalAbierto = null;
+  modalSucursalAbierto = { remitoId };
+  render();
+}
+
+function confirmarEnSucursal(remitoId, sucursalId, sucursalNombre) {
+  const ahora = new Date();
+  db.ref('remitos/' + remitoId).update({
+    estado: 'en-sucursal',
+    sucursalEntrega: { id: sucursalId, nombre: sucursalNombre },
+    entregadoEn: ahora.toLocaleDateString('es-AR') + ' ' + ahora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
+  }).then(() => {
+    mostrarToast('✓ Paquete dejado en ' + sucursalNombre, 'ok');
+    modalSucursalAbierto = null;
+    render();
+  });
+}
+
+function salirARuta(remitoId) {
+  db.ref('remitos/' + remitoId).update({ estado: 'en-camino' });
+}
+
+// ─── HELPERS CAPACIDAD ───────────────────────────────────────────────────────
+// Parsea "1.200 kg cobrable" → 1200
+function parseRemitoKg(r) {
+  const texto = r.envio?.peso || '0';
+  const limpio = texto.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
+  return parseFloat(limpio) || 0;
+}
+
+// Kg actualmente en el vehículo: retirados que NO están en aDepositar + en-camino
+function kgEnVehiculo() {
+  return remitos
+    .filter(r => (r.estado === 'retirado' && !aDepositar.has(r.id)) || r.estado === 'en-camino')
+    .reduce((sum, r) => sum + parseRemitoKg(r), 0);
+}
+
+// Kg extra que agregarían los paquetes seleccionados del depósito (Tab 2)
+function kgSeleccionadosDepot() {
+  return remitosEnDeposito()
+    .filter(r => seleccionados.has(r.id))
+    .reduce((sum, r) => sum + parseRemitoKg(r

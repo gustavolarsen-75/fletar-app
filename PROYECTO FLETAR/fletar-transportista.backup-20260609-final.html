@@ -1,0 +1,2047 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fletar — App Transportista</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyBIhZzpTRlNEG2x9dMdNTQ3ILvcRAaSJ-o",
+      authDomain: "fletar-49e36.firebaseapp.com",
+      databaseURL: "https://fletar-49e36-default-rtdb.firebaseio.com",
+      projectId: "fletar-49e36",
+      storageBucket: "fletar-49e36.firebasestorage.app",
+      messagingSenderId: "698884616195",
+      appId: "1:698884616195:web:c42078e969cdf5268e9e36"
+    });
+    const db = firebase.database();
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F0F4F8; color: #1A1A1A; min-height: 100vh; overflow-x: hidden; }
+
+    /* ── Clases de grilla responsive ── */
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ── Responsive móvil ── */
+    @media (max-width: 600px) {
+      /* Grillas colapsan a 1 columna */
+      .g2 { grid-template-columns: 1fr; }
+
+      /* PageWrapper padding ajustado */
+      div[style*="max-width: 900px"] { padding: 16px 12px !important; }
+      div[style*="max-width: 680px"] { padding: 16px 12px !important; }
+
+      /* Navbar: texto más pequeño */
+      nav { padding: 0 6px !important; }
+      nav button { font-size: 12px !important; padding: 5px 7px !important; }
+
+      /* Cards */
+      .card { padding: 12px !important; }
+
+      /* Inputs 16px: evita zoom en iOS */
+      input, select, textarea { font-size: 16px !important; }
+
+      /* Pipeline: labels en 3 cols */
+      .pipeline-grid { grid-template-columns: repeat(3, 1fr) !important; }
+      .pipeline-grid button { padding: 10px 4px !important; }
+      .pipeline-grid .pill-label { font-size: 11px !important; }
+      .pipeline-grid .pill-sub  { display: none !important; }
+
+      /* Botones de acción: wrap */
+      .card button { white-space: normal !important; }
+    }
+    :root {
+      --teal: #0F6E56;
+      --teal-light: #E1F5EE;
+      --teal-dark: #0A5040;
+      --naranja: #E85D20;
+      --naranja-light: #FEF3EC;
+      --gris-header: #1A2E3B;
+      --gris-bg: #F0F4F8;
+      --gris-border: #DDE3EA;
+      --gris-text: #5A6A78;
+      --azul: #185FA5;
+      --azul-light: #E6F1FB;
+      --rojo: #C0392B;
+    }
+    input, select, textarea { font-family: inherit; font-size: 14px; width: 100%; padding: 10px 12px; border: 1px solid var(--gris-border); border-radius: 8px; outline: none; transition: border-color 0.15s; background: #fff; }
+    input:focus, select:focus, textarea:focus { border-color: var(--teal); }
+    button { font-family: inherit; cursor: pointer; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; transition: opacity 0.15s, transform 0.1s; }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--teal); color: #fff; padding: 10px 20px; }
+    .btn-primary:hover { background: var(--teal-dark); }
+    .btn-secondary { background: #fff; color: var(--teal); border: 1.5px solid var(--teal); padding: 9px 20px; }
+    .btn-ghost { background: transparent; color: var(--gris-text); padding: 8px 16px; }
+    .btn-ghost:hover { background: var(--gris-bg); }
+    .card { background: #fff; border-radius: 12px; border: 1px solid var(--gris-border); padding: 16px; }
+    .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 5px; }
+    .badge-nueva { background: var(--naranja-light); color: #C44A0F; }
+    .badge-activo { background: var(--azul-light); color: var(--azul); }
+    .badge-en-camino { background: #FFF8E1; color: #F57F17; }
+    .badge-entregado { background: var(--teal-light); color: var(--teal); }
+    .badge-ruta { background: var(--teal-light); color: var(--teal); }
+    .badge-verificado { background: var(--teal-light); color: var(--teal); }
+    label { font-size: 13px; font-weight: 500; color: #444; display: block; margin-bottom: 5px; }
+    .form-group { margin-bottom: 14px; }
+    .divider { height: 1px; background: var(--gris-border); margin: 12px 0; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+    /* Banda identificadora superior */
+    .app-banner {
+      background: #0F6E56;
+      color: white;
+      text-align: center;
+      padding: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+<!-- BANDA IDENTIFICADORA -->
+<div class="app-banner" id="app-banner">🚛 App Transportista — Central</div>
+<script>
+  (function(){
+    var s = new URLSearchParams(window.location.search).get('sucursal');
+    if (s) document.getElementById('app-banner').textContent = '🏢 Sucursal: ' + s.charAt(0).toUpperCase() + s.slice(1).replace(/-/g,' ');
+  })();
+</script>
+
+<div id="root"></div>
+<script type="text/babel">
+
+const { useState, useEffect, useRef } = React;
+
+// ─── DETECCIÓN DE SUCURSAL POR URL ────────────────────────────────────────────
+// Central: fletar-transportista.html  (sin parámetros)
+// Sucursal: fletar-transportista.html?sucursal=obera
+const _urlParams  = new URLSearchParams(window.location.search);
+const SUCURSAL_ID = _urlParams.get('sucursal') || null;
+const ES_CENTRAL  = !SUCURSAL_ID;
+
+// ─── LOCALIDADES DE MISIONES (para asignar a sucursales) ─────────────────────
+const LOCALIDADES_MISIONES = [
+  "Posadas","Garupá","Candelaria","Santa Ana","Loreto","San Ignacio","Corpus","Jardín América",
+  "Oberá","San Martín","Mártires","Panambí","Guaraní","Leandro N. Alem","Campo Viera","Aristóbulo del Valle",
+  "Puerto Iguazú","Wanda","Esperanza","El Dorado","Montecarlo","Puerto Rico","Garuhapé",
+  "Eldorado","San Pedro","Bernardo de Irigoyen","Colonia Delicia",
+  "Apóstoles","Azara","San José","Concepción de la Sierra",
+  "Corrientes Capital","Buenos Aires, CABA","Rosario, Santa Fe","Santa Fe Capital",
+];
+
+// ─── USUARIO FIJO (auto-login como transportista) ─────────────────────────────
+const USUARIO_TRANS = { nombre: "Carlos Ramírez", email: "trans@test.com", tipo: "transportista", calificacion: 4.9, viajes: 210, vehiculo: "Camión 3/4", foto: "CR" };
+
+// ─── STORAGE (localStorage compartido entre las dos apps) ─────────────────────
+// ─── FIREBASE HELPERS ─────────────────────────────────────────────────────────
+// localStorage solo para datos privados por dispositivo (flota)
+const KEY_FLOTA = "fletar_flota";
+function storageGet(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch { return fallback; }
+}
+function storageSave(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch {}
+}
+
+function fbSnap(snap) {
+  const val = snap.val();
+  if (!val) return [];
+  return Object.values(val).sort((a, b) => (a.id || 0) - (b.id || 0));
+}
+function fbSetItem(path, item) {
+  return db.ref(path + '/' + item.id).set(item);
+}
+function fbUpdate(path, id, changes) {
+  return db.ref(path + '/' + id).update(changes);
+}
+function fbListen(path, callback) {
+  const ref = db.ref(path);
+  ref.on('value', snap => callback(fbSnap(snap)));
+  return () => ref.off();
+}
+
+// ─── MOCK DATA (semilla inicial) ──────────────────────────────────────────────
+const CARGAS_SEMILLA = [
+  { id: 1, empresa: "Mi Empresa SRL", origen: "Posadas, Misiones", destino: "Buenos Aires, CABA", tipo: "General", peso: "1.200 kg", retiro: "02/06/2026", entrega: "04/06/2026", estado: "activo", ofertas: 3, matchRuta: true },
+  { id: 2, empresa: "Distribuidora Sur", origen: "Oberá, Misiones", destino: "Corrientes Capital", tipo: "Refrigerado", peso: "450 kg", retiro: "03/06/2026", entrega: "03/06/2026", estado: "nueva", ofertas: 1, matchRuta: false },
+  { id: 3, empresa: "Agro Misiones", origen: "Eldorado, Misiones", destino: "Rosario, Santa Fe", tipo: "Granel", peso: "8.000 kg", retiro: "05/06/2026", entrega: "07/06/2026", estado: "nueva", ofertas: 0, matchRuta: true },
+  { id: 4, empresa: "Comercio Norte", origen: "Posadas, Misiones", destino: "Santa Fe Capital", tipo: "General", peso: "600 kg", retiro: "01/06/2026", entrega: "03/06/2026", estado: "en-camino", ofertas: 2, matchRuta: false },
+];
+
+const OFERTAS_SEMILLA = [
+  { id: 1, transportistaId: 1, cargaId: 1, transportistaNombre: "Transportes Norte SA", calificacion: 4.8, viajes: 142, verificado: true, vehiculo: "Camión 18 ruedas", foto: "TN", precio: 45000, retiro: "Mañana 8:00hs", entrega: "En 48hs", nota: "Camión disponible, salida confirmada el martes temprano.", matchRuta: true },
+  { id: 2, transportistaId: 3, cargaId: 1, transportistaNombre: "Carlos Ramírez", calificacion: 4.9, viajes: 210, verificado: true, vehiculo: "Camión 3/4", foto: "CR", precio: 42000, retiro: "Mañana 14:00hs", entrega: "En 48hs", nota: "Hago esta ruta todos los martes y jueves.", matchRuta: true },
+  { id: 3, transportistaId: 2, cargaId: 1, transportistaNombre: "Fletes Mika", calificacion: 4.6, viajes: 89, verificado: true, vehiculo: "Camioneta", foto: "FM", precio: 50000, retiro: "Pasado 9:00hs", entrega: "En 36hs", nota: "Camioneta con seguro de carga incluido.", matchRuta: false },
+];
+
+const MENSAJES_SEMILLA = [
+  { id: 1, de: "empresa", texto: "Hola, ¿pueden confirmar el horario de retiro?", hora: "10:32" },
+  { id: 2, de: "transportista", texto: "Sí, pasamos el martes a las 8 de la mañana.", hora: "10:45" },
+  { id: 3, de: "empresa", texto: "Perfecto, los esperamos en Av. Quaranta 1250.", hora: "10:47" },
+  { id: 4, de: "transportista", texto: "Anotado. ¿La mercadería va paletizada?", hora: "11:02" },
+];
+
+const FLOTA_SEMILLA = [
+  { id: 1, alias: "Móvil 01 · ABC 123", modelo: "Camión grande / 18 ruedas", tipo: "Camión grande / 18 ruedas", uso: "Ruta", patente: "ABC 123", chofer: "Carlos Ramírez", telefono: "3764 412345", capacidadM3: 90, capacidadKg: 20000 },
+  { id: 2, alias: "Móvil 02 · DEF 456", modelo: "Camión 3/4", tipo: "Camión 3/4", uso: "Ambos", patente: "DEF 456", chofer: "Juan López", telefono: "3764 498765", capacidadM3: 18, capacidadKg: 3500 },
+];
+
+// ─── BASE DE DATOS DE VEHÍCULOS (datos de fabricante, Argentina 2025) ────────
+// Fuente: Infobae Autos, Transporte Mundial, fichas técnicas de marca
+const DB_VEHICULOS = [
+  // ── Utilitarios chicos ──────────────────────────────────────────────────────
+  { nombre: "Fiat Fiorino",          categoria: "Utilitario chico",  volumenM3: 3.3,  cargaKg: 650,   alias: ["fiorino"] },
+  { nombre: "Renault Kangoo",        categoria: "Utilitario chico",  volumenM3: 3.3,  cargaKg: 750,   alias: ["kangoo", "kangoo express", "express"] },
+  { nombre: "Peugeot Partner",       categoria: "Utilitario chico",  volumenM3: 3.9,  cargaKg: 950,   alias: ["partner"] },
+  { nombre: "Citroën Berlingo",      categoria: "Utilitario chico",  volumenM3: 3.9,  cargaKg: 865,   alias: ["berlingo"] },
+  { nombre: "Volkswagen Caddy",      categoria: "Utilitario chico",  volumenM3: 3.7,  cargaKg: 800,   alias: ["caddy", "vw caddy"] },
+  // ── Furgones medianos ───────────────────────────────────────────────────────
+  { nombre: "Peugeot Expert",        categoria: "Furgón mediano",    volumenM3: 6.1,  cargaKg: 1450,  alias: ["expert"] },
+  { nombre: "Citroën Jumpy",         categoria: "Furgón mediano",    volumenM3: 6.1,  cargaKg: 1450,  alias: ["jumpy"] },
+  { nombre: "Toyota Hiace Furgón",   categoria: "Furgón mediano",    volumenM3: 6.2,  cargaKg: 1200,  alias: ["hiace", "hiace furgon", "hiace furgón"] },
+  { nombre: "Toyota Hiace L2H2",     categoria: "Furgón mediano",    volumenM3: 9.3,  cargaKg: 1500,  alias: ["hiace l2h2", "hiace grande"] },
+  { nombre: "Renault Master L1H1",   categoria: "Furgón mediano",    volumenM3: 8.0,  cargaKg: 1593,  alias: ["master", "master l1h1", "master chico"] },
+  { nombre: "Renault Master L2H2",   categoria: "Furgón mediano",    volumenM3: 10.8, cargaKg: 1539,  alias: ["master l2h2", "master mediano"] },
+  { nombre: "Renault Master L3H2",   categoria: "Furgón mediano",    volumenM3: 13.0, cargaKg: 1433,  alias: ["master l3h2", "master largo"] },
+  { nombre: "Fiat Ducato",           categoria: "Furgón mediano",    volumenM3: 8.0,  cargaKg: 1600,  alias: ["ducato"] },
+  { nombre: "Ford Transit",          categoria: "Furgón mediano",    volumenM3: 9.0,  cargaKg: 1500,  alias: ["transit", "ford transit"] },
+  { nombre: "Iveco Daily",           categoria: "Furgón mediano",    volumenM3: 7.5,  cargaKg: 1600,  alias: ["daily", "iveco daily", "iveco"] },
+  { nombre: "Mercedes-Benz Sprinter", categoria: "Furgón mediano",   volumenM3: 7.5,  cargaKg: 1250,  alias: ["sprinter", "mercedes sprinter", "mb sprinter"] },
+  // ── Furgones grandes ────────────────────────────────────────────────────────
+  { nombre: "Ford Transit L2H2",     categoria: "Furgón grande",     volumenM3: 9.5,  cargaKg: 2000,  alias: ["transit l2h2", "transit alto"] },
+  { nombre: "Ford Transit L3H3",     categoria: "Furgón grande",     volumenM3: 12.4, cargaKg: 2000,  alias: ["transit l3h3", "transit largo alto"] },
+  { nombre: "Mercedes Sprinter L2H2",categoria: "Furgón grande",     volumenM3: 10.5, cargaKg: 1600,  alias: ["sprinter l2h2"] },
+  { nombre: "Mercedes Sprinter L3H2",categoria: "Furgón grande",     volumenM3: 14.0, cargaKg: 1500,  alias: ["sprinter l3h2", "sprinter largo"] },
+  { nombre: "Mercedes Sprinter L4H2",categoria: "Furgón grande",     volumenM3: 15.5, cargaKg: 1400,  alias: ["sprinter l4h2", "sprinter extra"] },
+  { nombre: "Peugeot Boxer",         categoria: "Furgón grande",     volumenM3: 11.0, cargaKg: 1800,  alias: ["boxer"] },
+  { nombre: "Citroën Jumper",        categoria: "Furgón grande",     volumenM3: 11.0, cargaKg: 1800,  alias: ["jumper"] },
+  { nombre: "Iveco Daily Grande",    categoria: "Furgón grande",     volumenM3: 18.0, cargaKg: 2500,  alias: ["daily grande", "iveco grande"] },
+  // ── Pick-ups ────────────────────────────────────────────────────────────────
+  { nombre: "Toyota Hilux",          categoria: "Pick-up",           volumenM3: null, cargaKg: 1000,  alias: ["hilux"] },
+  { nombre: "Ford Ranger",           categoria: "Pick-up",           volumenM3: null, cargaKg: 1000,  alias: ["ranger"] },
+  { nombre: "Volkswagen Amarok",     categoria: "Pick-up",           volumenM3: null, cargaKg: 1250,  alias: ["amarok"] },
+  { nombre: "Chevrolet S10",         categoria: "Pick-up",           volumenM3: null, cargaKg: 1100,  alias: ["s10"] },
+  { nombre: "RAM 1500",              categoria: "Pick-up",           volumenM3: null, cargaKg: 900,   alias: ["ram 1500", "ram"] },
+  // ── Camiones ────────────────────────────────────────────────────────────────
+  { nombre: "Camión 3/4",            categoria: "Camión",            volumenM3: 12.0, cargaKg: 3000,  alias: ["camion 3/4", "camión 3/4", "tres cuartos"] },
+  { nombre: "Camión chico (4-5 tn)", categoria: "Camión",            volumenM3: 28.0, cargaKg: 5000,  alias: ["camion chico", "camión chico", "4 ton", "5 ton"] },
+  { nombre: "Camión mediano (8-10 tn)", categoria: "Camión",         volumenM3: 50.0, cargaKg: 10000, alias: ["camion mediano", "camión mediano", "8 ton", "10 ton"] },
+  { nombre: "Camión grande (18 tn)", categoria: "Camión",            volumenM3: 80.0, cargaKg: 18000, alias: ["camion grande", "camión grande", "18 ton"] },
+  { nombre: "Semirremolque (30 tn)", categoria: "Camión",            volumenM3: 120.0,cargaKg: 30000, alias: ["semi", "semirremolque", "trailer", "18 ruedas"] },
+];
+
+// Busca vehículos que coincidan con el texto ingresado
+function buscarVehiculos(texto) {
+  if (!texto || texto.length < 2) return [];
+  const q = texto.toLowerCase().trim();
+  return DB_VEHICULOS.filter(v =>
+    v.nombre.toLowerCase().includes(q) ||
+    v.alias.some(a => a.includes(q))
+  ).slice(0, 6);
+}
+
+// ─── SELECTOR DE VEHÍCULO con autocompletado ──────────────────────────────────
+function SelectorVehiculo({ vehiculo, setVehiculo }) {
+  const [texto, setTexto] = useState(vehiculo?.nombre || "");
+  const [sugerencias, setSugerencias] = useState([]);
+  const [abierto, setAbierto] = useState(false);
+  const ref = React.useRef(null);
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (ref.current && !ref.current.contains(e.target)) setAbierto(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  function handleTexto(val) {
+    setTexto(val);
+    const res = buscarVehiculos(val);
+    setSugerencias(res);
+    setAbierto(res.length > 0);
+    if (!val) setVehiculo(null);
+  }
+
+  function seleccionar(v) {
+    setTexto(v.nombre);
+    setVehiculo(v);
+    setSugerencias([]);
+    setAbierto(false);
+  }
+
+  const COLORES_CAT = {
+    "Utilitario chico": { bg: "#E1F5EE", color: "#0F6E56" },
+    "Furgón mediano":   { bg: "#E6F1FB", color: "#185FA5" },
+    "Furgón grande":    { bg: "#F3E5F5", color: "#6A1B9A" },
+    "Pick-up":          { bg: "#FFF8E1", color: "#F57F17" },
+    "Camión":           { bg: "#FEF3EC", color: "#C44A0F" },
+  };
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <div style={{ position: "relative" }}>
+        <input
+          value={texto}
+          onChange={e => handleTexto(e.target.value)}
+          onFocus={() => { if (sugerencias.length) setAbierto(true); }}
+          placeholder="Ej: Kangoo, Sprinter, camión 3/4..."
+          style={{ paddingRight: 32 }}
+        />
+        {texto && (
+          <button onClick={() => { setTexto(""); setVehiculo(null); setSugerencias([]); }}
+            style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#ccc", fontSize: 16, cursor: "pointer", padding: 0 }}>×</button>
+        )}
+      </div>
+
+      {/* Dropdown de sugerencias */}
+      {abierto && sugerencias.length > 0 && (
+        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid #DDE3EA", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.10)", zIndex: 200, marginTop: 4, overflow: "hidden" }}>
+          {sugerencias.map(v => {
+            const cat = COLORES_CAT[v.categoria] || { bg: "#F5F5F5", color: "#555" };
+            return (
+              <div key={v.nombre} onClick={() => seleccionar(v)}
+                style={{ padding: "10px 14px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #F5F5F5" }}
+                onMouseEnter={e => e.currentTarget.style.background = "#F5F8FB"}
+                onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
+                <div>
+                  <div style={{ fontWeight: 500, fontSize: 14 }}>{v.nombre}</div>
+                  <span style={{ fontSize: 10, background: cat.bg, color: cat.color, padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>{v.categoria}</span>
+                </div>
+                <div style={{ textAlign: "right", fontSize: 12, color: "#5A6A78" }}>
+                  {v.volumenM3 && <div>{v.volumenM3} m³</div>}
+                  <div style={{ fontWeight: 600, color: "#0F6E56" }}>{v.cargaKg.toLocaleString()} kg</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Datos precargados del vehículo seleccionado */}
+      {vehiculo && (
+        <div style={{ marginTop: 10, padding: "10px 14px", background: "#E1F5EE", borderRadius: 8, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ fontSize: 12, color: "#0F6E56", fontWeight: 600 }}>✅ Datos del fabricante</div>
+          {vehiculo.volumenM3 && (
+            <div style={{ fontSize: 13 }}>
+              <span style={{ color: "#888" }}>Volumen: </span>
+              <strong>{vehiculo.volumenM3} m³</strong>
+            </div>
+          )}
+          <div style={{ fontSize: 13 }}>
+            <span style={{ color: "#888" }}>Carga máx.: </span>
+            <strong>{vehiculo.cargaKg.toLocaleString()} kg</strong>
+          </div>
+          <div style={{ fontSize: 11, color: "#888", fontStyle: "italic" }}>Datos de fabricante — podés editarlos si tu configuración difiere</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── LOGO ─────────────────────────────────────────────────────────────────────
+function FletarLogo({ size = "sm" }) {
+  const iconSize = size === "lg" ? 52 : 34;
+  const textW = size === "lg" ? 140 : 110;
+  const textH = size === "lg" ? 46 : 36;
+  const fontSize = size === "lg" ? 42 : 32;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: size === "lg" ? 12 : 8 }}>
+      <svg width={iconSize} height={iconSize} viewBox="0 0 38 38">
+        <rect width="38" height="38" rx="9" fill="#0F6E56"/>
+        <text fontFamily="Montserrat, sans-serif" fontSize="26" fontWeight="900" x="7" y="28" fill="white">F</text>
+        <polygon points="28,24 34,19 28,14 28,18 22,18 22,20 28,20" fill="white" opacity="0.9"/>
+      </svg>
+      <svg width={textW} height={textH} viewBox={`0 0 ${textW} ${textH}`}>
+        <defs>
+          <clipPath id="cl-left"><polygon points={`0,${textH} 0,0 ${textW * 0.58},0 ${textW * 0.36},${textH}`}/></clipPath>
+          <clipPath id="cl-right"><polygon points={`${textW * 0.58},0 ${textW},0 ${textW},${textH} ${textW * 0.36},${textH}`}/></clipPath>
+        </defs>
+        <text fontFamily="Montserrat, sans-serif" fontSize={fontSize} fontWeight="900" y={textH - 4} clipPath="url(#cl-left)" fill="#0F6E56">fletar</text>
+        <text fontFamily="Montserrat, sans-serif" fontSize={fontSize} fontWeight="900" y={textH - 4} clipPath="url(#cl-right)" fill="white">fletar</text>
+      </svg>
+    </div>
+  );
+}
+
+// ─── NAVBAR ───────────────────────────────────────────────────────────────────
+function Navbar({ onNav, screen, sucursalNombre }) {
+  const [nRemitos, setNRemitos] = useState(0);
+  useEffect(() => fbListen('remitos', arr => {
+    setNRemitos(arr.filter(r => r.transportistaNombre === USUARIO_TRANS.nombre).length);
+  }), []);
+
+  const navLinks = [
+    { id: "trans-dashboard", label: "Inicio" },
+    { id: "mis-rutas",       label: "Mis rutas" },
+    { id: "mi-flota",        label: "Mi flota" },
+  ];
+  const etiqueta = ES_CENTRAL ? "CENTRAL" : (sucursalNombre ? sucursalNombre.toUpperCase() : "SUCURSAL");
+
+  return (
+    <nav style={{ background: "#1A2E3B", padding: "0 10px", display: "flex", alignItems: "center", height: 52, position: "sticky", top: 0, zIndex: 100, overflowX: "auto", gap: 4 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginRight: 12, flexShrink: 0 }}>
+        <FletarLogo size="sm" />
+        <span style={{ fontSize: 11, background: ES_CENTRAL ? "#0F6E56" : "#185FA5", color: "#fff", padding: "3px 8px", borderRadius: 5, fontWeight: 700, letterSpacing: "0.04em" }}>{etiqueta}</span>
+      </div>
+      <div style={{ display: "flex", gap: 4, flex: 1 }}>
+        {navLinks.map(l => (
+          <button key={l.id} onClick={() => onNav(l.id)} style={{ background: screen === l.id ? "rgba(15,110,86,0.3)" : "transparent", color: screen === l.id ? "#5DD9B5" : "rgba(255,255,255,0.7)", border: "none", padding: "6px 14px", borderRadius: 6, fontSize: 14, fontWeight: screen === l.id ? 500 : 400, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+            {l.label}
+            {l.badge && <span style={{ background: "#E85D20", color: "#fff", borderRadius: "50%", width: 18, height: 18, fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{l.badge}</span>}
+          </button>
+        ))}
+        {ES_CENTRAL && (
+          <button onClick={() => onNav("sucursales")} style={{ background: screen === "sucursales" ? "rgba(24,95,165,0.35)" : "transparent", color: screen === "sucursales" ? "#90CAF9" : "rgba(255,255,255,0.7)", border: "none", padding: "6px 14px", borderRadius: 6, fontSize: 14, fontWeight: screen === "sucursales" ? 500 : 400, cursor: "pointer" }}>
+            🏢 Sucursales
+          </button>
+        )}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#0F6E56", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 600 }}>CR</div>
+        <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>Carlos Ramírez</span>
+        <span style={{ color: "#5DD9B5", fontSize: 12 }}>★ 4.9</span>
+      </div>
+    </nav>
+  );
+}
+
+function PageWrapper({ children, titulo, subtitulo, accion }) {
+  return (
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "20px 12px", width: "100%" }}>
+      {(titulo || accion) && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {titulo && <h1 style={{ fontSize: 20, fontWeight: 600, color: "#1A1A1A" }}>{titulo}</h1>}
+            {subtitulo && <p style={{ fontSize: 13, color: "#5A6A78", marginTop: 3 }}>{subtitulo}</p>}
+          </div>
+          {accion}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
+// ─── PIPELINE DASHBOARD ───────────────────────────────────────────────────────
+function TransportistaDashboard({ onNav, setCargaSeleccionada, setRemitoActivo, ciudadesSucursal }) {
+  const [cargas,  setCargas]  = useState(CARGAS_SEMILLA);
+  const [ofertas, setOfertas] = useState([]);
+  const [remitos, setRemitos] = useState([]);
+  const [etapa,   setEtapa]   = useState(null); // null = vista grilla general
+  const [flota,   setFlota]   = useState(() => storageGet(KEY_FLOTA, FLOTA_SEMILLA));
+  const [asignandoId,  setAsignandoId]  = useState(null);
+  const [vehiculoSel,  setVehiculoSel]  = useState(null);
+  const [horaRetiro,   setHoraRetiro]   = useState("");
+  const [notaChofer,   setNotaChofer]   = useState("");
+  const [depositandoId, setDepositandoId] = useState(null);
+  const [vehiculoRuta,  setVehiculoRuta]  = useState(null);
+
+  useEffect(() => {
+    const unC = fbListen('cargas',  arr => setCargas(arr.length  > 0 ? arr : CARGAS_SEMILLA));
+    const unO = fbListen('ofertas', arr => setOfertas(arr));
+    const unR = fbListen('remitos', arr => setRemitos(arr));
+    setFlota(storageGet(KEY_FLOTA, FLOTA_SEMILLA));
+    return () => { unC(); unO(); unR(); };
+  }, []);
+
+  // Filtrar por zona de sucursal (si aplica)
+  function enZona(carga) {
+    if (ES_CENTRAL || !ciudadesSucursal || ciudadesSucursal.length === 0) return true;
+    const origen  = (carga.origen  || "").toLowerCase();
+    const destino = (carga.destino || "").toLowerCase();
+    return ciudadesSucursal.some(c => origen.includes(c.toLowerCase()) || destino.includes(c.toLowerCase()));
+  }
+  function remitoEnZona(r) {
+    if (ES_CENTRAL || !ciudadesSucursal || ciudadesSucursal.length === 0) return true;
+    const orig = (r.remitente?.ciudad || "").toLowerCase();
+    const dest = (r.destinatario?.ciudad || "").toLowerCase();
+    return ciudadesSucursal.some(c => orig.includes(c.toLowerCase()) || dest.includes(c.toLowerCase()));
+  }
+
+  function abrirPanel(r) {
+    setAsignandoId(r.id);
+    setVehiculoSel(r.vehiculoAsignado ? flota.find(v => v.id === r.vehiculoAsignado.id) || null : null);
+    setHoraRetiro(r.horaRetiro || "");
+    setNotaChofer(r.notaChofer || "");
+  }
+
+  function confirmarAsignacion(remitoId) {
+    if (!vehiculoSel) { alert("Seleccioná un vehículo."); return; }
+    fbUpdate('remitos', remitoId, {
+      vehiculoAsignado: { id: vehiculoSel.id, alias: vehiculoSel.alias, patente: vehiculoSel.patente, chofer: vehiculoSel.chofer || null },
+      horaRetiro: horaRetiro || null,
+      notaChofer: notaChofer || null,
+    });
+    setAsignandoId(null);
+    setVehiculoSel(null);
+    setHoraRetiro("");
+    setNotaChofer("");
+  }
+
+  function confirmarRetiro(remitoId) {
+    fbUpdate('remitos', remitoId, { estado: 'retirado' });
+  }
+
+  function abrirPanelRuta(r) {
+    setDepositandoId(r.id);
+    setVehiculoRuta(r.vehiculoRuta ? flota.find(v => v.id === r.vehiculoRuta.id) || null : null);
+  }
+
+  function confirmarCargaRuta(remitoId) {
+    if (!vehiculoRuta) { alert("Seleccioná un vehículo de ruta."); return; }
+    fbUpdate('remitos', remitoId, {
+      estado: 'cargando-ruta',
+      vehiculoRuta: { id: vehiculoRuta.id, alias: vehiculoRuta.alias, patente: vehiculoRuta.patente, chofer: vehiculoRuta.chofer || null },
+    });
+    setDepositandoId(null); setVehiculoRuta(null);
+  }
+
+  function saltarDeposito(remitoId) {
+    fbUpdate('remitos', remitoId, { estado: 'cargando-ruta' });
+  }
+
+  const misOfertas       = ofertas.filter(o => o.transportistaNombre === USUARIO_TRANS.nombre);
+  const cargasConOferta  = new Set(misOfertas.map(o => o.cargaId));
+  const misRemitos       = remitos.filter(r => r.transportistaNombre === USUARIO_TRANS.nombre && remitoEnZona(r));
+  const cargasFiltradas  = cargas.filter(enZona);
+
+  const counts = {
+    pedidos:     cargasFiltradas.filter(c => (c.estado === "nueva" || c.estado === "activo") && !cargasConOferta.has(c.id)).length,
+    cotizados:   misOfertas.filter(o => { const cg = cargas.find(c => c.id === o.cargaId); return cg && cg.estado !== "en-camino" && cg.estado !== "entregado"; }).length,
+    aceptados:   misRemitos.filter(r => r.estado === "pendiente-retiro").length,
+    enDeposito:  misRemitos.filter(r => r.estado === "retirado" || r.estado === "en-deposito").length,
+    enCamino:    misRemitos.filter(r => r.estado === "cargando-ruta" || r.estado === "en-camino").length,
+    enSucursal:  misRemitos.filter(r => r.estado === "en-sucursal").length,
+    entregados:  misRemitos.filter(r => r.estado === "entregado").length,
+  };
+
+  const ETAPAS = [
+    { id: "pedidos",    emoji: "📋", label: "Pedidos",     sub: "Sin cotizar"        },
+    { id: "cotizados",  emoji: "💬", label: "Cotizados",   sub: "Esperando resp."    },
+    { id: "aceptados",  emoji: "✅", label: "Aceptados",   sub: "Por retirar"        },
+    { id: "enDeposito", emoji: "📦", label: "En depósito", sub: "Retirado/Depot"     },
+    { id: "enCamino",   emoji: "🚛", label: "En camino",   sub: "En ruta"            },
+    { id: "enSucursal", emoji: "🏢", label: "En sucursal", sub: "Listo para retirar" },
+    { id: "entregados", emoji: "☑️", label: "Entregados",  sub: "Completados"        },
+  ];
+
+  // helper: hora legible desde item (usa publishedAt o deriva del id timestamp)
+  function horaItem(item) {
+    if (item.publishedAt) return item.publishedAt;
+    const id = item.id || item.cargaId;
+    if (id && id > 1000000000000) return new Date(id).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+    return null;
+  }
+  function fechaItem(item) {
+    if (item.publishedDate) return item.publishedDate;
+    const id = item.id || item.cargaId;
+    if (id && id > 1000000000000) return new Date(id).toLocaleDateString("es-AR");
+    return null;
+  }
+
+  function getItems() {
+    const desc = arr => [...arr].sort((a, b) => (b.id || 0) - (a.id || 0));
+    switch (etapa) {
+      case "pedidos":
+        return desc(cargasFiltradas.filter(c => (c.estado === "nueva" || c.estado === "activo") && !cargasConOferta.has(c.id)));
+      case "cotizados":
+        return desc(misOfertas
+          .filter(o => { const cg = cargasFiltradas.find(c => c.id === o.cargaId); return cg && cg.estado !== "en-camino" && cg.estado !== "entregado"; })
+          .map(o => ({ ...o, _carga: cargasFiltradas.find(c => c.id === o.cargaId) })));
+      case "aceptados":   return desc(misRemitos.filter(r => r.estado === "pendiente-retiro"));
+      case "enDeposito":  return desc(misRemitos.filter(r => r.estado === "retirado" || r.estado === "en-deposito"));
+      case "enCamino":    return desc(misRemitos.filter(r => r.estado === "cargando-ruta" || r.estado === "en-camino"));
+      case "enSucursal":  return desc(misRemitos.filter(r => r.estado === "en-sucursal"));
+      case "entregados":  return desc(misRemitos.filter(r => r.estado === "entregado"));
+      default: return [];
+    }
+  }
+
+  const items = getItems();
+  const etapaActual = etapa ? ETAPAS.find(e => e.id === etapa) : null;
+
+  return (
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "20px 12px", width: "100%" }}>
+
+      {/* ── VISTA GRILLA (etapa === null) ── */}
+      {!etapa && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          {ETAPAS.map(e => {
+            const n = counts[e.id];
+            return (
+              <button key={e.id} onClick={() => setEtapa(e.id)} style={{
+                background: "#fff",
+                border: n > 0 ? "1px solid #DDE3EA" : "1px solid #F0F0F0",
+                borderRadius: 12, padding: "14px 8px",
+                textAlign: "center", cursor: "pointer",
+                transition: "border 0.1s, background 0.1s, transform 0.1s",
+              }}
+              onMouseEnter={e2 => e2.currentTarget.style.background="#F5FDFB"}
+              onMouseLeave={e2 => e2.currentTarget.style.background="#fff"}>
+                <div style={{ fontSize: 22, marginBottom: 4 }}>{e.emoji}</div>
+                <div style={{ fontSize: 26, fontWeight: 700, lineHeight: 1,
+                  color: n > 0 ? "#1A1A1A" : "#ccc" }}>{n}</div>
+                <div style={{ fontSize: 13, fontWeight: 500, marginTop: 4,
+                  color: n > 0 ? "#1A1A1A" : "#aaa" }}>{e.label}</div>
+                <div style={{ fontSize: 11, marginTop: 2, color: "#999" }}>{e.sub}</div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── VISTA DETALLE (etapa !== null) ── */}
+      {etapa && etapaActual && (
+        <>
+          {/* Cabecera con botón volver */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+            <button onClick={() => setEtapa(null)} style={{
+              background: "#F0F4F8", border: "none", borderRadius: 8,
+              padding: "7px 14px", fontSize: 13, fontWeight: 500,
+              color: "#5A6A78", cursor: "pointer", flexShrink: 0,
+            }}>← Volver</button>
+            <span style={{ fontSize: 20 }}>{etapaActual.emoji}</span>
+            <h2 style={{ fontSize: 17, fontWeight: 600, color: "#1A1A1A", flex: 1 }}>{etapaActual.label}</h2>
+            <span style={{ fontSize: 12, background: "#E1F5EE", color: "#0F6E56",
+              padding: "3px 10px", borderRadius: 10, fontWeight: 600 }}>{items.length}</span>
+          </div>
+
+          {/* Lista vacía */}
+          {items.length === 0 && (
+            <div className="card" style={{ textAlign: "center", padding: "32px 20px", color: "#aaa" }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>📭</div>
+              <p style={{ fontWeight: 500, color: "#888" }}>No hay {etapaActual.label.toLowerCase()} en este momento</p>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── Pedidos: cargas sin cotizar ── */}
+      {etapa === "pedidos" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {items.map(c => (
+            <div key={c.id} className="card" style={{ border: c.matchRuta ? "2px solid #0F6E56" : "1px solid #DDE3EA" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
+                    <span style={{ fontWeight: 600, fontSize: 14 }}>{c.origen} → {c.destino}</span>
+                    {c.matchRuta && <span className="badge badge-ruta">Tu ruta</span>}
+                  </div>
+                  <div style={{ display: "flex", gap: 12, fontSize: 13, color: "#5A6A78", flexWrap: "wrap" }}>
+                    <span>📦 {c.tipo}</span>
+                    {c.peso && c.peso !== "— kg" && <span>⚖️ {c.peso}</span>}
+                    {c.totalCobrable && <span style={{ color: "#0F6E56", fontWeight: 500 }}>⚖️ {c.totalCobrable} kg cob.</span>}
+                    <span>📅 {c.retiro}</span>
+                  </div>
+                  {c.estimadoMin && c.estimadoMax && (
+                    <div style={{ marginTop: 5, fontSize: 12, background: "#FEF3EC", color: "#C44A0F", padding: "2px 8px", borderRadius: 5, display: "inline-block" }}>
+                      Ref. ${c.estimadoMin.toLocaleString()} – ${c.estimadoMax.toLocaleString()}
+                    </div>
+                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 11, color: "#aaa" }}>{c.empresa}</span>
+                    {horaItem(c) && <span style={{ fontSize: 11, background: "#F5F5F5", color: "#666", padding: "1px 6px", borderRadius: 4 }}>🕐 {horaItem(c)}{fechaItem(c) ? ` · ${fechaItem(c)}` : ""}</span>}
+                  </div>
+                </div>
+                <button className="btn-primary" onClick={() => { setCargaSeleccionada(c); onNav("hacer-oferta"); }} style={{ fontSize: 13, flexShrink: 0 }}>
+                  Cotizar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Cotizados: mis ofertas enviadas ── */}
+      {etapa === "cotizados" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {items.map(o => (
+            <div key={o.id} className="card">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>
+                    {o._carga?.origen || "—"} → {o._carga?.destino || "—"}
+                  </div>
+                  <div style={{ display: "flex", gap: 12, fontSize: 13, color: "#5A6A78", flexWrap: "wrap" }}>
+                    <span>📦 {o._carga?.tipo}</span>
+                    <span>📅 Retiro {o.retiro}</span>
+                    <span>🎯 Entrega {o.entrega}</span>
+                  </div>
+                  {o.nota && <div style={{ fontSize: 12, color: "#888", marginTop: 4, fontStyle: "italic" }}>"{o.nota}"</div>}
+                  {horaItem(o) && <div style={{ fontSize: 11, background: "#F5F5F5", color: "#666", padding: "1px 6px", borderRadius: 4, marginTop: 4, display: "inline-block" }}>🕐 {horaItem(o)}{fechaItem(o) ? ` · ${fechaItem(o)}` : ""}</div>}
+                </div>
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <div style={{ fontSize: 18, fontWeight: 600, color: "#0F6E56" }}>${o.precio?.toLocaleString()}</div>
+                  <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>Mi oferta</div>
+                  <div style={{ marginTop: 6, fontSize: 11, background: "#E6F1FB", color: "#185FA5", padding: "2px 8px", borderRadius: 10, fontWeight: 500 }}>Esperando cliente</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Aceptados: asignación de móvil ── */}
+      {etapa === "aceptados" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {items.map(r => {
+            const abierto  = asignandoId === r.id;
+            const asignado = r.vehiculoAsignado;
+            return (
+              <div key={r.id} className="card" style={{ border: abierto ? "1.5px solid #9FE1CB" : "1px solid #DDE3EA" }}>
+                {/* Fila principal */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: (abierto || asignado) ? 10 : 0 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                      <span style={{ fontWeight: 600, fontSize: 14 }}>{r.remitente?.ciudad || "—"} → {r.destinatario?.ciudad || "—"}</span>
+                      <span style={{ fontSize: 11, background: "#FEF3EC", color: "#C44A0F", padding: "2px 8px", borderRadius: 5, fontWeight: 500 }}>Por retirar</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 10, fontSize: 12, color: "#5A6A78", flexWrap: "wrap" }}>
+                      <span>🔢 {r.id}</span>
+                      {r.destinatario?.nombre && <span>👤 {r.destinatario.nombre}</span>}
+                      {r.flete && <span style={{ color: "#0F6E56", fontWeight: 500 }}>💵 ${r.flete.toLocaleString()}</span>}
+                    </div>
+                    {asignado && !abierto && (
+                      <div style={{ marginTop: 6, display: "flex", gap: 5, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 11, background: "#E1F5EE", color: "#0F6E56", padding: "2px 8px", borderRadius: 5, fontWeight: 500 }}>🚐 {asignado.alias}</span>
+                        {r.horaRetiro && <span style={{ fontSize: 11, background: "#E1F5EE", color: "#0F6E56", padding: "2px 8px", borderRadius: 5 }}>🕐 {r.horaRetiro}</span>}
+                        {asignado.chofer && <span style={{ fontSize: 11, color: "#5A6A78" }}>· {asignado.chofer}</span>}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 5, alignItems: "flex-end", flexShrink: 0 }}>
+                    {abierto ? (
+                      <button onClick={() => setAsignandoId(null)} style={{ background: "transparent", border: "none", fontSize: 20, color: "#aaa", cursor: "pointer", lineHeight: 1, padding: "2px 4px" }}>✕</button>
+                    ) : asignado ? (
+                      <>
+                        <button className="btn-secondary" onClick={() => abrirPanel(r)} style={{ fontSize: 11, padding: "5px 10px" }}>Cambiar</button>
+                        <button className="btn-ghost" onClick={() => { setRemitoActivo(r); onNav("remito"); }} style={{ fontSize: 11, padding: "5px 10px" }}>Ver remito</button>
+                        <button onClick={() => confirmarRetiro(r.id)} style={{ background: "#E85D20", color: "#fff", border: "none", borderRadius: 7, padding: "6px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>📦 Retiré →</button>
+                      </>
+                    ) : (
+                      <button className="btn-primary" onClick={() => abrirPanel(r)} style={{ fontSize: 12 }}>Asignar móvil</button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Panel de asignación inline */}
+                {abierto && (
+                  <div style={{ background: "#F0FBF7", borderRadius: 10, padding: 12, border: "0.5px solid #9FE1CB" }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "#0F6E56", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 8 }}>Elegir vehículo</div>
+                    {flota.length === 0 ? (
+                      <div style={{ fontSize: 13, color: "#aaa", marginBottom: 8 }}>No hay vehículos en Mi Flota. Agregá uno primero.</div>
+                    ) : flota.map(v => (
+                      <div key={v.id} onClick={() => setVehiculoSel(v)}
+                        style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 10px", borderRadius: 8, marginBottom: 5, cursor: "pointer",
+                          border: vehiculoSel?.id === v.id ? "1.5px solid #0F6E56" : "1px solid #DDE3EA",
+                          background: vehiculoSel?.id === v.id ? "#E1F5EE" : "#fff" }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 7, background: "#E1F5EE", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>🚐</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500 }}>{v.alias}</div>
+                          <div style={{ fontSize: 11, color: "#5A6A78" }}>{v.chofer || "Sin chofer asignado"}</div>
+                        </div>
+                        {vehiculoSel?.id === v.id && <span style={{ color: "#0F6E56", fontSize: 16, flexShrink: 0 }}>✓</span>}
+                      </div>
+                    ))}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, margin: "10px 0" }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#5A6A78", marginBottom: 3 }}>Hora de retiro (opcional)</div>
+                        <input type="time" value={horaRetiro} onChange={e => setHoraRetiro(e.target.value)}
+                          style={{ fontSize: 13, padding: "7px 10px", borderRadius: 7, border: "1px solid #DDE3EA", width: "100%", background: "#fff" }} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#5A6A78", marginBottom: 3 }}>Nota al chofer (opcional)</div>
+                        <input type="text" value={notaChofer} onChange={e => setNotaChofer(e.target.value)} placeholder="Ej: Timbre 2, portón azul"
+                          style={{ fontSize: 13, padding: "7px 10px", borderRadius: 7, border: "1px solid #DDE3EA", width: "100%", background: "#fff" }} />
+                      </div>
+                    </div>
+                    <button className="btn-primary" onClick={() => confirmarAsignacion(r.id)} style={{ width: "100%", fontSize: 13 }}>
+                      Confirmar y notificar al chofer →
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── En depósito: retirado + en-deposito ── */}
+      {etapa === "enDeposito" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {items.map(r => {
+            const abierto = depositandoId === r.id;
+            const esRetirado = r.estado === "retirado";
+            return (
+              <div key={r.id} className="card" style={{ border: abierto ? "1.5px solid #9FE1CB" : "1px solid #DDE3EA" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 10 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                      <span style={{ fontWeight: 600, fontSize: 14 }}>{r.remitente?.ciudad || "—"} → {r.destinatario?.ciudad || "—"}</span>
+                      <span style={{ fontSize: 11, background: esRetirado ? "#E6F1FB" : "#FFF8E1", color: esRetirado ? "#185FA5" : "#F57F17", padding: "2px 8px", borderRadius: 5, fontWeight: 500 }}>
+                        {esRetirado ? "Retirado" : "En depósito"}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", gap: 10, fontSize: 12, color: "#5A6A78", flexWrap: "wrap" }}>
+                      <span>🔢 {r.id}</span>
+                      {r.destinatario?.nombre && <span>👤 {r.destinatario.nombre}</span>}
+                      {r.flete && <span style={{ color: "#0F6E56", fontWeight: 500 }}>💵 ${r.flete.toLocaleString()}</span>}
+                    </div>
+                    {r.vehiculoAsignado && <div style={{ fontSize: 11, color: "#0F6E56", marginTop: 4 }}>🚐 Retiro: {r.vehiculoAsignado.alias}</div>}
+                    {r.remitente?.ciudad && <div style={{ fontSize: 11, color: "#185FA5", marginTop: 4, fontWeight: 500 }}>📍 Desde: {r.remitente.ciudad}</div>}
+                  </div>
+                  <div style={{ flexShrink: 0 }}>
+                    {abierto ? (
+                      <button onClick={() => setDepositandoId(null)} style={{ background: "transparent", border: "none", fontSize: 20, color: "#aaa", cursor: "pointer" }}>✕</button>
+                    ) : (
+                      <button className="btn-ghost" onClick={() => { setRemitoActivo(r); onNav("remito"); }} style={{ fontSize: 11, padding: "5px 10px" }}>Ver remito</button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Acciones rápidas */}
+                {!abierto && (
+                  <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                    {esRetirado && (
+                      <>
+                        <button onClick={() => fbUpdate('remitos', r.id, { estado: 'en-deposito' })}
+                          style={{ flex: 1, background: "#185FA5", color: "#fff", border: "none", borderRadius: 8, padding: "9px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                          📦 Llevar al depósito
+                        </button>
+                        <button onClick={() => abrirPanelRuta(r)}
+                          style={{ flex: 1, background: "#0F6E56", color: "#fff", border: "none", borderRadius: 8, padding: "9px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                          🚛 Cargar en vehículo →
+                        </button>
+                      </>
+                    )}
+                    {r.estado === "en-deposito" && (
+                      <button onClick={() => abrirPanelRuta(r)}
+                        style={{ width: "100%", background: "#0F6E56", color: "#fff", border: "none", borderRadius: 8, padding: "9px 12px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                        Asignar vehículo de ruta y cargar →
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Panel selector vehículo de ruta */}
+                {abierto && (
+                  <div style={{ background: "#F0FBF7", borderRadius: 10, padding: 12, border: "0.5px solid #9FE1CB" }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "#0F6E56", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 8 }}>Vehículo de ruta</div>
+                    {flota.length === 0 ? (
+                      <div style={{ fontSize: 13, color: "#aaa", marginBottom: 8 }}>No hay vehículos en Mi Flota.</div>
+                    ) : flota.map(v => (
+                      <div key={v.id} onClick={() => setVehiculoRuta(v)}
+                        style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 10px", borderRadius: 8, marginBottom: 5, cursor: "pointer",
+                          border: vehiculoRuta?.id === v.id ? "1.5px solid #0F6E56" : "1px solid #DDE3EA",
+                          background: vehiculoRuta?.id === v.id ? "#E1F5EE" : "#fff" }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 7, background: "#E1F5EE", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>🚚</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500 }}>{v.alias}</div>
+                          <div style={{ fontSize: 11, color: "#5A6A78" }}>{v.uso === "Ruta" || v.uso === "Ambos" ? "✓ Apto para ruta" : v.uso} · {v.chofer || "Sin chofer"}</div>
+                        </div>
+                        {vehiculoRuta?.id === v.id && <span style={{ color: "#0F6E56", fontSize: 16 }}>✓</span>}
+                      </div>
+                    ))}
+                    <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                      <button onClick={() => confirmarCargaRuta(r.id)}
+                        style={{ flex: 2, background: "#0F6E56", color: "#fff", border: "none", borderRadius: 8, padding: "9px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                        Confirmar carga en ruta →
+                      </button>
+                      <button onClick={() => { saltarDeposito(r.id); setDepositandoId(null); setVehiculoRuta(null); }}
+                        style={{ flex: 1, background: "transparent", border: "0.5px solid #ccc", color: "#666", borderRadius: 8, padding: "9px 8px", fontSize: 11, cursor: "pointer" }}>
+                        Saltar depósito
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── En sucursal: esperando retiro por el cliente ── */}
+      {etapa === "enSucursal" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {items.length === 0 && (
+            <div style={{ background: "#fff", border: "1px solid #DDE3EA", borderRadius: 12, padding: 40, textAlign: "center", color: "#5A6A78" }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>🏢</div>
+              <p style={{ fontWeight: 500 }}>Sin paquetes en sucursal</p>
+            </div>
+          )}
+          {items.map(r => {
+            const abierto = depositandoId === r.id;
+            return (
+              <div key={r.id} className="card" style={{ border: abierto ? "1.5px solid #9FE1CB" : "1px solid #DDE3EA" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 10 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                      <span style={{ fontWeight: 600, fontSize: 14 }}>{r.remitente?.ciudad || "—"} → {r.destinatario?.ciudad || "—"}</span>
+                      <span style={{ fontSize: 11, background: "#F3E8FF", color: "#6B21A8", padding: "2px 8px", borderRadius: 5, fontWeight: 500 }}>🏢 En sucursal</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 10, fontSize: 12, color: "#5A6A78", flexWrap: "wrap" }}>
+                      <span>🔢 {r.id}</span>
+                      {r.destinatario?.nombre && <span>👤 {r.destinatario.nombre}</span>}
+                      {r.flete && <span style={{ color: "#0F6E56", fontWeight: 500 }}>💵 ${r.flete.toLocaleString()}</span>}
+                    </div>
+                    {r.sucursalEntrega?.nombre && (
+                      <div style={{ fontSize: 11, color: "#6B21A8", marginTop: 4, fontWeight: 500 }}>
+                        🏢 Dejado en: {r.sucursalEntrega.nombre}
+                      </div>
+                    )}
+                    {r.remitente?.ciudad && (
+                      <div style={{ fontSize: 11, color: "#185FA5", marginTop: 2, fontWeight: 500 }}>
+                        📍 Desde: {r.remitente.ciudad}
+                      </div>
+                    )}
+                    {r.entregadoEn && <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>🕐 {r.entregadoEn}</div>}
+                  </div>
+                  {abierto
+                    ? <button onClick={() => setDepositandoId(null)} style={{ background: "transparent", border: "none", fontSize: 20, color: "#aaa", cursor: "pointer" }}>✕</button>
+                    : <button className="btn-ghost" onClick={() => { setRemitoActivo(r); onNav("remito"); }} style={{ fontSize: 11, padding: "5px 10px", flexShrink: 0 }}>Ver remito</button>
+                  }
+                </div>
+
+                {/* Acciones rápidas */}
+                {!abierto && (
+                  <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                    <button onClick={() => fbUpdate('remitos', r.id, { estado: 'entregado' })}
+                      style={{ flex: 1, background: "#0F6E56", color: "#fff", border: "none", borderRadius: 8, padding: "9px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                      ✅ Cliente retiró
+                    </button>
+                    <button onClick={() => abrirPanelRuta(r)}
+                      style={{ flex: 1, background: "#185FA5", color: "#fff", border: "none", borderRadius: 8, padding: "9px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                      🚛 Asignar a vehículo →
+                    </button>
+                  </div>
+                )}
+
+                {/* Panel selector vehículo de ruta */}
+                {abierto && (
+                  <div style={{ background: "#F0FBF7", borderRadius: 10, padding: 12, border: "0.5px solid #9FE1CB" }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "#0F6E56", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 8 }}>Asignar vehículo de ruta</div>
+                    {flota.length === 0 ? (
+                      <div style={{ fontSize: 13, color: "#aaa", marginBottom: 8 }}>No hay vehículos en Mi Flota.</div>
+                    ) : flota.map(v => (
+                      <div key={v.id} onClick={() => setVehiculoRuta(v)}
+                        style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 10px", borderRadius: 8, marginBottom: 5, cursor: "pointer",
+                          border: vehiculoRuta?.id === v.id ? "1.5px solid #0F6E56" : "1px solid #DDE3EA",
+                          background: vehiculoRuta?.id === v.id ? "#E1F5EE" : "#fff" }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 7, background: "#E1F5EE", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>🚚</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500 }}>{v.alias}</div>
+                          <div style={{ fontSize: 11, color: "#5A6A78" }}>{v.uso === "Ruta" || v.uso === "Ambos" ? "✓ Apto para ruta" : v.uso} · {v.chofer || "Sin chofer"}</div>
+                        </div>
+                        {vehiculoRuta?.id === v.id && <span style={{ color: "#0F6E56", fontSize: 16 }}>✓</span>}
+                      </div>
+                    ))}
+                    <button onClick={() => confirmarCargaRuta(r.id)}
+                      style={{ width: "100%", background: "#0F6E56", color: "#fff", border: "none", borderRadius: 8, padding: "9px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", marginTop: 8 }}>
+                      Confirmar asignación →
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── En camino / Entregados: remitos ── */}
+      {["enCamino", "entregados"].includes(etapa) && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {items.map(r => {
+            const estadoBadgeMap = {
+              "cargando-ruta": { bg: "#FEF3EC", color: "#C44A0F", label: "Cargando en ruta" },
+              "en-camino":     { bg: "#FFF8E1", color: "#F57F17", label: "En camino" },
+              "entregado":     { bg: "#E1F5EE", color: "#0F6E56", label: "Entregado ✓" },
+            };
+            const badge = estadoBadgeMap[r.estado] || {};
+            return (
+              <div key={r.id} className="card">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                      <span style={{ fontWeight: 600, fontSize: 14 }}>{r.remitente?.ciudad || "—"} → {r.destinatario?.ciudad || "—"}</span>
+                      <span style={{ fontSize: 11, background: badge.bg, color: badge.color, padding: "2px 8px", borderRadius: 5, fontWeight: 500 }}>{badge.label}</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 12, fontSize: 12, color: "#5A6A78", flexWrap: "wrap" }}>
+                      <span>🔢 {r.id}</span>
+                      {r.destinatario?.nombre && <span>👤 {r.destinatario.nombre}</span>}
+                      {r.flete && <span style={{ color: "#0F6E56", fontWeight: 500 }}>💵 ${r.flete.toLocaleString()}</span>}
+                    </div>
+                    {r.vehiculoRuta ? (
+                      <div style={{ fontSize: 11, color: "#5A6A78", marginTop: 4 }}>🚚 Ruta: {r.vehiculoRuta.alias}</div>
+                    ) : r.vehiculoAsignado ? (
+                      <div style={{ fontSize: 11, color: "#5A6A78", marginTop: 4 }}>🚐 {r.vehiculoAsignado.alias}</div>
+                    ) : null}
+                    {r.remitente?.ciudad && <div style={{ fontSize: 11, color: "#185FA5", marginTop: 4, fontWeight: 500 }}>📍 Desde: {r.remitente.ciudad}</div>}
+                  </div>
+                  <button className="btn-secondary" onClick={() => { setRemitoActivo(r); onNav("remito"); }}
+                    style={{ fontSize: 12, padding: "7px 14px", flexShrink: 0 }}>
+                    {r.estado === "entregado" ? "Ver remito" : "Ver remito"}
+                  </button>
+                </div>
+                {/* Acciones rápidas */}
+                {etapa === "enCamino" && r.estado === "cargando-ruta" && (
+                  <button onClick={() => fbUpdate('remitos', r.id, { estado: 'en-camino' })}
+                    style={{ marginTop: 10, width: "100%", background: "#F57F17", color: "#fff", border: "none", borderRadius: 8, padding: "9px 12px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                    🚛 Marcar en camino
+                  </button>
+                )}
+                {etapa === "enCamino" && r.estado === "en-camino" && (
+                  <button onClick={() => fbUpdate('remitos', r.id, { estado: 'entregado' })}
+                    style={{ marginTop: 10, width: "100%", background: "#0F6E56", color: "#fff", border: "none", borderRadius: 8, padding: "9px 12px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                    ✅ Confirmar entrega
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── MIS RUTAS ────────────────────────────────────────────────────────────────
+function MisRutas({ onNav }) {
+  const [rutas, setRutas] = useState([
+    { id: 1, origen: "Posadas", destino: "Buenos Aires", paradas: "Corrientes, Santa Fe", dias: ["Lun", "Mié"], tipo: "General", vehiculo: "Camión 3/4", volumenM3: 12, cargaKg: 3000 },
+    { id: 2, origen: "Posadas", destino: "Corrientes", paradas: "", dias: ["Mar", "Jue", "Sáb"], tipo: "Refrigerado", vehiculo: "Renault Kangoo", volumenM3: 3.3, cargaKg: 750 },
+  ]);
+  const [agregando, setAgregando] = useState(false);
+  const [nueva, setNueva] = useState({ origen: "", destino: "", paradas: "", dias: [], tipo: "General" });
+  const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+  function toggleDia(d) {
+    setNueva(prev => ({ ...prev, dias: prev.dias.includes(d) ? prev.dias.filter(x => x !== d) : [...prev.dias, d] }));
+  }
+
+  function agregarRuta() {
+    if (!nueva.origen || !nueva.destino || nueva.dias.length === 0) { alert("Completá origen, destino y al menos un día."); return; }
+    setRutas(prev => [...prev, { ...nueva, id: Date.now() }]);
+    setNueva({ origen: "", destino: "", paradas: "", dias: [], tipo: "General" });
+    setAgregando(false);
+  }
+
+  return (
+    <PageWrapper titulo="Mis rutas" subtitulo="Las empresas van a ver tus rutas antes de publicar una carga." accion={<button className="btn-primary" onClick={() => setAgregando(true)}>+ Agregar ruta</button>}>
+      {rutas.length === 0 && !agregando && (
+        <div className="card" style={{ textAlign: "center", padding: 32, color: "#5A6A78" }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🗺️</div>
+          <p style={{ fontWeight: 500 }}>Todavía no cargaste ninguna ruta</p>
+          <p style={{ fontSize: 13, marginTop: 6 }}>Agregá tus rutas para que las empresas te encuentren más fácil.</p>
+        </div>
+      )}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+        {rutas.map(r => (
+          <div key={r.id} className="card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6 }}>📍 {r.origen} → {r.destino}</div>
+                {r.paradas && <div style={{ fontSize: 13, color: "#5A6A78", marginBottom: 6 }}>Paradas: {r.paradas}</div>}
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: r.vehiculo ? 8 : 0 }}>
+                  {r.dias.map(d => <span key={d} style={{ background: "#E1F5EE", color: "#0F6E56", fontSize: 11, padding: "2px 8px", borderRadius: 4, fontWeight: 500 }}>{d}</span>)}
+                  <span style={{ background: "#F5F5F5", color: "#666", fontSize: 11, padding: "2px 8px", borderRadius: 4 }}>{r.tipo}</span>
+                </div>
+                {/* Capacidades del vehículo */}
+                {r.vehiculo && (
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: "#1A2E3B" }}>🚛 {r.vehiculo}</span>
+                    {r.volumenM3 && (
+                      <span style={{ fontSize: 12, background: "#E6F1FB", color: "#185FA5", padding: "2px 8px", borderRadius: 4 }}>
+                        📦 {r.volumenM3} m³
+                      </span>
+                    )}
+                    {r.cargaKg && (
+                      <span style={{ fontSize: 12, background: "#E1F5EE", color: "#0F6E56", padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>
+                        ⚖️ {r.cargaKg.toLocaleString()} kg máx.
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+              <button onClick={() => setRutas(prev => prev.filter(x => x.id !== r.id))} style={{ background: "transparent", color: "#ccc", border: "none", fontSize: 18, cursor: "pointer", padding: "0 4px", marginLeft: 8 }}>×</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      {agregando && (
+        <div className="card" style={{ border: "2px solid #0F6E56" }}>
+          <h3 style={{ fontSize: 15, fontWeight: 500, marginBottom: 14 }}>Nueva ruta</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Origen *</label>
+              <input value={nueva.origen} onChange={e => setNueva({...nueva, origen: e.target.value})} placeholder="Ciudad de salida" />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Destino *</label>
+              <input value={nueva.destino} onChange={e => setNueva({...nueva, destino: e.target.value})} placeholder="Ciudad de llegada" />
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Paradas intermedias (opcional)</label>
+            <input value={nueva.paradas} onChange={e => setNueva({...nueva, paradas: e.target.value})} placeholder="Ej: Corrientes, Santa Fe" />
+          </div>
+          <div className="form-group">
+            <label>Tipo de carga que transportás</label>
+            <select value={nueva.tipo} onChange={e => setNueva({...nueva, tipo: e.target.value})}>
+              {["General", "Refrigerado", "Congelado", "Granel", "Fruta/verdura", "Ganado", "Maquinaria"].map(t => <option key={t}>{t}</option>)}
+            </select>
+          </div>
+
+          <div className="form-group" style={{ marginBottom: 16 }}>
+            <label>Días que hacés esta ruta *</label>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+              {DIAS.map(d => (
+                <button key={d} onClick={() => toggleDia(d)} style={{ padding: "6px 12px", borderRadius: 6, background: nueva.dias.includes(d) ? "#0F6E56" : "#fff", color: nueva.dias.includes(d) ? "#fff" : "#666", border: `1px solid ${nueva.dias.includes(d) ? "#0F6E56" : "#DDE3EA"}`, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>{d}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="btn-ghost" onClick={() => setAgregando(false)}>Cancelar</button>
+            <button className="btn-primary" onClick={agregarRuta}>Guardar ruta</button>
+          </div>
+        </div>
+      )}
+    </PageWrapper>
+  );
+}
+
+// ─── HACER OFERTA ─────────────────────────────────────────────────────────────
+function HacerOferta({ onNav, cargaSeleccionada }) {
+  const carga = cargaSeleccionada || CARGAS_SEMILLA[0];
+  const [form, setForm] = useState({ precio: "", fechaRetiro: "", horaRetiro: "", fechaEntrega: "", horaEntrega: "", nota: "" });
+  const [enviado, setEnviado] = useState(false);
+
+  function enviarOferta() {
+    if (!form.precio || !form.fechaRetiro || !form.horaRetiro) {
+      alert("Completá el precio y la fecha y hora de retiro.");
+      return;
+    }
+    // Guardar oferta en Firebase
+    const nuevaOferta = {
+      id: Date.now(),
+      transportistaId: 3,
+      cargaId: carga.id,
+      transportistaNombre: USUARIO_TRANS.nombre,
+      calificacion: USUARIO_TRANS.calificacion,
+      viajes: USUARIO_TRANS.viajes,
+      verificado: true,
+      vehiculo: USUARIO_TRANS.vehiculo,
+      foto: USUARIO_TRANS.foto,
+      precio: parseInt(form.precio),
+      retiro: `${form.fechaRetiro} ${form.horaRetiro}hs`,
+      entrega: form.fechaEntrega ? `${form.fechaEntrega}${form.horaEntrega ? " " + form.horaEntrega + "hs" : ""}` : "A confirmar",
+      nota: form.nota,
+      matchRuta: true,
+    };
+    fbSetItem('ofertas', nuevaOferta);
+    // Actualizar contador en la carga
+    fbUpdate('cargas', carga.id, { ofertas: (carga.ofertas || 0) + 1, estado: carga.estado === "nueva" ? "activo" : carga.estado });
+
+    setEnviado(true);
+    setTimeout(() => onNav("trans-dashboard"), 2500);
+  }
+
+  if (enviado) return (
+    <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center", maxWidth: 360 }}>
+        <div style={{ fontSize: 56 }}>🚛</div>
+        <h2 style={{ marginTop: 12 }}>¡Cotización enviada!</h2>
+        <p style={{ color: "#5A6A78", marginTop: 8 }}>La empresa va a ver tu oferta en su app. Te avisamos si te eligen.</p>
+        <div style={{ marginTop: 16, padding: 12, background: "#E1F5EE", borderRadius: 8, fontSize: 13, color: "#0F6E56" }}>
+          ✅ Tu oferta se guardó. La empresa puede verla al recargar su app.
+        </div>
+        <p style={{ color: "#aaa", fontSize: 13, marginTop: 12 }}>Volviendo a cargas disponibles...</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <PageWrapper titulo="Cotizar este flete">
+      <div style={{ maxWidth: 560 }}>
+        <div className="card" style={{ marginBottom: 20, borderLeft: "4px solid #0F6E56" }}>
+          <div style={{ fontSize: 12, color: "#888", marginBottom: 6 }}>PEDIDO DE FLETE</div>
+          <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 6 }}>{carga.origen} → {carga.destino}</div>
+          <div style={{ display: "flex", gap: 16, fontSize: 13, color: "#555", flexWrap: "wrap" }}>
+            <span>📦 {carga.tipo}</span>
+            {carga.peso && carga.peso !== "— kg" && <span>⚖️ {carga.peso}</span>}
+            <span>📅 Retiro deseado: {carga.retiro}</span>
+            {carga.entrega && carga.entrega !== "—" && <span>🎯 Entrega deseada: {carga.entrega}</span>}
+          </div>
+          {carga.descripcion && <div style={{ marginTop: 8, fontSize: 13, color: "#666" }}>📝 {carga.descripcion}</div>}
+
+          {/* Tabla de paquetes si hay datos de dimensiones */}
+          {carga.paquetes && carga.paquetes.length > 0 && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#0F6E56", marginBottom: 8 }}>📐 Detalle de bultos</div>
+              <div style={{ overflowX: "auto", borderRadius: 8, border: "1px solid #DDE3EA" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                  <thead>
+                    <tr style={{ background: "#F0F4F8" }}>
+                      {["#", "Largo cm", "Ancho cm", "Alto cm", "Peso real kg", "Cant.", "Vol. total kg", "Cobrable kg"].map(h => (
+                        <th key={h} style={{ padding: "6px 8px", textAlign: "center", fontSize: 11, color: "#5A6A78", fontWeight: 600, borderBottom: "1px solid #DDE3EA", whiteSpace: "nowrap" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {carga.paquetes.map((p, i) => (
+                      <tr key={i} style={{ borderBottom: "1px solid #F0F0F0", background: i % 2 === 0 ? "#fff" : "#FAFAFA" }}>
+                        <td style={{ padding: "6px 8px", textAlign: "center", color: "#999", fontWeight: 600 }}>{i + 1}</td>
+                        <td style={{ padding: "6px 8px", textAlign: "center" }}>{p.largo}</td>
+                        <td style={{ padding: "6px 8px", textAlign: "center" }}>{p.ancho}</td>
+                        <td style={{ padding: "6px 8px", textAlign: "center" }}>{p.alto}</td>
+                        <td style={{ padding: "6px 8px", textAlign: "center" }}>{p.peso}</td>
+                        <td style={{ padding: "6px 8px", textAlign: "center" }}>{p.cantidad}</td>
+                        <td style={{ padding: "6px 8px", textAlign: "center", color: "#185FA5", fontWeight: 600 }}>{p.volTotal}</td>
+                        <td style={{ padding: "6px 8px", textAlign: "center" }}>
+                          <span style={{ background: p.volTotal > p.realTotal ? "#E6F1FB" : "#E1F5EE", color: p.volTotal > p.realTotal ? "#185FA5" : "#0F6E56", borderRadius: 5, padding: "2px 7px", fontWeight: 700 }}>
+                            {p.cobrable}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{ background: "#E1F5EE", fontWeight: 700 }}>
+                      <td colSpan={5} style={{ padding: "8px 10px", fontSize: 12, color: "#0F6E56" }}>TOTALES</td>
+                      <td style={{ padding: "8px", textAlign: "center", color: "#0F6E56" }}>{carga.totalBultos}</td>
+                      <td style={{ padding: "8px", textAlign: "center", color: "#185FA5" }}>{carga.totalVolumen}</td>
+                      <td style={{ padding: "8px", textAlign: "center" }}>
+                        <span style={{ background: "#0F6E56", color: "#fff", borderRadius: 5, padding: "3px 10px", fontSize: 13 }}>
+                          {carga.totalCobrable} kg
+                        </span>
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+              {carga.estimadoMin && carga.estimadoMax && (
+                <div style={{ marginTop: 8, padding: "8px 12px", background: "#FEF3EC", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 12, color: "#888" }}>Precio de referencia del cliente:</span>
+                  <span style={{ fontWeight: 700, color: "#E85D20", fontSize: 14 }}>
+                    ${carga.estimadoMin.toLocaleString()} – ${carga.estimadoMax.toLocaleString()}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div style={{ marginTop: 12, padding: "8px 10px", background: "#E1F5EE", borderRadius: 7, fontSize: 12, color: "#0F6E56" }}>
+            ℹ️ Otros transportistas también recibieron este pedido, pero no pueden ver tus precios ni vos los de ellos. Solo la empresa compara.
+          </div>
+        </div>
+
+        <div className="card">
+          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 18 }}>Tu cotización</h3>
+          <div className="form-group">
+            <label>Precio total del flete *</label>
+            <div style={{ position: "relative" }}>
+              <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#666", fontWeight: 500 }}>$</span>
+              <input type="number" value={form.precio} onChange={e => setForm({...form, precio: e.target.value})} placeholder="45000" style={{ paddingLeft: 28, fontSize: 18, fontWeight: 600 }} />
+            </div>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 13, fontWeight: 500, color: "#444", display: "block", marginBottom: 6 }}>¿Cuándo podés retirar? *</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div>
+                <label style={{ fontSize: 11, color: "#888", marginBottom: 3 }}>Fecha</label>
+                <input type="date" value={form.fechaRetiro} onChange={e => setForm({...form, fechaRetiro: e.target.value})} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: "#888", marginBottom: 3 }}>Hora</label>
+                <input type="time" value={form.horaRetiro} onChange={e => setForm({...form, horaRetiro: e.target.value})} />
+              </div>
+            </div>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 13, fontWeight: 500, color: "#444", display: "block", marginBottom: 6 }}>¿Cuándo estimás la entrega?</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div>
+                <label style={{ fontSize: 11, color: "#888", marginBottom: 3 }}>Fecha</label>
+                <input type="date" value={form.fechaEntrega} onChange={e => setForm({...form, fechaEntrega: e.target.value})} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: "#888", marginBottom: 3 }}>Hora (opcional)</label>
+                <input type="time" value={form.horaEntrega} onChange={e => setForm({...form, horaEntrega: e.target.value})} />
+              </div>
+            </div>
+            {form.fechaEntrega && (
+              <div style={{ marginTop: 6, fontSize: 12, color: "#0F6E56", fontWeight: 500 }}>
+                ✓ Entrega estimada: {form.fechaEntrega}{form.horaEntrega ? " a las " + form.horaEntrega + "hs" : ""}
+              </div>
+            )}
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+              <label style={{ margin: 0 }}>Nota para la empresa</label>
+              <span style={{ fontSize: 11, color: "#888", background: "#F5F5F5", padding: "2px 8px", borderRadius: 4 }}>Opcional</span>
+            </div>
+            <textarea value={form.nota} onChange={e => setForm({...form, nota: e.target.value})} placeholder="Ej: Camión disponible, salgo los martes temprano. Seguro de carga incluido." rows={3} style={{ resize: "vertical" }} />
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+          <button className="btn-secondary" onClick={() => onNav("trans-dashboard")} style={{ flex: 1 }}>Cancelar</button>
+          <button className="btn-primary" onClick={enviarOferta} style={{ flex: 2, padding: "12px" }}>Enviar cotización</button>
+        </div>
+      </div>
+    </PageWrapper>
+  );
+}
+
+// ─── MIS VIAJES ───────────────────────────────────────────────────────────────
+function MisViajes({ onNav, onVerRemito }) {
+  const [remitos, setRemitos] = useState([]);
+  const [flota, setFlota] = useState(() => storageGet(KEY_FLOTA, FLOTA_SEMILLA));
+  const PASOS = ["pendiente-retiro", "retirado", "en-deposito", "cargando-ruta", "en-camino", "entregado"];
+  const ETIQUETAS = { "pendiente-retiro": "Por retirar", "retirado": "Retiré la carga", "en-deposito": "En depósito", "cargando-ruta": "Cargado en vehículo", "en-camino": "En camino", "entregado": "Entregué" };
+
+  useEffect(() => {
+    const unsub = fbListen('remitos', arr => {
+      setRemitos(arr.filter(r => r.transportistaNombre === USUARIO_TRANS.nombre));
+    });
+    setFlota(storageGet(KEY_FLOTA, FLOTA_SEMILLA));
+    return unsub;
+  }, []);
+
+  function asignarVehiculo(remitoId, vehiculoId) {
+    const vehiculo = flota.find(v => v.id === parseInt(vehiculoId));
+    const remito = remitos.find(r => r.id === remitoId);
+    if (!remito) return;
+    const dims = remito.envio?.dims;
+    const m3Carga = dims ? parseFloat(((dims.largo * dims.ancho * dims.alto) / 1000000).toFixed(2)) : 0;
+    const kgCarga = dims ? (dims.pesoCobrable || dims.pesoReal || 0) : parseFloat(remito.envio?.peso) || 0;
+    fbUpdate('remitos', remitoId, { vehiculoId: vehiculo?.id || null, vehiculoAlias: vehiculo?.alias || null, m3Carga, kgCarga });
+  }
+
+  function actualizarEstado(remitoId, nuevoEstado) {
+    fbUpdate('remitos', remitoId, { estado: nuevoEstado });
+  }
+
+  // Incluir también viajes demo si no hay remitos reales
+  const VIAJES_DEMO = [
+    { id: "DEMO-1", remitente: { ciudad: "Posadas, Misiones" }, destinatario: { ciudad: "Buenos Aires, CABA" }, envio: { tipo: "General", peso: "1.200 kg" }, transportista: { nombre: USUARIO_TRANS.nombre, vehiculo: USUARIO_TRANS.vehiculo }, flete: 45000, estado: "en-camino", retiro: "02/06/2026", entregaEst: "04/06/2026", fecha: "02/06/2026", transportistaNombre: USUARIO_TRANS.nombre, remitente2: "Mi Empresa SRL" },
+  ];
+  const viajesAMostrar = remitos.length > 0 ? remitos : VIAJES_DEMO;
+
+  function generarLinkChofer(vehiculoId, vehiculoAlias) {
+    const base = window.location.origin + '/fletar-chofer.html';
+    const fecha = new Date().toLocaleDateString('es-AR');
+    const v = flota.find(x => x.id === vehiculoId);
+    const kg = v ? (v.capacidadKg || 0) : 0;
+    const m3 = v ? (v.capacidadM3 || 0) : 0;
+    const link = `${base}?v=${vehiculoId}&alias=${encodeURIComponent(vehiculoAlias)}&t=${encodeURIComponent(USUARIO_TRANS.nombre)}&fecha=${encodeURIComponent(fecha)}&kg=${kg}&m3=${m3}`;
+    const texto = `🚛 Fletar — Manifiesto de viaje\n📅 ${fecha}\nChofer: ${USUARIO_TRANS.nombre}\n\n${link}`;
+    const wa = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+    window.open(wa, '_blank');
+  }
+
+  // Obtener vehículos únicos con remitos activos
+  const vehiculosConRemitos = flota.filter(v =>
+    remitos.some(r => r.vehiculoId === v.id && r.estado !== 'entregado')
+  );
+
+  return (
+    <PageWrapper titulo="Mis viajes" subtitulo="Actualizá el estado para que la empresa vea los cambios en tiempo real.">
+      {/* Panel: generar link para chofer */}
+      {vehiculosConRemitos.length > 0 && (
+        <div className="card" style={{ marginBottom: 20, border: "2px solid #0F6E56" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            <span style={{ fontSize: 22 }}>📲</span>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>Enviar manifiesto al chofer</div>
+              <div style={{ fontSize: 12, color: "#5A6A78" }}>Generá el link y mandalo por WhatsApp. El chofer ve sus entregas y retiros del día.</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {vehiculosConRemitos.map(v => (
+              <div key={v.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#F0F4F8", borderRadius: 8, padding: "10px 14px" }}>
+                <div>
+                  <div style={{ fontWeight: 500, fontSize: 13 }}>🚛 {v.alias}</div>
+                  <div style={{ fontSize: 11, color: "#888" }}>
+                    {remitos.filter(r => r.vehiculoId === v.id && r.estado !== 'entregado').length} paquetes pendientes
+                  </div>
+                </div>
+                <button onClick={() => generarLinkChofer(v.id, v.alias)}
+                  style={{ background: "#0F6E56", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
+                  📲 WhatsApp
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {viajesAMostrar.length === 0 && (
+        <div className="card" style={{ textAlign: "center", padding: 40, color: "#5A6A78" }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🚛</div>
+          <p style={{ fontWeight: 500 }}>No tenés viajes asignados todavía</p>
+          <p style={{ fontSize: 13, marginTop: 6 }}>Cuando una empresa acepte tu oferta, el viaje aparece acá.</p>
+        </div>
+      )}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {viajesAMostrar.map(v => (
+          <div key={v.id} className="card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 15 }}>{v.remitente?.ciudad} → {v.destinatario?.ciudad}</div>
+                <div style={{ fontSize: 13, color: "#5A6A78", marginTop: 2 }}>
+                  {v.envio?.tipo} · ${v.flete?.toLocaleString()} · {v.fecha || v.retiro}
+                </div>
+                <div style={{ fontSize: 12, color: "#999", marginTop: 2 }}>Remito: {v.id}</div>
+              </div>
+              <span className={`badge badge-${v.estado === "entregado" ? "entregado" : v.estado === "pendiente-retiro" ? "nueva" : "en-camino"}`}>
+                {v.estado === "entregado" ? "✓ Entregado" : v.estado === "en-camino" ? "🚛 En camino" : v.estado === "retirado" ? "📦 Retirado" : "⏳ Pendiente"}
+              </span>
+            </div>
+
+            {/* Selector de vehículo */}
+            <div style={{ marginBottom: 12 }}>
+              <div className="divider" style={{ marginBottom: 10 }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 12, color: "#5A6A78", whiteSpace: "nowrap" }}>🚛 Vehículo asignado:</span>
+                {flota.length === 0 ? (
+                  <button onClick={() => onNav("mi-flota")} style={{ fontSize: 12, background: "#E1F5EE", color: "#0F6E56", border: "1px solid #0F6E56", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>
+                    + Agregar vehículos en Mi Flota
+                  </button>
+                ) : (
+                  <select
+                    value={v.vehiculoId || ""}
+                    onChange={e => asignarVehiculo(v.id, e.target.value)}
+                    style={{ flex: 1, fontSize: 13, padding: "5px 8px", border: v.vehiculoId ? "1.5px solid #0F6E56" : "1.5px solid #E0E0E0", borderRadius: 6, background: v.vehiculoId ? "#E1F5EE" : "#fff" }}
+                  >
+                    <option value="">— Elegir vehículo —</option>
+                    {flota.map(vh => (
+                      <option key={vh.id} value={vh.id}>{vh.alias} ({vh.patente}) · {vh.tipo}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              {v.vehiculoId && (
+                <div style={{ marginTop: 6, fontSize: 11, color: "#0F6E56" }}>
+                  ✓ Asignado a <strong>{v.vehiculoAlias}</strong>
+                  {v.m3Carga > 0 && ` · ocupa ${v.m3Carga} m³`}
+                  {v.kgCarga > 0 && ` y ${v.kgCarga} kg`}
+                </div>
+              )}
+            </div>
+
+            {v.estado !== "entregado" && (
+              <div>
+                <div style={{ fontSize: 12, color: "#5A6A78", marginBottom: 8 }}>Actualizar estado (la empresa lo ve en tiempo real):</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {PASOS.filter(p => p !== "pendiente-retiro").map(p => (
+                    <button key={p} onClick={() => actualizarEstado(v.id, p)}
+                      style={{ padding: "7px 14px", borderRadius: 6, background: v.estado === p ? "#0F6E56" : "#F0F4F8", color: v.estado === p ? "#fff" : "#5A6A78", border: "none", fontSize: 12, cursor: "pointer", fontWeight: v.estado === p ? 500 : 400 }}>
+                      {ETIQUETAS[p]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+              <button className="btn-ghost" onClick={() => onNav("chat")} style={{ fontSize: 12 }}>Contactar empresa</button>
+              {onVerRemito && (
+                <button className="btn-secondary" onClick={() => onVerRemito(v)} style={{ fontSize: 12 }}>📄 Ver remito</button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </PageWrapper>
+  );
+}
+
+// ─── CHAT ─────────────────────────────────────────────────────────────────────
+function ChatScreen({ onNav }) {
+  const [mensajes, setMensajes] = useState(MENSAJES_SEMILLA);
+  const [input, setInput] = useState("");
+  const bottomRef = useRef(null);
+
+  useEffect(() => fbListen('chat', arr => setMensajes(arr.length > 0 ? arr : MENSAJES_SEMILLA)), []);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [mensajes]);
+
+  function enviar() {
+    if (!input.trim()) return;
+    const msg = { id: Date.now(), de: "transportista", texto: input, hora: new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }) };
+    fbSetItem('chat', msg);
+    setInput("");
+  }
+
+  return (
+    <PageWrapper titulo="Chat" subtitulo="Posadas → Buenos Aires · Mi Empresa SRL">
+      <div style={{ maxWidth: 600 }}>
+        <div style={{ marginBottom: 12, padding: "6px 10px", background: "#E1F5EE", borderRadius: 8, fontSize: 12, color: "#0F6E56" }}>
+          💡 Los mensajes que enviés acá también van a aparecer en la app de la empresa.
+        </div>
+        <div className="card" style={{ height: 380, display: "flex", flexDirection: "column" }}>
+          <div style={{ flex: 1, overflowY: "auto", padding: "4px 0" }}>
+            {mensajes.map(m => {
+              const esMio = m.de === "transportista";
+              return (
+                <div key={m.id} style={{ display: "flex", justifyContent: esMio ? "flex-end" : "flex-start", marginBottom: 10 }}>
+                  <div style={{ maxWidth: "75%", background: esMio ? "#0F6E56" : "#F0F4F8", color: esMio ? "#fff" : "#1A1A1A", borderRadius: esMio ? "12px 12px 2px 12px" : "12px 12px 12px 2px", padding: "8px 12px" }}>
+                    <p style={{ fontSize: 14, margin: 0 }}>{m.texto}</p>
+                    <p style={{ fontSize: 10, marginTop: 4, opacity: 0.7, textAlign: "right" }}>{m.hora}</p>
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={bottomRef} />
+          </div>
+          <div className="divider" style={{ margin: "8px 0" }} />
+          <div style={{ display: "flex", gap: 8 }}>
+            <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && enviar()} placeholder="Escribí un mensaje..." />
+            <button className="btn-primary" onClick={enviar} style={{ padding: "10px 16px", whiteSpace: "nowrap" }}>Enviar</button>
+          </div>
+        </div>
+      </div>
+    </PageWrapper>
+  );
+}
+
+// ─── MI FLOTA ────────────────────────────────────────────────────────────────
+function MiFlota({ onNav }) {
+  const [flota, setFlota] = useState(() => storageGet(KEY_FLOTA, FLOTA_SEMILLA));
+  const [agregando, setAgregando] = useState(false);
+  const [editandoId, setEditandoId] = useState(null);
+  const FORM_VACIO = { alias: "", modelo: "", tipo: "Camión 3/4", uso: "Ambos", patente: "", chofer: "", telefono: "", capacidadM3: "", capacidadKg: "" };
+  const [form, setForm] = useState(FORM_VACIO);
+  const [vehiculoModelo, setVehiculoModelo] = useState(null);
+
+  const TIPOS_VEHICULO = [
+    "Utilitario chico (Kangoo, Berlingo, etc.)",
+    "Furgón mediano",
+    "Furgón grande",
+    "Pick-up",
+    "Camión 3/4",
+    "Camión mediano",
+    "Camión grande / 18 ruedas",
+    "Semi / Acoplado",
+    "Otro",
+  ];
+
+  const USOS = [
+    { val: "Ciudad",  label: "🏙️ Ciudad",  desc: "Retiro y reparto urbano" },
+    { val: "Ruta",    label: "🛣️ Ruta",    desc: "Trayecto entre ciudades" },
+    { val: "Ambos",   label: "🔄 Ambos",   desc: "Ciudad y ruta" },
+  ];
+
+  function guardar() {
+    if (!form.patente || !form.chofer || !form.capacidadM3 || !form.capacidadKg) {
+      alert("Completá patente, chofer y las capacidades."); return;
+    }
+    // Si no ingresaron número de móvil, se autogenera con modelo + patente
+    const aliasFinal = form.alias.trim() || `${form.modelo || form.tipo} · ${form.patente}`;
+    let nuevaFlota;
+    const base = { ...form, alias: aliasFinal, capacidadM3: parseFloat(form.capacidadM3), capacidadKg: parseFloat(form.capacidadKg) };
+    if (editandoId) {
+      nuevaFlota = flota.map(v => v.id === editandoId ? { ...v, ...base } : v);
+      setEditandoId(null);
+    } else {
+      nuevaFlota = [...flota, { ...base, id: Date.now() }];
+    }
+    storageSave(KEY_FLOTA, nuevaFlota);
+    setFlota(nuevaFlota);
+    setForm(FORM_VACIO);
+    setVehiculoModelo(null);
+    setAgregando(false);
+  }
+
+  function eliminar(id) {
+    if (!confirm("¿Eliminar este vehículo?")) return;
+    const nueva = flota.filter(v => v.id !== id);
+    storageSave(KEY_FLOTA, nueva);
+    setFlota(nueva);
+  }
+
+  function editar(v) {
+    setForm({ alias: v.alias, modelo: v.modelo || "", tipo: v.tipo, uso: v.uso || "Ambos", patente: v.patente, chofer: v.chofer, telefono: v.telefono || "", capacidadM3: String(v.capacidadM3), capacidadKg: String(v.capacidadKg) });
+    setVehiculoModelo(null);
+    setEditandoId(v.id);
+    setAgregando(true);
+  }
+
+  // Calcular espacio ocupado (usa remitos del estado de MisViajes via Firebase)
+  function espacioOcupado(vehiculoId) {
+    // Los remitos se cargan en tiempo real via Firebase en MisViajes
+    // Aquí devolvemos 0 hasta integrar el estado compartido
+    return { m3: 0, kg: 0, n: 0 };
+  }
+
+  const iconosPorTipo = {
+    "Camioneta (hasta 1.000 kg)": "🚐",
+    "Camión 3/4": "🚛",
+    "Camión mediano": "🚛",
+    "Camión 18 ruedas": "🚚",
+    "Semi (acoplado)": "🚚",
+    "Furgón": "🚐",
+    "Otro": "🚗",
+  };
+
+  return (
+    <PageWrapper titulo="Mi flota" subtitulo="Cargá tus vehículos una vez y la app lleva el control de espacio disponible."
+      accion={!agregando && <button className="btn-primary" onClick={() => { setForm(FORM_VACIO); setEditandoId(null); setAgregando(true); }}>+ Agregar vehículo</button>}>
+
+      {/* Lista de vehículos */}
+      {flota.length === 0 && !agregando && (
+        <div className="card" style={{ textAlign: "center", padding: 40, color: "#5A6A78" }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>🚛</div>
+          <p style={{ fontWeight: 500, fontSize: 16 }}>Todavía no cargaste ningún vehículo</p>
+          <p style={{ fontSize: 13, marginTop: 6 }}>Agregá tus unidades para que la app calcule el espacio disponible.</p>
+        </div>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+        {flota.map(v => {
+          const ocup = espacioOcupado(v.id);
+          const pctM3 = Math.min((ocup.m3 / v.capacidadM3) * 100, 100);
+          const pctKg = Math.min((ocup.kg / v.capacidadKg) * 100, 100);
+          const libreM3 = Math.max(v.capacidadM3 - ocup.m3, 0).toFixed(1);
+          const libreKg = Math.max(v.capacidadKg - ocup.kg, 0).toLocaleString();
+          const colorM3 = pctM3 > 90 ? "#C0392B" : pctM3 > 70 ? "#E85D20" : "#0F6E56";
+          const colorKg = pctKg > 90 ? "#C0392B" : pctKg > 70 ? "#E85D20" : "#0F6E56";
+
+          return (
+            <div key={v.id} className="card">
+              {/* Header del vehículo */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 10, background: "#E1F5EE", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>
+                    {iconosPorTipo[v.tipo] || "🚛"}
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                      <div style={{ fontWeight: 700, fontSize: 16 }}>{v.alias}</div>
+                      {v.uso && (
+                        <span style={{ fontSize: 10, background: v.uso === "Ciudad" ? "#E6F1FB" : v.uso === "Ruta" ? "#FEF3EC" : "#E1F5EE", color: v.uso === "Ciudad" ? "#185FA5" : v.uso === "Ruta" ? "#C44A0F" : "#0F6E56", padding: "2px 7px", borderRadius: 4, fontWeight: 600 }}>
+                          {v.uso === "Ciudad" ? "🏙️ Ciudad" : v.uso === "Ruta" ? "🛣️ Ruta" : "🔄 Ambos"}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 13, color: "#5A6A78" }}>{v.tipo}{v.patente ? ` · ${v.patente}` : ""}</div>
+                    <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>👤 {v.chofer}{v.telefono ? ` · 📞 ${v.telefono}` : ""}</div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5, alignItems: "flex-end" }}>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => editar(v)} style={{ background: "#F0F4F8", color: "#5A6A78", border: "none", borderRadius: 6, padding: "6px 10px", fontSize: 12, cursor: "pointer" }}>✏️ Editar</button>
+                    <button onClick={() => eliminar(v.id)} style={{ background: "#FDEDEC", color: "#C0392B", border: "none", borderRadius: 6, padding: "6px 10px", fontSize: 12, cursor: "pointer" }}>🗑️</button>
+                  </div>
+                  <button onClick={() => {
+                    const base = window.location.origin + '/fletar-chofer.html';
+                    const fecha = new Date().toLocaleDateString('es-AR');
+                    const link = `${base}?v=${v.id}&alias=${encodeURIComponent(v.alias)}&t=${encodeURIComponent(USUARIO_TRANS.nombre)}&fecha=${encodeURIComponent(fecha)}&kg=${v.capacidadKg||0}&m3=${v.capacidadM3||0}`;
+                    const msg = `Hola ${v.chofer || 'chofer'}, acá tu manifiesto de hoy: ${link}`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                  }} style={{ background: "#25D366", color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px", fontSize: 12, cursor: "pointer", fontWeight: 500 }}>
+                    📲 Link chofer
+                  </button>
+                </div>
+              </div>
+
+              {/* Barras de capacidad */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+
+                {/* m³ */}
+                <div style={{ background: "#F5F5F5", borderRadius: 8, padding: "10px 12px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase" }}>Espacio (m³)</span>
+                    <span style={{ fontSize: 11, color: colorM3, fontWeight: 600 }}>{pctM3.toFixed(0)}% ocupado</span>
+                  </div>
+                  <div style={{ background: "#E0E0E0", borderRadius: 4, height: 8, marginBottom: 8, overflow: "hidden" }}>
+                    <div style={{ width: `${pctM3}%`, height: "100%", background: colorM3, borderRadius: 4, transition: "width 0.3s" }} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                    <span style={{ color: "#888" }}>Ocupado: <strong style={{ color: "#1A1A1A" }}>{ocup.m3} m³</strong></span>
+                    <span style={{ color: "#0F6E56", fontWeight: 600 }}>Libre: {libreM3} m³</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: "#aaa", marginTop: 3 }}>Capacidad total: {v.capacidadM3} m³</div>
+                </div>
+
+                {/* kg */}
+                <div style={{ background: "#F5F5F5", borderRadius: 8, padding: "10px 12px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase" }}>Peso (kg)</span>
+                    <span style={{ fontSize: 11, color: colorKg, fontWeight: 600 }}>{pctKg.toFixed(0)}% ocupado</span>
+                  </div>
+                  <div style={{ background: "#E0E0E0", borderRadius: 4, height: 8, marginBottom: 8, overflow: "hidden" }}>
+                    <div style={{ width: `${pctKg}%`, height: "100%", background: colorKg, borderRadius: 4, transition: "width 0.3s" }} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                    <span style={{ color: "#888" }}>Ocupado: <strong style={{ color: "#1A1A1A" }}>{ocup.kg.toLocaleString()} kg</strong></span>
+                    <span style={{ color: "#0F6E56", fontWeight: 600 }}>Libre: {libreKg} kg</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: "#aaa", marginTop: 3 }}>Capacidad total: {v.capacidadKg.toLocaleString()} kg</div>
+                </div>
+              </div>
+
+              {ocup.n > 0 && (
+                <div style={{ marginTop: 10, fontSize: 12, color: "#5A6A78", background: "#E1F5EE", borderRadius: 6, padding: "6px 10px" }}>
+                  📦 {ocup.n} {ocup.n === 1 ? "carga asignada actualmente" : "cargas asignadas actualmente"}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Formulario agregar/editar */}
+      {agregando && (
+        <div className="card" style={{ border: "2px solid #0F6E56" }}>
+          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>{editandoId ? "Editar vehículo" : "Nuevo vehículo"}</h3>
+
+          {/* Modelo con autocompletado */}
+          <div className="form-group">
+            <label>🔍 Modelo / marca del vehículo</label>
+            <SelectorVehiculo
+              vehiculo={vehiculoModelo}
+              setVehiculo={v => {
+                setVehiculoModelo(v);
+                if (v) {
+                  setForm(f => ({
+                    ...f,
+                    modelo: v.nombre,
+                    capacidadM3: String(v.volumenM3 || f.capacidadM3),
+                    capacidadKg: String(v.cargaKg || f.capacidadKg),
+                  }));
+                }
+              }}
+            />
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Número de móvil</label>
+              <input value={form.alias} onChange={e => setForm({...form, alias: e.target.value})} placeholder="Ej: Móvil 01, Unidad Norte..." />
+              <p style={{ fontSize: 11, color: "#888", marginTop: 3 }}>Opcional — si no completás, se usa modelo + patente</p>
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Tipo de vehículo *</label>
+              <select value={form.tipo} onChange={e => setForm({...form, tipo: e.target.value})}>
+                {TIPOS_VEHICULO.map(t => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Uso del vehículo */}
+          <div className="form-group">
+            <label>¿Para qué usás este vehículo?</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              {USOS.map(u => (
+                <div key={u.val} onClick={() => setForm({...form, uso: u.val})}
+                  style={{ flex: 1, border: `2px solid ${form.uso === u.val ? "#0F6E56" : "#DDE3EA"}`, borderRadius: 8, padding: "10px 8px", cursor: "pointer", background: form.uso === u.val ? "#E1F5EE" : "#fff", textAlign: "center" }}>
+                  <div style={{ fontSize: 18 }}>{u.label.split(" ")[0]}</div>
+                  <div style={{ fontSize: 12, fontWeight: form.uso === u.val ? 600 : 400, color: form.uso === u.val ? "#0F6E56" : "#1A1A1A", marginTop: 3 }}>{u.label.split(" ").slice(1).join(" ")}</div>
+                  <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>{u.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Patente *</label>
+              <input value={form.patente} onChange={e => setForm({...form, patente: e.target.value.toUpperCase()})} placeholder="Ej: AB 123 CD" />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Nombre del chofer *</label>
+              <input value={form.chofer} onChange={e => setForm({...form, chofer: e.target.value})} placeholder="Ej: Juan García" />
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Teléfono chofer</label>
+              <input value={form.telefono} onChange={e => setForm({...form, telefono: e.target.value})} placeholder="Ej: 3764 412345" />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Capacidad en m³ *</label>
+              <input type="number" min="0.5" step="0.5" value={form.capacidadM3} onChange={e => setForm({...form, capacidadM3: e.target.value})} placeholder="Ej: 40" />
+              <p style={{ fontSize: 11, color: "#888", marginTop: 3 }}>Se precarga al elegir el modelo</p>
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Capacidad en kg *</label>
+              <input type="number" min="100" step="100" value={form.capacidadKg} onChange={e => setForm({...form, capacidadKg: e.target.value})} placeholder="Ej: 8000" />
+              <p style={{ fontSize: 11, color: "#888", marginTop: 3 }}>Carga máxima del vehículo</p>
+            </div>
+          </div>
+
+          <div style={{ background: "#E1F5EE", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "#0F6E56", marginBottom: 16 }}>
+            💡 Una vez guardado, cuando asignés una carga a este vehículo en "Mis viajes", la app va a descontar el espacio automáticamente.
+          </div>
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <button className="btn-ghost" onClick={() => { setAgregando(false); setEditandoId(null); setForm(FORM_VACIO); }}>Cancelar</button>
+            <button className="btn-primary" onClick={guardar} style={{ flex: 1 }}>{editandoId ? "Guardar cambios" : "Agregar vehículo"}</button>
+          </div>
+        </div>
+      )}
+    </PageWrapper>
+  );
+}
+
+// ─── QR + REMITO ─────────────────────────────────────────────────────────────
+function QRCode({ value, size = 120 }) {
+  const [imgOk, setImgOk] = useState(true);
+  const src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}&color=2C2C2A&bgcolor=ffffff&margin=4`;
+  if (!imgOk) return (
+    <div style={{ width: size, height: size, background: "#F5F5F5", border: "2px dashed #ccc", borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
+      <div style={{ fontSize: 28 }}>📱</div>
+      <div style={{ fontSize: 9, color: "#888", textAlign: "center" }}>QR con internet</div>
+    </div>
+  );
+  return <img src={src} width={size} height={size} alt="QR" style={{ display: "block", borderRadius: 6 }} onError={() => setImgOk(false)} />;
+}
+
+const ESTADOS_REMITO = [
+  { id: "pendiente-retiro", label: "Pendiente de retiro" },
+  { id: "retirado",         label: "Mercadería retirada" },
+  { id: "en-deposito",      label: "En depósito" },
+  { id: "cargando-ruta",    label: "Cargado en vehículo" },
+  { id: "en-camino",        label: "En camino" },
+  { id: "entregado",        label: "Entregado" },
+];
+
+function RemitoTransportista({ onNav, remito }) {
+  const [estado, setEstado] = useState(remito?.estado || "pendiente-retiro");
+  const estadoIdx = ESTADOS_REMITO.findIndex(e => e.id === estado);
+  const linkRemito = remito ? `${window.location.href.split('?')[0]}?remito=${remito.id}` : window.location.href;
+
+  function avanzarEstado(nuevoEstado) {
+    fbUpdate('remitos', remito.id, { estado: nuevoEstado });
+    setEstado(nuevoEstado);
+  }
+
+  if (!remito) return (
+    <div style={{ maxWidth: 600, margin: "40px auto", padding: "0 20px", textAlign: "center" }}>
+      <div style={{ fontSize: 40, marginBottom: 12 }}>📄</div>
+      <p style={{ color: "#5A6A78" }}>No hay remito seleccionado.</p>
+      <button className="btn-secondary" onClick={() => onNav("mis-viajes")} style={{ marginTop: 16 }}>← Volver a mis viajes</button>
+    </div>
+  );
+
+  return (
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "28px 20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 600 }}>Remito {remito.id}</h1>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="btn-secondary" onClick={() => window.print()} style={{ fontSize: 13 }}>🖨️ Imprimir</button>
+          <button onClick={() => {
+            const texto = `Seguí tu envío ${remito.id} en tiempo real:\n${linkRemito}`;
+            if (navigator.share) {
+              navigator.share({ title: `Envío ${remito.id} — Fletar`, text: texto, url: linkRemito }).catch(() => {});
+            } else {
+              navigator.clipboard.writeText(linkRemito).then(() => alert("✓ Link copiado al portapapeles")).catch(() => alert(linkRemito));
+            }
+          }} style={{ fontSize: 13, background: "#0F6E56", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontWeight: 600, cursor: "pointer" }}>📤 Enviar link</button>
+          <button className="btn-ghost" onClick={() => onNav("mis-viajes")} style={{ fontSize: 13 }}>← Volver</button>
+        </div>
+      </div>
+
+      {/* Header oscuro */}
+      <div style={{ background: "#1A2E3B", borderRadius: "12px 12px 0 0", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <FletarLogo size="sm" />
+        <div style={{ textAlign: "center" }}>
+          <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>COMPROBANTE DE ENVÍO</div>
+          <div style={{ color: "#5DD9B5", fontSize: 18, fontWeight: 700 }}>{remito.id}</div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>{remito.fecha}</div>
+          <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>{remito.hora} hs</div>
+        </div>
+      </div>
+
+      <div style={{ background: "#fff", border: "1px solid #DDE3EA", borderTop: "none", borderRadius: "0 0 12px 12px", padding: 20 }}>
+        {/* Estado */}
+        <div style={{ background: "#E1F5EE", border: "1px solid #0F6E56", borderRadius: 8, padding: "8px 14px", display: "flex", alignItems: "center", gap: 8, marginBottom: 16, fontSize: 12, fontWeight: 500, color: "#0F6E56" }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#0F6E56" }} />
+          {ESTADOS_REMITO.find(e => e.id === estado)?.label}
+        </div>
+
+        {/* Info */}
+        <div className="g2" style={{ marginBottom: 16 }}>
+          {[["Remitente", remito.remitente], ["Destinatario", remito.destinatario]].map(([titulo, d]) => (
+            <div key={titulo} style={{ background: "#F5F5F5", borderRadius: 8, padding: "12px 14px" }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "#888", textTransform: "uppercase", marginBottom: 8 }}>{titulo}</div>
+              {[["Nombre", d?.nombre], ["Teléfono", d?.telefono || "—"], ["Ciudad", d?.ciudad]].map(([k, v]) => (
+                <div key={k} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ fontSize: 12, color: "#5A6A78" }}>{k}</span>
+                  <span style={{ fontSize: 13, fontWeight: 500 }}>{v}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        {/* QR + Timeline */}
+        <div style={{ display: "flex", gap: 16 }}>
+          <div style={{ background: "#F5F5F5", borderRadius: 10, padding: 12, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            <QRCode value={linkRemito} size={110} />
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#0F6E56" }}>{remito.id}</div>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "#888", textTransform: "uppercase", marginBottom: 8 }}>Estado del envío</div>
+            {ESTADOS_REMITO.map((e, i) => {
+              const done = i < estadoIdx;
+              const activo = i === estadoIdx;
+              return (
+                <div key={e.id}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: done ? "#0F6E56" : activo ? "#fff" : "#E0E0E0", border: activo ? "2px solid #0F6E56" : done ? "none" : "2px solid #E0E0E0", boxShadow: activo ? "0 0 0 3px #E1F5EE" : "none", flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, color: activo ? "#0F6E56" : done ? "#1A1A1A" : "#aaa", fontWeight: activo ? 600 : 400 }}>{e.label}</span>
+                  </div>
+                  {i < ESTADOS_REMITO.length - 1 && <div style={{ width: 2, height: 12, background: "#E0E0E0", marginLeft: 5 }} />}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Acciones del transportista */}
+        <div style={{ borderTop: "1px solid #DDE3EA", marginTop: 20, paddingTop: 16 }}>
+          <div style={{ fontSize: 12, color: "#5A6A78", marginBottom: 10, background: "#E1F5EE", borderRadius: 8, padding: "8px 12px", borderLeft: "3px solid #0F6E56" }}>
+            🔒 Solo vos podés cambiar el estado — sos el transportista asignado.
+          </div>
+          {estado === "pendiente-retiro" && (
+            <button onClick={() => avanzarEstado("retirado")} style={{ width: "100%", background: "#E85D20", color: "#fff", border: "none", borderRadius: 10, padding: 14, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
+              📦 Confirmar retiro del paquete
+            </button>
+          )}
+          {estado === "retirado" && (
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => avanzarEstado("en-deposito")} style={{ flex: 1, background: "#185FA5", color: "#fff", border: "none", borderRadius: 10, padding: 14, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                📦 Llevar al depósito
+              </button>
+              <button onClick={() => avanzarEstado("cargando-ruta")} style={{ flex: 1, background: "#0F6E56", color: "#fff", border: "none", borderRadius: 10, padding: 14, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                🚛 Cargar en vehículo
+              </button>
+            </div>
+          )}
+          {estado === "en-deposito" && (
+            <button onClick={() => avanzarEstado("cargando-ruta")} style={{ width: "100%", background: "#185FA5", color: "#fff", border: "none", borderRadius: 10, padding: 14, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
+              🔄 Confirmar carga en vehículo de ruta
+            </button>
+          )}
+          {estado === "cargando-ruta" && (
+            <button onClick={() => avanzarEstado("en-camino")} style={{ width: "100%", background: "#F57F17", color: "#fff", border: "none", borderRadius: 10, padding: 14, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
+              🚛 Marcar en camino
+            </button>
+          )}
+          {estado === "en-camino" && (
+            <button onClick={() => avanzarEstado("entregado")} style={{ width: "100%", background: "#0F6E56", color: "#fff", border: "none", borderRadius: 10, padding: 14, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
+              ✅ Confirmar entrega
+            </button>
+          )}
+          {estado === "entregado" && (
+            <div style={{ background: "#E1F5EE", borderRadius: 10, padding: 16, textAlign: "center", color: "#0F6E56", fontWeight: 500 }}>
+              ✓ Entrega confirmada. ¡Buen trabajo!
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── GESTOR DE SUCURSALES (solo central) ────────────────────────────────────
+function SucursalesManager({ onNav }) {
+  const [sucursales, setSucursales] = useState([]);
+  const [creando, setCreando] = useState(false);
+  const [nombre, setNombre] = useState("");
+  const [ciudadesSelec, setCiudadesSelec] = useState([]);
+  const [editandoId, setEditandoId] = useState(null);
+  const [copiado, setCopiado] = useState(null);
+
+  useEffect(() => {
+    const ref = db.ref('sucursales');
+    ref.on('value', snap => {
+      const val = snap.val();
+      setSucursales(val ? Object.values(val) : []);
+    });
+    return () => ref.off();
+  }, []);
+
+  function toggleCiudad(c) {
+    setCiudadesSelec(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
+  }
+
+  function guardar() {
+    if (!nombre.trim()) { alert("Ingresá un nombre para la sucursal."); return; }
+    if (ciudadesSelec.length === 0) { alert("Seleccioná al menos una localidad."); return; }
+    const id = editandoId || nombre.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"");
+    const data = { id, nombre: nombre.trim(), ciudades: ciudadesSelec };
+    db.ref('sucursales/' + id).set(data);
+    setCreando(false); setEditandoId(null); setNombre(""); setCiudadesSelec([]);
+  }
+
+  function eliminar(id) {
+    if (!confirm("¿Eliminar esta sucursal?")) return;
+    db.ref('sucursales/' + id).remove();
+  }
+
+  function editarSucursal(s) {
+    setEditandoId(s.id); setNombre(s.nombre); setCiudadesSelec(s.ciudades || []);
+    setCreando(true);
+  }
+
+  function copiarLink(id) {
+    const base = window.location.href.split('?')[0];
+    const link = `${base}?sucursal=${id}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopiado(id);
+      setTimeout(() => setCopiado(null), 2000);
+    }).catch(() => alert(link));
+  }
+
+  function compartirLink(s) {
+    const base = window.location.href.split('?')[0];
+    const link = `${base}?sucursal=${s.id}`;
+    const texto = `App Fletar — ${s.nombre}:\n${link}`;
+    if (navigator.share) {
+      navigator.share({ title: `Fletar — ${s.nombre}`, url: link, text: texto }).catch(() => {});
+    } else {
+      copiarLink(s.id);
+    }
+  }
+
+  return (
+    <div style={{ maxWidth: 700, margin: "0 auto", padding: "24px 16px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 2 }}>🏢 Sucursales</h1>
+          <p style={{ fontSize: 13, color: "#5A6A78" }}>Cada sucursal recibe solo los pedidos de su zona.</p>
+        </div>
+        {!creando && (
+          <button onClick={() => { setCreando(true); setEditandoId(null); setNombre(""); setCiudadesSelec([]); }}
+            style={{ background: "#0F6E56", color: "#fff", border: "none", borderRadius: 9, padding: "9px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            + Nueva sucursal
+          </button>
+        )}
+      </div>
+
+      {creando && (
+        <div style={{ background: "#fff", border: "1px solid #DDE3EA", borderRadius: 12, padding: 20, marginBottom: 20 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 14 }}>{editandoId ? "Editar sucursal" : "Nueva sucursal"}</h3>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 12, fontWeight: 500, color: "#5A6A78", display: "block", marginBottom: 4 }}>Nombre de la sucursal</label>
+            <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Ej: Sucursal Oberá"
+              style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid #DDE3EA", fontSize: 14 }} />
+          </div>
+          <div style={{ mar

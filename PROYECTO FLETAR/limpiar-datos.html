@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Limpiar datos — FLETAR</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 480px; margin: 60px auto; padding: 20px; background: #f5f5f5; }
+    h2 { color: #C0392B; }
+    .card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .nodo { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+    .nodo:last-child { border-bottom: none; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; flex-shrink: 0; }
+    .dot.ok { background: #0F6E56; }
+    .dot.err { background: #C0392B; }
+    .dot.spin { background: #FAC775; animation: pulse 0.8s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    button { width: 100%; padding: 16px; background: #C0392B; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 20px; }
+    button:disabled { background: #ccc; cursor: default; }
+    #resultado { margin-top: 16px; font-size: 13px; color: #555; text-align: center; }
+    .advertencia { background: #FEF3EC; border: 1px solid #FAC775; border-radius: 8px; padding: 12px; font-size: 13px; color: #633806; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🗑️ Limpiar datos de prueba</h2>
+    <p style="font-size:13px;color:#555;margin-bottom:16px;">Elimina todos los pedidos, cargas, ofertas, viajes y rendiciones para empezar desde cero. <strong>No borra</strong> usuarios, sucursales, flota ni rutas.</p>
+
+    <div class="advertencia">
+      ⚠️ Esta acción no se puede deshacer. Solo usá esto para limpiar datos de prueba.
+    </div>
+
+    <div id="lista">
+      <div class="nodo"><div class="dot" id="d-remitos"></div> remitos (pedidos)</div>
+      <div class="nodo"><div class="dot" id="d-cargas"></div> cargas (publicaciones de empresas)</div>
+      <div class="nodo"><div class="dot" id="d-ofertas"></div> ofertas (cotizaciones)</div>
+      <div class="nodo"><div class="dot" id="d-viajes"></div> viajes</div>
+      <div class="nodo"><div class="dot" id="d-turnosMostrador"></div> turnosMostrador (rendiciones sucursal)</div>
+      <div class="nodo"><div class="dot" id="d-chat"></div> chat</div>
+    </div>
+
+    <button id="btn" onclick="limpiar()">🗑️ Limpiar todo ahora</button>
+    <div id="resultado"></div>
+  </div>
+
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyBIhZzpTRlNEG2x9dMdNTQ3ILvcRAaSJ-o",
+      authDomain: "fletar-49e36.firebaseapp.com",
+      databaseURL: "https://fletar-49e36-default-rtdb.firebaseio.com",
+      projectId: "fletar-49e36",
+    });
+    const db = firebase.database();
+
+    const nodos = ['remitos', 'cargas', 'ofertas', 'viajes', 'turnosMostrador', 'chat'];
+
+    async function limpiar() {
+      const btn = document.getElementById('btn');
+      btn.disabled = true;
+      btn.textContent = 'Limpiando...';
+
+      for (const nodo of nodos) {
+        const dot = document.getElementById('d-' + nodo);
+        dot.className = 'dot spin';
+        try {
+          await db.ref(nodo).remove();
+          dot.className = 'dot ok';
+        } catch(e) {
+          dot.className = 'dot err';
+          console.error(nodo, e);
+        }
+      }
+
+      document.getElementById('resultado').innerHTML = '✅ <strong>Listo.</strong> La base de datos quedó limpia. Podés cerrar esta página y recargar las apps.';
+      btn.textContent = '✓ Completado';
+    }
+  </script>
+</body>
+</html>

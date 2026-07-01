@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fletar — Tu carga, donde necesitás</title>
+<meta name="description" content="Conectamos empresas y personas con transportistas en todo el país. Sin llamadas, sin intermediarios. 100% desde el celular.">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --o: #E85D20;
+    --o-d: #C94A14;
+    --g: #0F6E56;
+    --dk: #0D1117;
+    --dk2: #161B22;
+    --w: #FFFFFF;
+    --lt: #F5F3EE;
+    --border: rgba(255,255,255,0.08);
+  }
+
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #fff; color: #1A1A1A; overflow-x: hidden; }
+
+  /* ─── NAVBAR ─── */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,17,23,0.97);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 2px solid var(--o);
+    height: 62px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px;
+  }
+  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .nav-links { display: flex; align-items: center; gap: 28px; }
+  .nav-link { color: rgba(255,255,255,0.6); font-size: 12px; font-weight: 500; text-decoration: none; text-transform: uppercase; letter-spacing: 0.8px; transition: color 0.2s; }
+  .nav-link:hover { color: #fff; }
+  .nav-cta {
+    background: var(--o); color: #fff; font-size: 12px; font-weight: 700;
+    padding: 10px 22px; border-radius: 5px; text-decoration: none;
+    text-transform: uppercase; letter-spacing: 0.8px; transition: background 0.2s;
+  }
+  .nav-cta:hover { background: var(--o-d); }
+
+  /* ─── HERO ─── */
+  .hero {
+    position: relative; min-height: 600px;
+    display: flex; align-items: center;
+    padding-top: 62px; overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background-image: url('hero-landing.jpg');
+    background-size: cover;
+    background-position: center 30%;
+  }
+  .hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      90deg,
+      rgba(13,17,23,0.95) 0%,
+      rgba(13,17,23,0.85) 40%,
+      rgba(13,17,23,0.50) 70%,
+      rgba(13,17,23,0.20) 100%
+    );
+  }
+  .hero-content {
+    position: relative; z-index: 2;
+    padding: 80px 40px; max-width: 620px;
+  }
+  .hero-pre {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 11px; font-weight: 700; color: var(--o);
+    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px;
+  }
+  .hero-pre::before { content: ''; display: block; width: 28px; height: 2px; background: var(--o); }
+  .hero-h1 {
+    font-size: 60px; font-weight: 900; line-height: 1.0; letter-spacing: -2px;
+    color: #fff; margin-bottom: 20px; text-transform: uppercase;
+  }
+  .hero-h1 span { color: var(--o); }
+  .hero-sub {
+    font-size: 15px; color: rgba(255,255,255,0.65); line-height: 1.8;
+    margin-bottom: 36px; max-width: 480px;
+  }
+  .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--o); color: #fff; font-size: 13px; font-weight: 700;
+    padding: 15px 30px; border-radius: 5px; text-decoration: none;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;
+  }
+  .btn-primary:hover { background: var(--o-d); }
+  .btn-outline {
+    background: transparent; color: #fff; font-size: 13px; font-weight: 700;
+    padding: 14px 28px; border-radius: 5px; border: 2px solid rgba(255,255,255,0.35);
+    text-decoration: none; text-transform: uppercase; letter-spacing: 0.8px;
+    display: inline-flex; align-items: center; gap: 8px; transition: border-color 0.2s;
+  }
+  .btn-outline:hover { border-color: rgba(255,255,255,0.7); }
+  .hero-trust { display: flex; align-items: center; gap: 16px; margin-top: 28px; flex-wrap: wrap; }
+  .hero-trust-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: rgba(255,255,255,0.5); }
+  .hero-trust-item .ck { color: var(--o); font-weight: 700; }
+  .hero-trust-sep { width: 1px; height: 18px; background: rgba(255,255,255,0.15); }
+
+  /* ─── QR INSTALAR (solo desktop) ─── */
+  .hero-qr {
+    position: absolute; z-index: 3; bottom: 24px; right: 24px;
+    background: var(--dk2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px; display: flex; align-items: center; gap: 10px;
+  }
+  .hero-qr img { width: 56px; height: 56px; border-radius: 3px; display: block; background: #fff; }
+  .hero-qr-txt { font-size: 10.5px; font-weight: 700; color: #fff; line-height: 1.35; text-align: left; }
+  .hero-qr-sub { font-size: 9.5px; color: rgba(255,255,255,0.5); margin-top: 3px; font-weight: 500; }
+
+  /* ─── SERVICES STRIP ─── */
+  .services { background: var(--dk2); border-bottom: 1px solid var(--border); }
+  .services-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .svc {
+    padding: 28px 24px; border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    cursor: pointer; transition: background 0.2s; text-decoration: none;
+  }
+  .svc:last-child { border-right: none; }
+  .svc:hover { background: rgba(232,93,32,0.07); }
+  .svc-icon { font-size: 32px; margin-bottom: 12px; }
+  .svc-title { font-size: 12px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .svc-desc { font-size: 11px; color: rgba(255,255,255,0.4); line-height: 1.5; }
+  .svc-line { width: 28px; height: 2px; background: var(--o); margin: 10px auto 0; }
+
+  /* ─── ABOUT ─── */
+  .about { background: #fff; padding: 80px 40px; }
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: center; max-width: 1100px; margin: 0 auto; }
+  .about-img-wrap { position: relative; border-radius: 5px; overflow: hidden; height: 340px; }
+  .about-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .about-badge {
+    position: absolute; bottom: 24px; left: 24px;
+    background: var(--o); color: #fff; padding: 16px 20px; border-radius: 5px;
+  }
+  .about-badge-num { font-size: 32px; font-weight: 900; line-height: 1; }
+  .about-badge-txt { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85; margin-top: 2px; }
+  .section-pre {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 11px; font-weight: 700; color: var(--o);
+    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px;
+  }
+  .section-pre::before { content: ''; display: block; width: 24px; height: 2px; background: var(--o); }
+  .section-h2 { font-size: 36px; font-weight: 900; line-height: 1.1; letter-spacing: -1px; color: var(--dk); margin-bottom: 16px; text-transform: uppercase; }
+  .section-h2 span { color: var(--o); }
+  .section-p { font-size: 14px; color: #666; line-height: 1.9; margin-bottom: 28px; }
+  .feature-list { display: flex; flex-direction: column; gap: 14px; }
+  .feat-item { display: flex; align-items: flex-start; gap: 14px; }
+  .feat-check {
+    width: 22px; height: 22px; background: var(--o); border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #fff; font-weight: 900; flex-shrink: 0; margin-top: 1px;
+  }
+  .feat-text { font-size: 13px; color: #444; line-height: 1.6; }
+  .feat-text strong { color: var(--dk); }
+
+  /* ─── HOW IT WORKS ─── */
+  .how { background: var(--lt); padding: 80px 40px; }
+  .how-header { text-align: center; margin-bottom: 60px; }
+  .how-header .section-pre { justify-content: center; }
+  .steps-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
+    max-width: 900px; margin: 0 auto; position: relative;
+  }
+  .steps-grid::before {
+    content: ''; position: absolute; top: 40px;
+    left: calc(16.6% + 20px); right: calc(16.6% + 20px);
+    height: 2px; background: linear-gradient(90deg, var(--o), rgba(232,93,32,0.2));
+  }
+  .step-card { text-align: center; padding: 0 16px; }
+  .step-circle {
+    width: 80px; height: 80px; border-radius: 50%; background: var(--o);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px; font-size: 24px; font-weight: 900; color: #fff;
+    position: relative; z-index: 1;
+    box-shadow: 0 0 0 6px #fff, 0 0 0 8px rgba(232,93,32,0.15);
+  }
+  .step-title { font-size: 15px; font-weight: 800; color: var(--dk); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 10px; }
+  .step-text { font-size: 13px; color: #666; line-height: 1.7; }
+
+  /* ─── STATS ─── */
+  .stats { background: var(--dk); padding: 60px 40px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); max-width: 1000px; margin: 0 auto; }
+  .stat { text-align: center; padding: 0 24px; border-right: 1px solid var(--border); }
+  .stat:last-child { border-right: none; }
+  .stat-n { font-size: 52px; font-weight: 900; color: #fff; line-height: 1; letter-spacing: -2px; }
+  .stat-n span { color: var(--o); }
+  .stat-divider { width: 36px; height: 2px; background: var(--o); margin: 12px auto; }
+  .stat-label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1.5px; }
+
+  /* ─── PRICING ─── */
+  .pricing { background: #fff; padding: 80px 40px; }
+  .pricing-header { text-align: center; margin-bottom: 50px; }
+  .pricing-header .section-pre { justify-content: center; }
+  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 900px; margin: 0 auto; }
+  .pc {
+    border: 1.5px solid #E0DDD8; border-radius: 5px; padding: 36px 28px;
+    position: relative; background: #fff; transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .pc:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.08); }
+  .pc.feat { border-color: var(--g); border-width: 2px; }
+  .pc-ribbon {
+    position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+    background: var(--g); color: #fff; font-size: 9px; font-weight: 700;
+    padding: 5px 18px; border-radius: 0 0 8px 8px;
+    text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap;
+  }
+  .pc-name { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--o); margin-bottom: 6px; }
+  .pc-title { font-size: 20px; font-weight: 900; color: var(--dk); margin-bottom: 4px; }
+  .pc-who { font-size: 12px; color: #999; margin-bottom: 24px; }
+  .pc-price { font-size: 44px; font-weight: 900; color: var(--dk); letter-spacing: -2px; line-height: 1; }
+  .pc-price sub { font-size: 15px; font-weight: 400; color: #999; letter-spacing: 0; }
+  .pc-note { font-size: 11px; font-weight: 700; color: var(--g); margin: 8px 0 24px; }
+  .pc-note.o { color: var(--o); }
+  .pc-divider { border: none; border-top: 1px solid #EEE; margin-bottom: 20px; }
+  .pc-feat-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .pc-feat-list li { font-size: 12px; color: #555; display: flex; gap: 10px; align-items: flex-start; }
+  .pck { color: var(--g); font-weight: 800; flex-shrink: 0; }
+  .pck.o { color: var(--o); }
+
+  /* ─── FOUNDERS ─── */
+  .founders { background: var(--o); padding: 80px 40px; }
+  .founders-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; max-width: 1000px; margin: 0 auto; }
+  .founders-h { font-size: 38px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: -1px; line-height: 1.1; margin-bottom: 16px; }
+  .founders-sub { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.8; }
+  .tiers { display: flex; flex-direction: column; gap: 12px; }
+  .tier {
+    background: rgba(0,0,0,0.15); border-radius: 6px; padding: 18px 22px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .tier.gold { background: rgba(255,255,255,0.15); }
+  .tier-label { font-size: 13px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; }
+  .tier-sub { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 3px; }
+  .tier-disc { font-size: 30px; font-weight: 900; color: #fff; }
+  .tier.gold .tier-disc { color: #FFD700; }
+  .tier-note {
+    background: rgba(0,0,0,0.2); border-radius: 6px; padding: 14px 18px;
+    font-size: 12px; color: rgba(255,255,255,0.75); line-height: 1.7;
+  }
+  .tier-note strong { color: #fff; }
+
+  /* ─── FINAL CTA ─── */
+  .final-cta {
+    background: var(--dk2); padding: 90px 40px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .final-cta::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(232,93,32,0.07) 0%, transparent 65%);
+  }
+  .final-h { font-size: 46px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 14px; position: relative; }
+  .final-h span { color: var(--o); }
+  .final-sub { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 36px; position: relative; }
+  .final-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; position: relative; }
+
+  /* ─── FOOTER ─── */
+  .footer { background: #060A0F; padding: 60px 40px 28px; }
+  .footer-top {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px;
+    padding-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.06);
+    max-width: 1100px; margin: 0 auto;
+  }
+  .footer-brand-name { font-size: 24px; font-weight: 900; margin-bottom: 8px; }
+  .footer-brand-name .lo { color: var(--o); }
+  .footer-brand-name .lr { color: #fff; }
+  .footer-tagline { font-size: 12px; color: rgba(255,255,255,0.3); line-height: 1.8; margin-top: 8px; max-width: 220px; }
+  .footer-col-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.35); margin-bottom: 16px; }
+  .footer-links { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .footer-links li a, .footer-links li { font-size: 12px; color: rgba(255,255,255,0.35); text-decoration: none; cursor: pointer; transition: color 0.2s; }
+  .footer-links li a:hover, .footer-links li:hover { color: rgba(255,255,255,0.7); }
+  .footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 24px; max-width: 1100px; margin: 0 auto; }
+  .footer-copy { font-size: 11px; color: rgba(255,255,255,0.2); }
+  .footer-made { font-size: 11px; color: rgba(255,255,255,0.2); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 768px) {
+    .nav { padding: 0 20px; }
+    .nav-links { display: none; }
+    .hero-content { padding: 60px 20px; }
+    .hero-h1 { font-size: 40px; }
+    .hero-qr { display: none; }
+    .services-grid { grid-template-columns: repeat(2, 1fr); }
+    .about { padding: 60px 20px; }
+    .about-grid { grid-template-columns: 1fr; gap: 36px; }
+    .how { padding: 60px 20px; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .steps-grid::before { display: none; }
+    .stats { padding: 40px 20px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+    .stat { border-right: none; border-bottom: 1px solid var(--border); padding-bottom: 24px; }
+    .pricing { padding: 60px 20px; }
+    .pricing-grid { grid-template-columns: 1fr; }
+    .founders { padding: 60px 20px; }
+    .founders-inner { grid-template-columns: 1fr; gap: 36px; }
+    .founders-h { font-size: 28px; }
+    .final-cta { padding: 60px 20px; }
+    .final-h { font-size: 32px; }
+    .footer { padding: 48px 20px 24px; }
+    .footer-top { grid-template-columns: 1fr 1fr; gap: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── NAVBAR ─── -->
+<nav class="nav">
+  <a href="#" class="nav-logo">
+    <svg width="36" height="36" viewBox="0 0 38 38">
+      <rect width="38" height="38" rx="9" fill="#E85D20"/>
+      <text font-family="Montserrat,sans-serif" font-size="26" font-weight="900" x="7" y="28" fill="white">F</text>
+      <polygon points="28,24 34,19 28,14 28,18 22,18 22,20 28,20" fill="white" opacity="0.9"/>
+    </svg>
+    <svg width="110" height="36" viewBox="0 0 110 36">
+      <defs>
+        <clipPath id="cl-left"><polygon points="0,36 0,0 63.8,0 39.6,36"/></clipPath>
+        <clipPath id="cl-right"><polygon points="63.8,0 110,0 110,36 39.6,36"/></clipPath>
+      </defs>
+      <text font-family="Montserrat,sans-serif" font-size="32" font-weight="900" y="32" clip-path="url(#cl-left)" fill="#E85D20">fletar</text>
+      <text font-family="Montserrat,sans-serif" font-size="32" font-weight="900" y="32" clip-path="url(#cl-right)" fill="white">fletar</text>
+    </svg>
+  </a>
+  <div class="nav-links">
+    <a href="#como-funciona" class="nav-link">Cómo funciona</a>
+    <a href="#servicios" class="nav-link">Servicios</a>
+    <a href="#precios" class="nav-link">Precios</a>
+    <a href="fletar-cliente.html" class="nav-cta">Empezar gratis</a>
+  </div>
+</nav>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-pre">Plataforma de transporte · Argentina</div>
+    <h1 class="hero-h1">Tu carga,<br><span>donde</span><br>necesitás.</h1>
+    <p class="hero-sub">
+      Conectamos empresas y personas con transportistas en todo el país.
+      Sin llamadas, sin intermediarios. 100% desde el celular.
+    </p>
+    <div class="hero-btns">
+      <a href="fletar-cliente.html" id="btnPublicarCarga" class="btn-primary">📦 Publicar carga</a>
+      <a href="fletar-transportista.html" class="btn-outline">🚛 Soy transportista</a>
+    </div>
+    <div class="hero-trust">
+      <span class="hero-trust-item"><span class="ck">✓</span> Sin tarjeta de crédito</span>
+      <div class="hero-trust-sep"></div>
+      <span class="hero-trust-item"><span class="ck">✓</span> 6 meses gratis</span>
+      <div class="hero-trust-sep"></div>
+      <span class="hero-trust-item"><span class="ck">✓</span> Sin contratos</span>
+    </div>
+  </div>
+  <div class="hero-qr" id="heroQr">
+    <img id="heroQrImg" src="" alt="QR para instalar la app" width="56" height="56" />
+    <div>
+      <div class="hero-qr-txt">Escaneá para<br>instalar la app</div>
+      <div class="hero-qr-sub">Publicá desde tu cel</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SERVICES STRIP ─── -->
+<section id="servicios" class="services">
+  <div class="services-grid">
+    <a href="fletar-cliente.html" class="svc">
+      <div class="svc-icon">🚛</div>
+      <div class="svc-title">Carga general</div>
+      <div class="svc-desc">Larga distancia, todo el país</div>
+      <div class="svc-line"></div>
+    </a>
+    <a href="fletar-cliente.html" class="svc">
+      <div class="svc-icon">⚡</div>
+      <div class="svc-title">Flete express</div>
+      <div class="svc-desc">Envíos urgentes, mismo día</div>
+      <div class="svc-line"></div>
+    </a>
+    <a href="fletar-cliente.html" class="svc">
+      <div class="svc-icon">❄️</div>
+      <div class="svc-title">Carga especial</div>
+      <div class="svc-desc">Frío, frágil y sobredimensionado</div>
+      <div class="svc-line"></div>
+    </a>
+    <a href="fletar-cliente.html" class="svc">
+      <div class="svc-icon">📦</div>
+      <div class="svc-title">Mudanzas</div>
+      <div class="svc-desc">Residencial y comercial</div>
+      <div class="svc-line"></div>
+    </a>
+  </div>
+</section>
+
+<!-- ─── ABOUT ─── -->
+<section class="about">
+  <div class="about-grid">
+    <div class="about-img-wrap">
+      <img src="hero-landing.jpg" alt="Transportista cargando mercadería">
+      <div class="about-badge">
+        <div class="about-badge-num">#1</div>
+        <div class="about-badge-txt">App de fletes<br>Argentina</div>
+      </div>
+    </div>
+    <div>
+      <div class="section-pre">¿Por qué Fletar?</div>
+      <h2 class="section-h2">La forma más<br>simple de <span>fletar</span></h2>
+      <p class="section-p">
+        Diseñada para la realidad del transporte en Argentina.
+        Sin burocracia, sin intermediarios, sin llamadas interminables.
+      </p>
+      <div class="feature-list">
+        <div class="feat-item">
+          <div class="feat-check">✓</div>
+          <div class="feat-text"><strong>Cotizaciones en minutos</strong> — Publicás tu carga y los transportistas disponibles te cotizan al instante.</div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-check">✓</div>
+          <div class="feat-text"><strong>Transportistas verificados</strong> — Perfil, calificaciones y recorrido visible antes de elegir.</div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-check">✓</div>
+          <div class="feat-text"><strong>Seguimiento en tiempo real</strong> — Sabés dónde está tu carga en todo momento.</div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-check">✓</div>
+          <div class="feat-text"><strong>Sin intermediarios</strong> — Hablás directo con el transportista. Precio justo para todos.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── HOW IT WORKS ─── -->
+<section id="como-funciona" class="how">
+  <div class="how-header">
+    <div class="section-pre">Proceso</div>
+    <h2 class="section-h2">Cómo funciona</h2>
+  </div>
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-circle">01</div>
+      <div class="step-title">Publicás tu carga</div>
+      <p class="step-text">Completás origen, destino, peso y tipo de mercadería. Menos de 2 minutos, desde el celular.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-circle">02</div>
+      <div class="step-title">Recibís ofertas</div>
+      <p class="step-text">Transportistas disponibles en tu ruta te cotizan al instante. Comparás precios y perfiles reales.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-circle">03</div>
+      <div class="step-title">Tu carga viaja</div>
+      <p class="step-text">Coordinás directo con el transportista y seguís la entrega en tiempo real hasta el destino.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─── STATS ─── -->
+<section class="stats">
+  <div class="stats-grid">
+    <div class="stat">
+      <div class="stat-n">100<span>%</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat-label">Desde el celular</div>
+    </div>
+    <div class="stat">
+      <div class="stat-n"><span>$</span>0</div>
+      <div class="stat-divider"></div>
+      <div class="stat-label">Para empezar</div>
+    </div>
+    <div class="stat">
+      <div class="stat-n">24<span>/7</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat-label">Disponible siempre</div>
+    </div>
+    <div class="stat">
+      <div class="stat-n">6<span>M</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat-label">Meses gratis · Beta</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── PRICING ─── -->
+<section id="precios" class="pricing">
+  <div class="pricing-header">
+    <div class="section-pre">Planes y precios</div>
+    <h2 class="section-h2">Transparente<br>desde el día uno</h2>
+  </div>
+  <div class="pricing-grid">
+    <div class="pc">
+      <div class="pc-name">Express · Siempre gratis</div>
+      <div class="pc-title">Flete local</div>
+      <div class="pc-who">Fleteros y clientes locales</div>
+      <div class="pc-price">$0 <sub>/ siempre</sub></div>
+      <div class="pc-note o">Gratis para siempre ✓</div>
+      <hr class="pc-divider">
+      <ul class="pc-feat-list">
+        <li><span class="pck o">✓</span> Fletes dentro de la ciudad</li>
+        <li><span class="pck o">✓</span> Publicar y cotizar gratis</li>
+        <li><span class="pck o">✓</span> Sin comisión de ningún tipo</li>
+      </ul>
+    </div>
+    <div class="pc feat">
+      <div class="pc-ribbon">Beta · 6 meses gratis</div>
+      <div class="pc-name" style="margin-top:14px">Transportista</div>
+      <div class="pc-title">Larga distancia</div>
+      <div class="pc-who">Transportistas profesionales</div>
+      <div class="pc-price">$0 <sub>/ durante beta</sub></div>
+      <div class="pc-note">Luego: paquetes de transacciones</div>
+      <hr class="pc-divider">
+      <ul class="pc-feat-list">
+        <li><span class="pck">✓</span> Ver cargas disponibles en tu ruta</li>
+        <li><span class="pck">✓</span> Cotizás gratis, sin límite</li>
+        <li><span class="pck">✓</span> Crédito solo al cerrar un trato</li>
+        <li><span class="pck">✓</span> App del chofer incluida</li>
+        <li><span class="pck">✓</span> Gestión de tu flota</li>
+        <li><span class="pck">✓</span> Gestión de sucursales</li>
+      </ul>
+    </div>
+    <div class="pc">
+      <div class="pc-name">Cliente</div>
+      <div class="pc-title">Publicar cargas</div>
+      <div class="pc-who">Empresas y personas</div>
+      <div class="pc-price">$0 <sub>/ publicar</sub></div>
+      <div class="pc-note o">Pagás solo al cerrar el flete</div>
+      <hr class="pc-divider">
+      <ul class="pc-feat-list">
+        <li><span class="pck o">✓</span> Publicar cargas gratis</li>
+        <li><span class="pck o">✓</span> Múltiples cotizaciones reales</li>
+        <li><span class="pck o">✓</span> Sin comisión oculta</li>
+        <li><span class="pck o">✓</span> Elegís precio y transportista</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FOUNDERS ─── -->
+<section class="founders">
+  <div class="founders-inner">
+    <div>
+      <h2 class="founders-h">Precio fundador<br>para los primeros<br>100 transportistas</h2>
+      <p class="founders-sub">
+        Registrarte durante la beta asegura un descuento permanente en todos los paquetes
+        cuando empiece a cobrarse el servicio.<br><br>
+        Sin fecha de vencimiento. Sin condiciones. De por vida.
+      </p>
+    </div>
+    <div class="tiers">
+      <div class="tier gold">
+        <div>
+          <div class="tier-label">🥇 Primeros 50</div>
+          <div class="tier-sub">Precio fundador oro · De por vida</div>
+        </div>
+        <div class="tier-disc">50% OFF</div>
+      </div>
+      <div class="tier">
+        <div>
+          <div class="tier-label">🥈 Del 51 al 100</div>
+          <div class="tier-sub">Precio fundador plata · De por vida</div>
+        </div>
+        <div class="tier-disc">20% OFF</div>
+      </div>
+      <div class="tier-note">
+        ⏱️ <strong>Todos durante la beta:</strong> 6 meses completamente gratis.
+        Sin tarjeta de crédito. Sin contratos.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FINAL CTA ─── -->
+<section class="final-cta">
+  <h2 class="final-h">Empezá <span>hoy</span>.<br>Es gratis.</h2>
+  <p class="final-sub">Sin tarjeta de crédito · Sin contratos · En menos de 5 minutos</p>
+  <div class="final-btns">
+    <a href="fletar-cliente.html" class="btn-primary">📦 Publicar mi primera carga</a>
+    <a href="fletar-transportista.html" class="btn-outline">🚛 Registrarme como transportista</a>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer class="footer">
+  <div class="footer-top">
+    <div>
+      <div class="footer-brand-name"><span class="lo">fle</span><span class="lr">tar</span></div>
+      <div class="footer-tagline">
+        Conectamos cargas con transportistas en todo el país.
+        Sin intermediarios. 100% desde el celular.
+      </div>
+    </div>
+    <div>
+      <div class="footer-col-title">Plataforma</div>
+      <ul class="footer-links">
+        <li><a href="fletar-cliente.html">Publicar carga</a></li>
+        <li><a href="fletar-transportista.html">Soy transportista</a></li>
+        <li><a href="#como-funciona">Cómo funciona</a></li>
+        <li><a href="#precios">Precios</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Servicios</div>
+      <ul class="footer-links">
+        <li>Carga general</li>
+        <li>Flete express</li>
+        <li>Carga especial</li>
+        <li>Mudanzas</li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Contacto</div>
+      <ul class="footer-links">
+        <li><a href="mailto:hola@fletar.app">hola@fletar.app</a></li>
+        <li>Argentina 🇦🇷</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2025 Fletar · Todos los derechos reservados</div>
+    <div class="footer-made">Hecho en Argentina 🇦🇷</div>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var installUrl = window.location.origin + '/instalar-cliente.html';
+
+    var qrImg = document.getElementById('heroQrImg');
+    if (qrImg) {
+      qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=112x112&data=' + encodeURIComponent(installUrl) + '&color=0D1117&bgcolor=ffffff&margin=2';
+    }
+
+    document.querySelectorAll('a[href="fletar-cliente.html"]').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        if (window.matchMedia('(max-width: 768px)').matches) {
+          e.preventDefault();
+          window.location.href = 'instalar-cliente.html';
+        }
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

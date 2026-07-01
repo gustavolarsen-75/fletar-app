@@ -1,0 +1,25 @@
+{
+  "name": "Fletar — Chofer",
+  "short_name": "Fletar",
+  "description": "App del chofer — Manifiesto de viaje Fletar",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "/fletar-chofer.html",
+  "scope": "/",
+  "background_color": "#0F6E56",
+  "theme_color": "#1A2E3B",
+  "icons": [
+    {
+      "src": "/icon-chofer-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-chofer-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,0 +1,2561 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fletar</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <!-- QR generado inline sin CDN externo -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F5F5F5; color: #1A1A1A; min-height: 100vh; }
+    :root {
+      --naranja: #E85D20;
+      --naranja-light: #FEF3EC;
+      --naranja-dark: #C44A0F;
+      --gris-header: #2C2C2A;
+      --gris-bg: #F5F5F5;
+      --gris-border: #E0E0E0;
+      --gris-text: #666;
+      --verde: #0F6E56;
+      --verde-light: #E1F5EE;
+      --azul: #185FA5;
+      --azul-light: #E6F1FB;
+      --rojo: #C0392B;
+      --rojo-light: #FDEDEC;
+    }
+    input, select, textarea { font-family: inherit; font-size: 14px; width: 100%; padding: 10px 12px; border: 1px solid var(--gris-border); border-radius: 8px; outline: none; transition: border-color 0.15s; background: #fff; }
+    input:focus, select:focus, textarea:focus { border-color: var(--naranja); }
+    button { font-family: inherit; cursor: pointer; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; transition: opacity 0.15s, transform 0.1s; }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--naranja); color: #fff; padding: 10px 20px; }
+    .btn-primary:hover { background: var(--naranja-dark); }
+    .btn-secondary { background: #fff; color: var(--naranja); border: 1.5px solid var(--naranja); padding: 9px 20px; }
+    .btn-ghost { background: transparent; color: var(--gris-text); padding: 8px 16px; }
+    .btn-ghost:hover { background: var(--gris-bg); }
+    .card { background: #fff; border-radius: 12px; border: 1px solid var(--gris-border); padding: 16px; }
+    .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 5px; }
+    .badge-nueva { background: var(--naranja-light); color: var(--naranja-dark); }
+    .badge-activo { background: var(--azul-light); color: var(--azul); }
+    .badge-en-camino { background: #FFF8E1; color: #F57F17; }
+    .badge-entregado { background: var(--verde-light); color: var(--verde); }
+    .badge-pendiente { background: #F3E5F5; color: #6A1B9A; }
+    .badge-verificado { background: var(--verde-light); color: var(--verde); }
+    .badge-no-verificado { background: #FFF3E0; color: #E65100; }
+    .badge-ruta { background: var(--naranja-light); color: var(--naranja-dark); }
+    label { font-size: 13px; font-weight: 500; color: #444; display: block; margin-bottom: 5px; }
+    .form-group { margin-bottom: 14px; }
+    .star { color: var(--naranja); }
+    .divider { height: 1px; background: var(--gris-border); margin: 12px 0; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+    /* ─── REMITO ─── */
+    .remito-header { background: #2C2C2A; border-radius: 12px 12px 0 0; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+    .remito-body { background: #fff; border: 1px solid #E0E0E0; border-top: none; border-radius: 0 0 12px 12px; padding: 20px; }
+    .remito-seccion { background: #F5F5F5; border-radius: 8px; padding: 12px 14px; }
+    .remito-seccion-titulo { font-size: 10px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .remito-fila { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+    .remito-label { font-size: 12px; color: #666; }
+    .remito-val { font-size: 13px; font-weight: 500; color: #1A1A1A; text-align: right; max-width: 55%; }
+    .remito-val.naranja { color: #E85D20; }
+    .remito-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .remito-status { background: #FEF3EC; border: 1px solid #E85D20; border-radius: 8px; padding: 8px 14px; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; font-size: 12px; font-weight: 500; color: #E85D20; }
+    .remito-track-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .remito-track-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .remito-track-linea { width: 2px; height: 12px; background: #E0E0E0; margin-left: 5px; margin-bottom: 0; }
+    @media print {
+      nav, .no-print { display: none !important; }
+      body { background: white !important; }
+      .remito-print { max-width: 100% !important; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+function generarNumeroRemito() {
+  const num = Math.floor(Math.random() * 900000) + 100000;
+  return `FL-${num}`;
+}
+
+function generarLinkChofer(remito) {
+  return `${window.location.href.split('?')[0]}?remito=${remito.id}&rol=chofer`;
+}
+
+// ─── MOCK DATA ───────────────────────────────────────────────────────────────
+
+const TRANSPORTISTAS_MOCK = [
+  { id: 1, nombre: "Transportes Norte SA", calificacion: 4.8, viajes: 142, verificado: true, rutas: ["Posadas → Buenos Aires", "Posadas → Corrientes"], dias: ["Lun","Mar","Mié","Jue"], vehiculo: "Camión 18 ruedas", foto: "TN" },
+  { id: 2, nombre: "Fletes Mika", calificacion: 4.6, viajes: 89, verificado: true, rutas: ["Posadas → Bs As", "Oberá → Corrientes"], dias: ["Lun","Mié","Vie"], vehiculo: "Camioneta", foto: "FM" },
+  { id: 3, nombre: "Carlos Ramírez", calificacion: 4.9, viajes: 210, verificado: true, rutas: ["Posadas → Buenos Aires", "Misiones → Santa Fe"], dias: ["Mar","Jue","Sáb"], vehiculo: "Camión 3/4", foto: "CR" },
+  { id: 4, nombre: "Logística del Litoral", calificacion: 4.3, viajes: 56, verificado: false, rutas: ["Posadas → Rosario"], dias: ["Lun","Vie"], vehiculo: "Camión 18 ruedas", foto: "LL" },
+];
+
+const CARGAS_MOCK = [
+  { id: 1, empresa: "Mi Empresa SRL", origen: "Posadas, Misiones", destino: "Buenos Aires, CABA", tipo: "General", peso: "1.200 kg", retiro: "02/06/2026", entrega: "04/06/2026", estado: "activo", ofertas: 3, matchRuta: true },
+  { id: 2, empresa: "Distribuidora Sur", origen: "Oberá, Misiones", destino: "Corrientes Capital", tipo: "Refrigerado", peso: "450 kg", retiro: "03/06/2026", entrega: "03/06/2026", estado: "nueva", ofertas: 1, matchRuta: false },
+  { id: 3, empresa: "Agro Misiones", origen: "Eldorado, Misiones", destino: "Rosario, Santa Fe", tipo: "Granel", peso: "8.000 kg", retiro: "05/06/2026", entrega: "07/06/2026", estado: "nueva", ofertas: 0, matchRuta: true },
+  { id: 4, empresa: "Comercio Norte", origen: "Posadas, Misiones", destino: "Santa Fe Capital", tipo: "General", peso: "600 kg", retiro: "01/06/2026", entrega: "03/06/2026", estado: "en-camino", ofertas: 2, matchRuta: false },
+];
+
+const OFERTAS_MOCK = [
+  { id: 1, transportistaId: 1, cargaId: 1, precio: 45000, retiro: "Mañana 8:00hs", entrega: "En 48hs", nota: "Camión disponible, salida confirmada el martes temprano.", matchRuta: true },
+  { id: 2, transportistaId: 3, cargaId: 1, precio: 42000, retiro: "Mañana 14:00hs", entrega: "En 48hs", nota: "Hago esta ruta todos los martes y jueves.", matchRuta: true },
+  { id: 3, transportistaId: 2, cargaId: 1, precio: 50000, retiro: "Pasado 9:00hs", entrega: "En 36hs", nota: "Camioneta con seguro de carga incluido.", matchRuta: false },
+];
+
+const MENSAJES_MOCK = [
+  { id: 1, de: "empresa", texto: "Hola, ¿pueden confirmar el horario de retiro?", hora: "10:32" },
+  { id: 2, de: "transportista", texto: "Sí, pasamos el martes a las 8 de la mañana.", hora: "10:45" },
+  { id: 3, de: "empresa", texto: "Perfecto, los esperamos en Av. Quaranta 1250.", hora: "10:47" },
+  { id: 4, de: "transportista", texto: "Anotado. ¿La mercadería va paletizada?", hora: "11:02" },
+];
+
+const TRANSPORTISTAS_PENDIENTES = [
+  { id: 10, nombre: "Julio Fernández", fecha: "01/06/2026", vehiculo: "Camión 3/4", rutas: ["Posadas → Corrientes", "Posadas → Bs As"], docs: ["Habilitación Nacional", "Seguro de carga"] },
+  { id: 11, nombre: "Transportes Iguazú SRL", fecha: "31/05/2026", vehiculo: "Camión 18 ruedas", rutas: ["Posadas → Buenos Aires", "Misiones → Rosario"], docs: ["Habilitación Nacional", "Seguro de carga", "CUIT empresa"] },
+];
+
+// ─── LOGO ─────────────────────────────────────────────────────────────────────
+
+function FletarLogo({ size = "sm" }) {
+  const iconSize = size === "lg" ? 52 : 34;
+  const textW = size === "lg" ? 140 : 110;
+  const textH = size === "lg" ? 46 : 36;
+  const fontSize = size === "lg" ? 42 : 32;
+  const arrowX = size === "lg" ? 34 : 22;
+  const arrowY1 = size === "lg" ? 30 : 20;
+  const arrowY2 = size === "lg" ? 26 : 17;
+  const arrowY3 = size === "lg" ? 34 : 23;
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: size === "lg" ? 12 : 8 }}>
+      <svg width={iconSize} height={iconSize} viewBox="0 0 38 38">
+        <rect width="38" height="38" rx="9" fill="#E85D20"/>
+        <text fontFamily="Montserrat, sans-serif" fontSize="26" fontWeight="900" x="7" y="28" fill="white">F</text>
+        <polygon points="28,24 34,19 28,14 28,18 22,18 22,20 28,20" fill="white" opacity="0.9"/>
+      </svg>
+      <svg width={textW} height={textH} viewBox={`0 0 ${textW} ${textH}`}>
+        <defs>
+          <clipPath id="cl-left"><polygon points={`0,${textH} 0,0 ${textW * 0.58},0 ${textW * 0.36},${textH}`}/></clipPath>
+          <clipPath id="cl-right"><polygon points={`${textW * 0.58},0 ${textW},0 ${textW},${textH} ${textW * 0.36},${textH}`}/></clipPath>
+        </defs>
+        <text fontFamily="Montserrat, sans-serif" fontSize={fontSize} fontWeight="900" y={textH - 4} clipPath="url(#cl-left)" fill="#E85D20">fletar</text>
+        <text fontFamily="Montserrat, sans-serif" fontSize={fontSize} fontWeight="900" y={textH - 4} clipPath="url(#cl-right)" fill="white">fletar</text>
+      </svg>
+    </div>
+  );
+}
+
+// ─── LAYOUT COMPONENTS ───────────────────────────────────────────────────────
+
+function Navbar({ usuario, onNav, screen }) {
+  const isTransportista = usuario?.tipo === "transportista";
+  const isAdmin = usuario?.tipo === "admin";
+
+  const navLinks = isAdmin
+    ? [{ id: "admin-dashboard", label: "Inicio" }, { id: "admin-transportistas", label: "Transportistas" }, { id: "admin-usuarios", label: "Usuarios" }]
+    : isTransportista
+    ? [{ id: "trans-dashboard", label: "Cargas" }, { id: "mis-rutas", label: "Mis rutas" }, { id: "mis-viajes", label: "Mis viajes" }, { id: "mi-flota", label: "Mi flota" }]
+    : [{ id: "empresa-dashboard", label: "Inicio" }];
+
+  return (
+    <nav style={{ background: "#2C2C2A", padding: "0 24px", display: "flex", alignItems: "center", height: 56, position: "sticky", top: 0, zIndex: 100 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginRight: 32 }}>
+        <FletarLogo size="sm" />
+        {isAdmin && <span style={{ fontSize: 10, background: "#E85D20", color: "#fff", padding: "2px 6px", borderRadius: 4, fontWeight: 500 }}>admin</span>}
+      </div>
+      <div style={{ display: "flex", gap: 4, flex: 1 }}>
+        {navLinks.map(l => (
+          <button key={l.id} onClick={() => onNav(l.id)} style={{ background: screen === l.id ? "rgba(232,93,32,0.2)" : "transparent", color: screen === l.id ? "#E85D20" : "rgba(255,255,255,0.7)", border: "none", padding: "6px 14px", borderRadius: 6, fontSize: 14, fontWeight: screen === l.id ? 500 : 400, cursor: "pointer" }}>{l.label}</button>
+        ))}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#E85D20", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 600 }}>
+          {usuario?.nombre?.charAt(0).toUpperCase()}
+        </div>
+        <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>{usuario?.nombre}</span>
+        <button onClick={() => onNav("logout")} style={{ background: "transparent", color: "rgba(255,255,255,0.4)", border: "none", fontSize: 12, cursor: "pointer", padding: "4px 8px" }}>Salir</button>
+      </div>
+    </nav>
+  );
+}
+
+function PageWrapper({ children, titulo, subtitulo, accion }) {
+  return (
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "28px 20px" }}>
+      {(titulo || accion) && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+          <div>
+            {titulo && <h1 style={{ fontSize: 22, fontWeight: 600, color: "#1A1A1A" }}>{titulo}</h1>}
+            {subtitulo && <p style={{ fontSize: 14, color: "#666", marginTop: 4 }}>{subtitulo}</p>}
+          </div>
+          {accion}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
+function StatCard({ valor, label, color }) {
+  return (
+    <div className="card" style={{ textAlign: "center", flex: 1 }}>
+      <div style={{ fontSize: 28, fontWeight: 600, color: color || "#E85D20" }}>{valor}</div>
+      <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>{label}</div>
+    </div>
+  );
+}
+
+// ─── MAPS INPUT ──────────────────────────────────────────────────────────────
+
+function MapsInput({ value, onChange }) {
+  const [estado, setEstado] = useState("idle"); // idle | cargando | ok | error
+
+  function obtenerUbicacion() {
+    if (!navigator.geolocation) {
+      alert("Tu navegador no soporta geolocalización.");
+      return;
+    }
+    setEstado("cargando");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const link = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        onChange(link);
+        setEstado("ok");
+      },
+      (err) => {
+        setEstado("error");
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }
+
+  return (
+    <div className="form-group">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+        <label style={{ margin: 0 }}>Link de Google Maps</label>
+        <span style={{ fontSize: 11, color: "#888", background: "#F5F5F5", padding: "2px 8px", borderRadius: 4 }}>Opcional</span>
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input
+          value={value}
+          onChange={e => { onChange(e.target.value); setEstado("idle"); }}
+          placeholder="https://maps.google.com/..."
+          style={{ flex: 1 }}
+        />
+        <button
+          type="button"
+          onClick={obtenerUbicacion}
+          disabled={estado === "cargando"}
+          style={{
+            background: estado === "ok" ? "#0F6E56" : "#2C2C2A",
+            color: "#fff", border: "none", borderRadius: 8,
+            padding: "0 14px", fontSize: 18, cursor: "pointer",
+            whiteSpace: "nowrap", flexShrink: 0,
+            opacity: estado === "cargando" ? 0.6 : 1
+          }}
+          title="Usar mi ubicación actual"
+        >
+          {estado === "cargando" ? "⏳" : estado === "ok" ? "✓" : "📍"}
+        </button>
+      </div>
+      {estado === "ok" && (
+        <div style={{ marginTop: 5, display: "flex", alignItems: "center", gap: 8 }}>
+          <p style={{ fontSize: 11, color: "#0F6E56", margin: 0 }}>✓ Ubicación actual detectada</p>
+          <a href={value} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#185FA5" }}>Ver en Maps →</a>
+        </div>
+      )}
+      {estado === "error" && (
+        <p style={{ fontSize: 11, color: "#C44A0F", marginTop: 5 }}>No se pudo obtener la ubicación. Pegá el link manualmente.</p>
+      )}
+      {estado === "idle" && (
+        <p style={{ fontSize: 11, color: "#888", marginTop: 5 }}>Tocá 📍 para usar tu ubicación actual o pegá el link manualmente.</p>
+      )}
+    </div>
+  );
+}
+
+// ─── AUTH SCREENS ────────────────────────────────────────────────────────────
+
+function AuthScreen({ onLogin }) {
+  const [modo, setModo] = useState("login");
+  const [tipo, setTipo] = useState(null);
+  const [paso, setPaso] = useState(1);
+  const [form, setForm] = useState({ email: "", password: "", nombre: "", empresa: "", cel: "", direccion: "", maps: "", logo: null, logoUrl: "", provinciaorigen: "" });
+  const [provsDest, setProvsDest] = useState([]);
+  const [localidades, setLocalidades] = useState({});
+  const [error, setError] = useState("");
+
+  const totalPasos = tipo === "transportista" ? 4 : 2;
+
+  function toggleProv(p) {
+    setProvsDest(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
+    setLocalidades(prev => {
+      if (prev[p]) { const n = {...prev}; delete n[p]; return n; }
+      return prev;
+    });
+  }
+
+  function toggleTodasProvs() {
+    if (provsDest.length === PROVINCIAS.length) { setProvsDest([]); setLocalidades({}); }
+    else setProvsDest([...PROVINCIAS]);
+  }
+
+  function toggleLoc(prov, loc) {
+    setLocalidades(prev => {
+      const locs = prev[prov] || [];
+      return { ...prev, [prov]: locs.includes(loc) ? locs.filter(x => x !== loc) : [...locs, loc] };
+    });
+  }
+
+  function toggleTodasLocs(prov) {
+    const todas = PROVINCIAS_LOCALIDADES[prov] || [];
+    const actuales = localidades[prov] || [];
+    setLocalidades(prev => ({ ...prev, [prov]: actuales.length === todas.length ? [] : [...todas] }));
+  }
+
+  function handleLogo(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setForm(f => ({ ...f, logo: file, logoUrl: ev.target.result }));
+    reader.readAsDataURL(file);
+  }
+
+  function siguiente() {
+    if (paso === 1 && !tipo) { setError("Elegí el tipo de cuenta."); return; }
+    if (paso === 2 && (!form.nombre || !form.cel || !form.direccion)) { setError("Completá nombre, celular y dirección."); return; }
+    if (paso === 3 && provsDest.length === 0) { setError("Seleccioná al menos una provincia de destino."); return; }
+    setError(""); setPaso(p => p + 1);
+  }
+
+  function handleSubmit() {
+    if (!form.email || !form.password) { setError("Completá email y contraseña."); return; }
+    if (form.email === "admin@fletar.com") { onLogin({ nombre: "Gustavo", email: form.email, tipo: "admin" }); return; }
+    if (modo === "login") {
+      if (form.email === "trans@test.com") { onLogin({ nombre: "Carlos Ramírez", email: form.email, tipo: "transportista" }); return; }
+      onLogin({ nombre: "Mi Empresa", email: form.email, tipo: "empresa" }); return;
+    }
+    onLogin({ ...form, tipo, provsDest, localidades });
+  }
+
+  const PasoIndicador = () => (
+    <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 20, justifyContent: "center" }}>
+      {Array.from({ length: totalPasos }, (_, i) => (
+        <React.Fragment key={i}>
+          <div style={{ width: 28, height: 28, borderRadius: "50%", background: paso > i + 1 ? "#0F6E56" : paso === i + 1 ? "#E85D20" : "#E0E0E0", color: paso >= i + 1 ? "#fff" : "#999", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {paso > i + 1 ? "✓" : i + 1}
+          </div>
+          {i < totalPasos - 1 && <div style={{ flex: 1, height: 2, background: paso > i + 1 ? "#0F6E56" : "#E0E0E0", maxWidth: 40 }} />}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+
+  const labelsPasos = tipo === "transportista"
+    ? ["Mis datos", "Mis datos", "Provincias", "Rutas", "Acceso"]
+    : ["Mis datos", "Mis datos", "Acceso"];
+
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F5F5F5", padding: "20px 0" }}>
+      <div style={{ width: "100%", maxWidth: modo === "registro" && paso >= 3 ? 600 : 440 }}>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
+            <div style={{ background: "#2C2C2A", borderRadius: 16, padding: "14px 24px", display: "inline-flex" }}>
+              <FletarLogo size="lg" />
+            </div>
+          </div>
+          <p style={{ fontSize: 14, color: "#666" }}>Más fletes, menos llamadas</p>
+        </div>
+
+        <div className="card" style={{ padding: 24 }}>
+          {/* Tabs login/registro */}
+          <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "#F5F5F5", borderRadius: 8, padding: 4 }}>
+            {["login", "registro"].map(m => (
+              <button key={m} onClick={() => { setModo(m); setPaso(1); setTipo(null); setError(""); }} style={{ flex: 1, padding: "8px", borderRadius: 6, background: modo === m ? "#fff" : "transparent", color: modo === m ? "#1A1A1A" : "#666", border: modo === m ? "1px solid #E0E0E0" : "none", fontWeight: modo === m ? 500 : 400, fontSize: 14, cursor: "pointer" }}>
+                {m === "login" ? "Iniciar sesión" : "Registrarse"}
+              </button>
+            ))}
+          </div>
+
+          {/* LOGIN */}
+          {modo === "login" && (<>
+            <div className="form-group"><label>Email</label><input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="tu@email.com" /></div>
+            <div className="form-group"><label>Contraseña</label><input type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder="••••••••" /></div>
+            {error && <p style={{ color: "#C44A0F", fontSize: 13, marginBottom: 10 }}>{error}</p>}
+            <button className="btn-primary" style={{ width: "100%", padding: "12px" }} onClick={handleSubmit}>Ingresar</button>
+            <div style={{ marginTop: 14, padding: 12, background: "#F5F5F5", borderRadius: 8 }}>
+              <p style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Cuentas de prueba:</p>
+              <p style={{ fontSize: 11, color: "#888" }}>empresa@test.com → empresa &nbsp;·&nbsp; trans@test.com → transportista &nbsp;·&nbsp; admin@fletar.com → admin</p>
+            </div>
+          </>)}
+
+          {/* REGISTRO */}
+          {modo === "registro" && (<>
+            <PasoIndicador />
+
+            {/* PASO 1: tipo de cuenta */}
+            {paso === 1 && (<>
+              <p style={{ fontSize: 14, fontWeight: 500, marginBottom: 12, color: "#444" }}>¿Cómo vas a usar Fletar?</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+                {[
+                  { val: "empresa", icon: "📦", label: "Envío mercadería", desc: "Publico cargas y elijo transportistas" },
+                  { val: "transportista", icon: "🚛", label: "Soy transportista", desc: "Oferto fletes y cargo mis rutas" },
+                ].map(t => (
+                  <div key={t.val} onClick={() => setTipo(t.val)} style={{ border: `2px solid ${tipo === t.val ? "#E85D20" : "#E0E0E0"}`, borderRadius: 10, padding: "14px 10px", cursor: "pointer", background: tipo === t.val ? "#FEF3EC" : "#fff", textAlign: "center" }}>
+                    <div style={{ fontSize: 28 }}>{t.icon}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, marginTop: 6 }}>{t.label}</div>
+                    <div style={{ fontSize: 11, color: "#666", marginTop: 3, lineHeight: 1.4 }}>{t.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </>)}
+
+            {/* PASO 2: datos básicos */}
+            {paso === 2 && (<>
+              <p style={{ fontSize: 14, fontWeight: 500, marginBottom: 14, color: "#444" }}>Tus datos</p>
+
+              {/* Logo — solo para transportista */}
+              {tipo === "transportista" && (
+                <div className="form-group" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div onClick={() => document.getElementById("logo-input").click()} style={{ width: 72, height: 72, borderRadius: 12, border: "2px dashed #E0E0E0", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "#F5F5F5", overflow: "hidden", flexShrink: 0 }}>
+                    {form.logoUrl ? <img src={form.logoUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 28 }}>🏢</span>}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 500, fontSize: 13 }}>Logo de tu empresa</div>
+                    <div style={{ fontSize: 11, color: "#888", marginTop: 3 }}>Los clientes van a verlo en tus ofertas</div>
+                    <button type="button" onClick={() => document.getElementById("logo-input").click()} style={{ marginTop: 6, fontSize: 12, background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>
+                      {form.logoUrl ? "Cambiar logo" : "Subir logo"}
+                    </button>
+                  </div>
+                  <input id="logo-input" type="file" accept="image/*" style={{ display: "none" }} onChange={handleLogo} />
+                </div>
+              )}
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div className="form-group"><label>Nombre *</label><input value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} placeholder="Tu nombre" /></div>
+                <div className="form-group"><label>Empresa / Razón social</label><input value={form.empresa} onChange={e => setForm({...form, empresa: e.target.value})} placeholder="Ej: Transportes Sur" /></div>
+              </div>
+              <div className="form-group"><label>Celular *</label><input type="tel" value={form.cel} onChange={e => setForm({...form, cel: e.target.value})} placeholder="Ej: 3764-123456" /></div>
+              <div className="form-group"><label>Dirección *</label><input value={form.direccion} onChange={e => setForm({...form, direccion: e.target.value})} placeholder="Calle, número, ciudad" /></div>
+              <MapsInput value={form.maps} onChange={v => setForm({...form, maps: v})} />
+
+              {tipo === "transportista" && (
+                <div className="form-group">
+                  <label>¿De qué provincia sos? *</label>
+                  <select value={form.provinciaorigen} onChange={e => setForm({...form, provinciaorigen: e.target.value})}>
+                    <option value="">Seleccioná tu provincia</option>
+                    {PROVINCIAS.map(p => <option key={p}>{p}</option>)}
+                  </select>
+                </div>
+              )}
+            </>)}
+
+            {/* PASO 3: provincias de destino (solo transportista) */}
+            {paso === 3 && tipo === "transportista" && (<>
+              <p style={{ fontSize: 14, fontWeight: 500, marginBottom: 4, color: "#444" }}>¿A qué provincias llegás?</p>
+              <p style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>Seleccioná todas las que hacés habitualmente.</p>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <label style={{ fontSize: 13, fontWeight: 500, color: "#444", margin: 0 }}>Provincias</label>
+                <button onClick={toggleTodasProvs} style={{ fontSize: 12, color: "#E85D20", background: "none", border: "1px solid #E85D20", borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>
+                  {provsDest.length === PROVINCIAS.length ? "Desmarcar todas" : "Marcar todas"}
+                </button>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, maxHeight: 320, overflowY: "auto" }}>
+                {PROVINCIAS.map(p => (
+                  <label key={p} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 7, border: `1.5px solid ${provsDest.includes(p) ? "#E85D20" : "#E0E0E0"}`, background: provsDest.includes(p) ? "#FEF3EC" : "#fff", cursor: "pointer", fontSize: 13 }}>
+                    <input type="checkbox" checked={provsDest.includes(p)} onChange={() => toggleProv(p)} style={{ accentColor: "#E85D20", width: 15, height: 15 }} />
+                    {p}
+                  </label>
+                ))}
+              </div>
+              {provsDest.length > 0 && <p style={{ fontSize: 12, color: "#0F6E56", marginTop: 10 }}>✓ {provsDest.length} provincia{provsDest.length > 1 ? "s" : ""} seleccionada{provsDest.length > 1 ? "s" : ""}</p>}
+            </>)}
+
+            {/* PASO 4: localidades por provincia (solo transportista) */}
+            {paso === 4 && tipo === "transportista" && (<>
+              <p style={{ fontSize: 14, fontWeight: 500, marginBottom: 4, color: "#444" }}>¿A qué localidades llegás?</p>
+              <p style={{ fontSize: 12, color: "#888", marginBottom: 14 }}>Marcá las localidades dentro de cada provincia.</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: 380, overflowY: "auto" }}>
+                {provsDest.map(prov => {
+                  const locs = PROVINCIAS_LOCALIDADES[prov] || [];
+                  const sel = localidades[prov] || [];
+                  return (
+                    <div key={prov}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 7 }}>
+                        <span style={{ fontWeight: 600, fontSize: 13 }}>📍 {prov}</span>
+                        <button onClick={() => toggleTodasLocs(prov)} style={{ fontSize: 11, color: "#E85D20", background: "none", border: "1px solid #E85D20", borderRadius: 5, padding: "2px 8px", cursor: "pointer" }}>
+                          {sel.length === locs.length ? "Desmarcar todas" : "Marcar todas"}
+                        </button>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 5 }}>
+                        {locs.map(loc => (
+                          <label key={loc} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, padding: "5px 7px", borderRadius: 6, border: `1px solid ${sel.includes(loc) ? "#E85D20" : "#E8E8E8"}`, background: sel.includes(loc) ? "#FEF3EC" : "#fff", cursor: "pointer" }}>
+                            <input type="checkbox" checked={sel.includes(loc)} onChange={() => toggleLoc(prov, loc)} style={{ accentColor: "#E85D20", width: 12, height: 12, flexShrink: 0 }} />
+                            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{loc}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {sel.length > 0 && <p style={{ fontSize: 11, color: "#0F6E56", marginTop: 5 }}>✓ {sel.length} localidad{sel.length > 1 ? "es" : ""}</p>}
+                    </div>
+                  );
+                })}
+              </div>
+            </>)}
+
+            {/* ÚLTIMO PASO: email + contraseña */}
+            {((tipo === "empresa" && paso === 2) || (tipo === "transportista" && paso === 4)) && (<>
+              <div style={{ marginTop: 16 }} />
+            </>)}
+            {((tipo === "empresa" && paso === 2) || (tipo === "transportista" && paso === 4)) && (<>
+              <div className="form-group" style={{ marginTop: 12 }}><label>Email *</label><input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="tu@email.com" /></div>
+              <div className="form-group"><label>Contraseña *</label><input type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder="••••••••" /></div>
+            </>)}
+
+            {error && <p style={{ color: "#C44A0F", fontSize: 13, margin: "10px 0" }}>{error}</p>}
+
+            <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+              {paso > 1 && <button className="btn-secondary" onClick={() => { setPaso(p => p - 1); setError(""); }} style={{ flex: 1 }}>← Atrás</button>}
+              {((tipo === "empresa" && paso < 2) || (tipo === "transportista" && paso < 4)) && (
+                <button className="btn-primary" onClick={siguiente} style={{ flex: 2 }}>Continuar →</button>
+              )}
+              {((tipo === "empresa" && paso === 2) || (tipo === "transportista" && paso === 4)) && (
+                <button className="btn-primary" onClick={handleSubmit} style={{ flex: 2 }}>Crear cuenta</button>
+              )}
+            </div>
+          </>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── EMPRESA SCREENS ─────────────────────────────────────────────────────────
+
+const HISTORIAL_MOCK = [
+  { id: 101, fecha: "28/05/2026", origen: "Posadas, Misiones", destino: "Buenos Aires, CABA", transportista: "Transportes Norte SA", tipo: "General", estado: "entregado" },
+  { id: 102, fecha: "20/05/2026", origen: "Posadas, Misiones", destino: "Corrientes Capital", transportista: "Fletes Mika", tipo: "Refrigerado", estado: "entregado" },
+  { id: 103, fecha: "12/05/2026", origen: "Oberá, Misiones", destino: "Rosario, Santa Fe", transportista: "Carlos Ramírez", tipo: "Granel", estado: "entregado" },
+  { id: 104, fecha: "03/05/2026", origen: "Posadas, Misiones", destino: "Santa Fe Capital", transportista: "Transportes Norte SA", tipo: "General", estado: "entregado" },
+  { id: 105, fecha: "22/04/2026", origen: "Posadas, Misiones", destino: "Buenos Aires, CABA", transportista: "Carlos Ramírez", tipo: "General", estado: "entregado" },
+];
+
+function EmpresaDashboard({ onNav, usuario, cargas }) {
+  const cargasData = cargas || CARGAS_MOCK;
+  const enCamino = cargasData.filter(c => c.estado === "en-camino");
+
+  return (
+    <div style={{ maxWidth: 520, margin: "0 auto", padding: "48px 20px" }}>
+      {/* Saludo */}
+      <div style={{ marginBottom: 40 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: "#1A1A1A", marginBottom: 6 }}>
+          Hola{usuario?.nombre ? `, ${usuario.nombre}` : ""} 👋
+        </h1>
+        <p style={{ fontSize: 15, color: "#666" }}>¿Qué querés hacer hoy?</p>
+      </div>
+
+      {/* Alerta si hay envíos en camino */}
+      {enCamino.length > 0 && (
+        <div onClick={() => onNav("seguimiento")} style={{ background: "#FFF8E1", border: "1px solid #FFD54F", borderRadius: 12, padding: "14px 16px", marginBottom: 24, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ fontWeight: 500, color: "#F57F17", fontSize: 14 }}>🚛 Tenés {enCamino.length} envío en camino</div>
+            <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>{enCamino[0].origen} → {enCamino[0].destino}</div>
+          </div>
+          <span style={{ color: "#F57F17", fontSize: 18 }}>›</span>
+        </div>
+      )}
+
+      {/* Botones principales */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <button
+          onClick={() => onNav("publicar-carga")}
+          style={{ background: "#E85D20", color: "#fff", border: "none", borderRadius: 14, padding: "22px 24px", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 16 }}
+        >
+          <span style={{ fontSize: 32 }}>📦</span>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 3 }}>Nuevo envío</div>
+            <div style={{ fontSize: 13, opacity: 0.85 }}>Publicá una carga y recibí ofertas de transportistas</div>
+          </div>
+          <span style={{ marginLeft: "auto", fontSize: 20, opacity: 0.7 }}>›</span>
+        </button>
+
+        <button
+          onClick={() => onNav("historial-envios")}
+          style={{ background: "#fff", color: "#1A1A1A", border: "1.5px solid #E0E0E0", borderRadius: 14, padding: "22px 24px", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 16 }}
+        >
+          <span style={{ fontSize: 32 }}>🗂️</span>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 3 }}>Últimos envíos</div>
+            <div style={{ fontSize: 13, color: "#666" }}>Revisá el historial y estado de tus envíos</div>
+          </div>
+          <span style={{ marginLeft: "auto", fontSize: 20, color: "#ccc" }}>›</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function HistorialEnvios({ onNav, cargas }) {
+  const cargasData = cargas || CARGAS_MOCK;
+  const activos = cargasData;
+  const pasados = HISTORIAL_MOCK;
+
+  return (
+    <PageWrapper titulo="Mis envíos">
+      {/* Envíos activos */}
+      {activos.length > 0 && (
+        <>
+          <h3 style={{ fontSize: 13, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Activos</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
+            {activos.map(c => (
+              <div key={c.id} className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
+                   onClick={() => onNav(c.estado === "en-camino" ? "seguimiento" : "ver-ofertas")}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                    <span style={{ fontWeight: 500, fontSize: 14 }}>{c.origen} → {c.destino}</span>
+                    <span className={`badge badge-${c.estado}`}>
+                      {c.estado === "en-camino" ? "En camino" : c.estado === "activo" ? "Con ofertas" : "Nueva"}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12, color: "#888" }}>{c.tipo} · Retiro {c.retiro}</div>
+                </div>
+                <div style={{ textAlign: "right", marginLeft: 12 }}>
+                  {c.estado === "en-camino" ? (
+                    <button className="btn-primary" style={{ fontSize: 12, padding: "6px 12px" }} onClick={e => { e.stopPropagation(); onNav("seguimiento"); }}>Ver estado</button>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: 16, fontWeight: 600, color: c.ofertas > 0 ? "#E85D20" : "#ccc" }}>{c.ofertas}</div>
+                      <div style={{ fontSize: 11, color: "#888" }}>{c.ofertas === 1 ? "oferta" : "ofertas"}</div>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Historial */}
+      <h3 style={{ fontSize: 13, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Historial</h3>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {pasados.map(e => (
+          <div key={e.id} className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 3 }}>{e.origen} → {e.destino}</div>
+              <div style={{ fontSize: 12, color: "#888" }}>
+                {e.fecha} · {e.transportista} · {e.tipo}
+              </div>
+            </div>
+            <span className="badge badge-entregado" style={{ marginLeft: 12, flexShrink: 0 }}>✓ Entregado</span>
+          </div>
+        ))}
+      </div>
+    </PageWrapper>
+  );
+}
+
+const PROVINCIAS_LOCALIDADES = {
+  "Misiones": ["Posadas","Oberá","Eldorado","Puerto Iguazú","Apóstoles","Aristóbulo del Valle","Campo Grande","Candelaria","Capioví","Cerro Azul","Colonia Aurora","Dos de Mayo","Garupá","Jardín América","Leandro N. Alem","Montecarlo","Puerto Rico","San Ignacio","San Vicente","Wanda"],
+  "Buenos Aires": ["La Plata","Mar del Plata","Quilmes","Lanús","General San Martín","Morón","Lomas de Zamora","Almirante Brown","Berazategui","Tigre","San Isidro","Vicente López","Bahía Blanca","Tandil","Azul","Junín","Pergamino","Zárate","Campana","San Nicolás"],
+  "CABA": ["Centro","Palermo","Flores","Caballito","Belgrano","Recoleta","San Telmo","La Boca","Villa Urquiza","Mataderos","Balvanera","Almagro","Barracas","Boedo","Chacarita"],
+  "Córdoba": ["Córdoba Capital","Villa Carlos Paz","Río Cuarto","San Francisco","Villa María","Alta Gracia","Cosquín","La Falda","Jesús María","Bell Ville","Cruz del Eje","Deán Funes","Laboulaye","Marcos Juárez","Río Tercero"],
+  "Santa Fe": ["Rosario","Santa Fe Capital","Rafaela","Venado Tuerto","Villa Gobernador Gálvez","Santo Tomé","Reconquista","San Lorenzo","Esperanza","Casilda","Cañada de Gómez","Rufino","Sunchales","Tostado","Vera"],
+  "Entre Ríos": ["Paraná","Concordia","Gualeguaychú","Concepción del Uruguay","Villaguay","Gualeguay","La Paz","Federal","Chajarí","Federación","Colón","San José","Victoria","Diamante","Nogoyá"],
+  "Corrientes": ["Corrientes Capital","Goya","Paso de los Libres","Curuzú Cuatiá","Mercedes","Monte Caseros","Esquina","Bella Vista","Ituzaingó","Santo Tomé","Gobernador Virasoro","San Luis del Palmar","Mburucuyá","Saladas"],
+  "Chaco": ["Resistencia","Presidencia Roque Sáenz Peña","Villa Ángela","Charata","Quitilipi","Las Breñas","General San Martín","Juan José Castelli","Machagai","Avia Terai","Corzuela","La Escondida"],
+  "Formosa": ["Formosa Capital","Clorinda","Pirané","General Pinedo","El Colorado","Ingeniero Juárez","Laguna Blanca","Fontana"],
+  "Tucumán": ["San Miguel de Tucumán","Yerba Buena","Tafí Viejo","Concepción","Monteros","Aguilares","Famaillá","Alberdi","Bella Vista","Río Chico"],
+  "Salta": ["Salta Capital","San Ramón de la Nueva Orán","Tartagal","General Güemes","Rosario de la Frontera","Metán","Cafayate","Joaquín V. González"],
+  "Jujuy": ["San Salvador de Jujuy","Palpalá","San Pedro","Libertador General San Martín","Humahuaca","Tilcara","Perico","El Carmen"],
+  "Santiago del Estero": ["Santiago del Estero Capital","La Banda","Termas de Río Hondo","Añatuya","Frías","Loreto","Monte Quemado","Quimilí"],
+  "Mendoza": ["Mendoza Capital","San Rafael","Godoy Cruz","Maipú","Luján de Cuyo","Las Heras","Rivadavia","San Martín","Junín","La Paz"],
+  "San Juan": ["San Juan Capital","Rawson","Chimbas","Rivadavia","Santa Lucía","Pocito","Caucete","Sarmiento"],
+  "San Luis": ["San Luis Capital","Villa Mercedes","Merlo","Justo Daract","Concarán","Arizona"],
+  "La Rioja": ["La Rioja Capital","Chilecito","Aimogasta","Chepes","Chamical"],
+  "Catamarca": ["San Fernando del Valle de Catamarca","San Fernando","Tinogasta","Belén","Santa María","Andalgalá"],
+  "Río Negro": ["Viedma","Bariloche","General Roca","Cipolletti","Allen","Villa Regina","Catriel","El Bolsón"],
+  "Neuquén": ["Neuquén Capital","Zapala","San Martín de los Andes","Villa La Angostura","Cutral Có","Plaza Huincul","Junín de los Andes"],
+  "La Pampa": ["Santa Rosa","General Pico","Toay","Realicó","General Acha","Eduardo Castex","Victorica"],
+  "Chubut": ["Rawson","Comodoro Rivadavia","Trelew","Puerto Madryn","Esquel","Rada Tilly","Sarmiento"],
+  "Santa Cruz": ["Río Gallegos","Caleta Olivia","Pico Truncado","Puerto Madryn","Las Heras","El Calafate","Gobernador Gregores"],
+  "Tierra del Fuego": ["Ushuaia","Río Grande","Tolhuin"],
+};
+
+const PROVINCIAS = Object.keys(PROVINCIAS_LOCALIDADES).sort();
+
+function SelectorRuta({ label, provincia, localidad, onProvincia, onLocalidad }) {
+  const localidades = provincia ? PROVINCIAS_LOCALIDADES[provincia] || [] : [];
+  return (
+    <div>
+      <div className="form-group" style={{ marginBottom: 8 }}>
+        <label>{label} — Provincia *</label>
+        <select value={provincia} onChange={e => { onProvincia(e.target.value); onLocalidad(""); }}>
+          <option value="">Seleccioná una provincia</option>
+          {PROVINCIAS.map(p => <option key={p} value={p}>{p}</option>)}
+        </select>
+      </div>
+      {provincia && (
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label>{label} — Localidad *</label>
+          <select value={localidad} onChange={e => onLocalidad(e.target.value)}>
+            <option value="">Seleccioná una localidad</option>
+            {localidades.map(l => <option key={l} value={l}>{l}</option>)}
+          </select>
+          {localidad && (
+            <div style={{ marginTop: 6, fontSize: 12, color: "#0F6E56", fontWeight: 500 }}>
+              ✓ {localidad}, {provincia}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MapsInputSimple({ value, onChange }) {
+  const [estado, setEstado] = useState("idle");
+  function obtener() {
+    if (!navigator.geolocation) { alert("Tu navegador no soporta geolocalización."); return; }
+    setEstado("cargando");
+    navigator.geolocation.getCurrentPosition(
+      pos => { const { latitude: lat, longitude: lng } = pos.coords; onChange(`https://www.google.com/maps?q=${lat},${lng}`); setEstado("ok"); },
+      () => setEstado("error"),
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }
+  return (
+    <div className="form-group">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+        <label style={{ margin: 0 }}>Link de Google Maps</label>
+        <span style={{ fontSize: 11, color: "#888", background: "#F5F5F5", padding: "2px 8px", borderRadius: 4 }}>Opcional</span>
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input value={value} onChange={e => { onChange(e.target.value); setEstado("idle"); }} placeholder="https://maps.google.com/..." style={{ flex: 1 }} />
+        <button type="button" onClick={obtener} disabled={estado === "cargando"} style={{ background: estado === "ok" ? "#0F6E56" : "#2C2C2A", color: "#fff", border: "none", borderRadius: 8, padding: "0 14px", fontSize: 18, cursor: "pointer", flexShrink: 0, opacity: estado === "cargando" ? 0.6 : 1 }}>
+          {estado === "cargando" ? "⏳" : estado === "ok" ? "✓" : "📍"}
+        </button>
+      </div>
+      {estado === "ok" && <p style={{ fontSize: 11, color: "#0F6E56", marginTop: 4 }}>✓ Ubicación actual detectada</p>}
+      {estado === "error" && <p style={{ fontSize: 11, color: "#C44A0F", marginTop: 4 }}>No se pudo obtener la ubicación. Pegá el link manualmente.</p>}
+    </div>
+  );
+}
+
+function PublicarCarga({ onNav, usuario, onPublicar }) {
+  const [paso, setPaso] = useState(1);
+  const TOTAL_PASOS = 4;
+
+  const [origenProv, setOrigenProv] = useState("");
+  const [origenLoc, setOrigenLoc] = useState("");
+  const [destinoProv, setDestinoProv] = useState("");
+  const [destinoLoc, setDestinoLoc] = useState("");
+  const [direccionRetiro, setDireccionRetiro] = useState(usuario?.direccion || "");
+  const [form, setForm] = useState({ tipo: "Paquete chico", especial: "normal", descripcion: "", retiro: "", horaRetiro: "", entrega: "", horaEntrega: "", pagaFlete: "remitente" });
+  const [bultos, setBultos] = useState([{ id: 1, largo: "", ancho: "", alto: "", peso: "", cant: "1" }]);
+  const [destinatario, setDestinatario] = useState({ nombre: "", telefono: "", calle: "", localidad: "", piso: "", depto: "", portero: "", referencia: "", maps: "", horarioFecha: "", horarioHora: "" });
+  const [enviado, setEnviado] = useState(false);
+  const [transportistasMatch, setTransportistasMatch] = useState([]);
+
+  useEffect(() => {
+    if (origenLoc && destinoLoc) {
+      setTransportistasMatch(TRANSPORTISTAS_MOCK.filter(t => t.rutas.some(r => r.toLowerCase().includes(origenProv.toLowerCase()) || r.toLowerCase().includes(origenLoc.toLowerCase()))));
+    } else setTransportistasMatch([]);
+  }, [origenLoc, destinoLoc, origenProv]);
+
+  function agregarBulto() { setBultos(prev => [...prev, { id: Date.now(), largo: "", ancho: "", alto: "", peso: "", cant: "1" }]); }
+  function eliminarBulto(id) { if (bultos.length === 1) return; setBultos(prev => prev.filter(b => b.id !== id)); }
+  function updateBulto(id, campo, val) { setBultos(prev => prev.map(b => b.id === id ? { ...b, [campo]: val } : b)); }
+
+  function siguientePaso() {
+    if (paso === 1 && (!origenLoc || !destinoLoc || !form.retiro)) { alert("Completá origen, destino y fecha de retiro."); return; }
+    if (paso === 2) {
+      const incompleto = bultos.some(b => !b.largo || !b.ancho || !b.alto || !b.peso);
+      if (incompleto) { alert("Completá las dimensiones y peso de todos los bultos."); return; }
+    }
+    if (paso === 3 && (!destinatario.nombre || !destinatario.telefono || !destinatario.calle || !destinatario.localidad)) { alert("Completá nombre, teléfono, calle y localidad del destinatario."); return; }
+    setPaso(p => p + 1);
+  }
+
+  function handlePublicar() {
+    const pesoTotal = bultos.reduce((s, b) => s + (parseFloat(b.peso) || 0) * (parseInt(b.cant) || 1), 0);
+    const newCarga = {
+      id: Date.now(),
+      empresa: usuario?.nombre || "Mi Empresa",
+      origen: origenLoc ? `${origenLoc}, ${origenProv}` : (direccionRetiro || "Posadas, Misiones"),
+      destino: destinoLoc ? `${destinoLoc}, ${destinoProv}` : "Destino",
+      tipo: form.tipo,
+      peso: pesoTotal > 0 ? `${pesoTotal} kg` : "—",
+      retiro: form.retiro,
+      entrega: form.entrega || "",
+      estado: "nueva",
+      ofertas: 0,
+      matchRuta: true,
+    };
+    if (onPublicar) onPublicar(newCarga);
+    setEnviado(true);
+    setTimeout(() => onNav("empresa-dashboard"), 2500);
+  }
+
+  const divider = <div style={{ height: 1, background: "#E8E8E8", margin: "12px 0 16px" }} />;
+  const optTag = <span style={{ fontSize: 10, background: "#F5F5F5", color: "#999", padding: "2px 7px", borderRadius: 4 }}>Opcional</span>;
+
+  if (enviado) return (
+    <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center", maxWidth: 340, padding: "0 20px" }}>
+        <div style={{ fontSize: 56 }}>✅</div>
+        <h2 style={{ marginTop: 12, fontSize: 22 }}>¡Carga publicada!</h2>
+        <p style={{ color: "#555", marginTop: 10, fontSize: 15, lineHeight: 1.5 }}>
+          Notificamos a <strong style={{ color: "#E85D20" }}>{transportistasMatch.length > 0 ? transportistasMatch.length : "los"} transportistas</strong> que hacen esta ruta. Solo vos vas a ver todos los precios para comparar.
+        </p>
+        <div style={{ marginTop: 16, padding: 12, background: "#F5F5F5", borderRadius: 8, fontSize: 13, color: "#666" }}>
+          Mirá las ofertas en <strong>Últimos envíos</strong>.
+        </div>
+        <p style={{ color: "#aaa", fontSize: 12, marginTop: 12 }}>Redirigiendo...</p>
+      </div>
+    </div>
+  );
+
+  const pasoLabels = ["Ruta", "Qué mandás", "Destinatario", "Resumen"];
+
+  return (
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "20px 14px" }}>
+
+      {/* Barra de pasos */}
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 24 }}>
+        {pasoLabels.map((lbl, i) => (
+          <React.Fragment key={i}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+              <div style={{ width: 26, height: 26, borderRadius: "50%", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", background: paso > i + 1 ? "#0F6E56" : paso === i + 1 ? "#E85D20" : "#E0E0E0", color: paso >= i + 1 ? "#fff" : "#999" }}>
+                {paso > i + 1 ? "✓" : i + 1}
+              </div>
+              <span style={{ fontSize: 9, color: paso === i + 1 ? "#E85D20" : "#999", fontWeight: paso === i + 1 ? 600 : 400, whiteSpace: "nowrap" }}>{lbl}</span>
+            </div>
+            {i < pasoLabels.length - 1 && <div style={{ flex: 1, height: 2, background: paso > i + 1 ? "#0F6E56" : "#E0E0E0", margin: "0 3px", marginBottom: 16 }} />}
+          </React.Fragment>
+        ))}
+      </div>
+
+      {/* ── PASO 1: RUTA ── */}
+      {paso === 1 && (
+        <div className="card">
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>¿A dónde va el envío?</h2>
+
+          {/* Dirección retiro */}
+          <div className="form-group">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+              <label style={{ margin: 0 }}>Dirección de retiro</label>
+              {usuario?.maps && <a href={usuario.maps} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#185FA5", textDecoration: "none" }}>📍 Ver en Maps</a>}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input value={direccionRetiro} onChange={e => setDireccionRetiro(e.target.value)} placeholder="Calle, número, ciudad" style={{ flex: 1 }} />
+              <button type="button" onClick={() => { if (!navigator.geolocation) return; navigator.geolocation.getCurrentPosition(p => setDireccionRetiro(`https://maps.google.com/?q=${p.coords.latitude},${p.coords.longitude}`)); }} style={{ background: "#2C2C2A", color: "#fff", border: "none", borderRadius: 8, padding: "0 12px", fontSize: 16, cursor: "pointer", flexShrink: 0 }}>📍</button>
+            </div>
+            {usuario?.direccion && direccionRetiro === usuario.direccion && <p style={{ fontSize: 11, color: "#0F6E56", marginTop: 4 }}>✓ Usando tu dirección registrada</p>}
+            {usuario?.direccion && direccionRetiro !== usuario.direccion && <button onClick={() => setDireccionRetiro(usuario.direccion)} style={{ fontSize: 11, color: "#E85D20", background: "none", border: "none", cursor: "pointer", padding: "3px 0", marginTop: 2 }}>↩ Usar mi dirección registrada</button>}
+          </div>
+
+          {divider}
+
+          <SelectorRuta label="Origen" provincia={origenProv} localidad={origenLoc} onProvincia={setOrigenProv} onLocalidad={setOrigenLoc} />
+          <div style={{ marginTop: 10 }} />
+          <SelectorRuta label="Destino" provincia={destinoProv} localidad={destinoLoc} onProvincia={setDestinoProv} onLocalidad={setDestinoLoc} />
+
+          {divider}
+
+          {/* Fechas retiro */}
+          <div className="form-group">
+            <label>Fecha de retiro *</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <input type="date" value={form.retiro} onChange={e => setForm({...form, retiro: e.target.value})} />
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}><span style={{ fontSize: 12, color: "#666" }}>Hora</span>{optTag}</div>
+                <input type="time" value={form.horaRetiro} onChange={e => setForm({...form, horaRetiro: e.target.value})} />
+              </div>
+            </div>
+          </div>
+
+          {/* Fechas entrega */}
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}><label style={{ margin: 0 }}>Fecha de entrega</label>{optTag}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <input type="date" value={form.entrega} onChange={e => setForm({...form, entrega: e.target.value})} />
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}><span style={{ fontSize: 12, color: "#666" }}>Hora</span>{optTag}</div>
+                <input type="time" value={form.horaEntrega} onChange={e => setForm({...form, horaEntrega: e.target.value})} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── PASO 2: QUÉ MANDÁS ── */}
+      {paso === 2 && (
+        <div className="card">
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>¿Qué mandás?</h2>
+
+          {/* Tipo */}
+          <div className="form-group">
+            <label>Tipo de envío *</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7 }}>
+              {[{ val: "Documento", icon: "📄", desc: "Papeles, facturas" }, { val: "Paquete chico", icon: "📦", desc: "Entra en moto" }, { val: "Paquete mediano", icon: "🗃️", desc: "Caja mediana" }, { val: "Caja grande", icon: "📫", desc: "Varios kilos" }, { val: "Varios bultos", icon: "🏗️", desc: "Más de una pieza" }, { val: "Otro", icon: "💬", desc: "Lo describo abajo" }].map(t => (
+                <div key={t.val} onClick={() => setForm({...form, tipo: t.val})} style={{ border: `2px solid ${form.tipo === t.val ? "#E85D20" : "#E0E0E0"}`, borderRadius: 8, padding: "9px 6px", cursor: "pointer", background: form.tipo === t.val ? "#FEF3EC" : "#fff", textAlign: "center" }}>
+                  <div style={{ fontSize: 18 }}>{t.icon}</div>
+                  <div style={{ fontSize: 11, fontWeight: 500, marginTop: 3, color: form.tipo === t.val ? "#C44A0F" : "#1A1A1A" }}>{t.val}</div>
+                  <div style={{ fontSize: 9, color: "#999", marginTop: 1 }}>{t.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Especial */}
+          <div className="form-group">
+            <label>¿Necesitás algo especial?</label>
+            <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+              {[{ val: "normal", label: "Normal" }, { val: "fragil", label: "⚠️ Frágil" }, { val: "refrigerado", label: "❄️ Refrigerado" }, { val: "contrareembolso", label: "💵 Contra reembolso" }].map(o => (
+                <button key={o.val} onClick={() => setForm({...form, especial: o.val})} style={{ padding: "7px 12px", borderRadius: 20, border: `1.5px solid ${form.especial === o.val ? "#E85D20" : "#E0E0E0"}`, background: form.especial === o.val ? "#FEF3EC" : "#fff", color: form.especial === o.val ? "#C44A0F" : "#555", fontSize: 12, fontWeight: form.especial === o.val ? 500 : 400, cursor: "pointer" }}>{o.label}</button>
+              ))}
+            </div>
+          </div>
+
+          {divider}
+
+          {/* Tabla bultos */}
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Detalle de bultos *</label>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 340 }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid #E8E8E8" }}>
+                    {["#", "Largo cm", "Ancho cm", "Alto cm", "Peso kg", "Cant.", ""].map((h, i) => (
+                      <th key={i} style={{ fontSize: 10, color: "#888", padding: "0 3px 8px", textAlign: "center", fontWeight: 500 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {bultos.map((b, i) => (
+                    <tr key={b.id}>
+                      <td style={{ fontSize: 12, color: "#999", textAlign: "center", padding: "4px 2px" }}>{i + 1}</td>
+                      {["largo", "ancho", "alto", "peso"].map(campo => (
+                        <td key={campo} style={{ padding: "4px 3px" }}>
+                          <input type="number" min="0" value={b[campo]} onChange={e => updateBulto(b.id, campo, e.target.value)} placeholder="—" style={{ textAlign: "center", padding: "7px 4px", fontSize: 13 }} />
+                        </td>
+                      ))}
+                      <td style={{ padding: "4px 3px" }}>
+                        <input type="number" min="1" value={b.cant} onChange={e => updateBulto(b.id, "cant", e.target.value)} style={{ textAlign: "center", padding: "7px 4px", fontSize: 13 }} />
+                      </td>
+                      <td style={{ padding: "4px 2px", textAlign: "center" }}>
+                        <button onClick={() => eliminarBulto(b.id)} style={{ background: "none", border: "none", color: "#ccc", fontSize: 16, cursor: "pointer", padding: "4px" }}>×</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <button onClick={agregarBulto} style={{ width: "100%", marginTop: 10, padding: "10px", border: "1.5px dashed #F5C4A0", borderRadius: 8, background: "#FEF3EC", color: "#E85D20", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>+ Agregar otro bulto</button>
+          </div>
+
+          {divider}
+
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}><label style={{ margin: 0 }}>Descripción</label>{optTag}</div>
+            <input value={form.descripcion} onChange={e => setForm({...form, descripcion: e.target.value})} placeholder="Ej: ropa, repuestos, documentación..." />
+          </div>
+        </div>
+      )}
+
+      {/* ── PASO 3: DESTINATARIO ── */}
+      {paso === 3 && (
+        <div className="card">
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>¿A quién va el envío?</h2>
+          <p style={{ fontSize: 12, color: "#888", marginBottom: 16 }}>Estos datos los usa el chofer para entregar y contactar al destinatario.</p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div className="form-group"><label>Nombre / Empresa *</label><input value={destinatario.nombre} onChange={e => setDestinatario({...destinatario, nombre: e.target.value})} placeholder="Ej: Juan García" /></div>
+            <div className="form-group"><label>Teléfono / WhatsApp *</label><input type="tel" value={destinatario.telefono} onChange={e => setDestinatario({...destinatario, telefono: e.target.value})} placeholder="Ej: 3764 123456" /></div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div className="form-group"><label>Calle y número *</label><input value={destinatario.calle} onChange={e => setDestinatario({...destinatario, calle: e.target.value})} placeholder="Av. San Martín 1250" /></div>
+            <div className="form-group"><label>Localidad *</label><input value={destinatario.localidad} onChange={e => setDestinatario({...destinatario, localidad: e.target.value})} placeholder="Ej: Posadas" /></div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+            <div className="form-group">
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}><label style={{ margin: 0 }}>Piso</label>{optTag}</div>
+              <input value={destinatario.piso} onChange={e => setDestinatario({...destinatario, piso: e.target.value})} placeholder="Ej: 3" />
+            </div>
+            <div className="form-group">
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}><label style={{ margin: 0 }}>Depto</label>{optTag}</div>
+              <input value={destinatario.depto} onChange={e => setDestinatario({...destinatario, depto: e.target.value})} placeholder="Ej: B" />
+            </div>
+            <div className="form-group">
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}><label style={{ margin: 0 }}>Portero</label>{optTag}</div>
+              <input value={destinatario.portero} onChange={e => setDestinatario({...destinatario, portero: e.target.value})} placeholder="Ej: 3B" />
+            </div>
+          </div>
+          <div className="form-group">
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}><label style={{ margin: 0 }}>Referencia / aclaraciones</label>{optTag}</div>
+            <input value={destinatario.referencia} onChange={e => setDestinatario({...destinatario, referencia: e.target.value})} placeholder="Ej: Casa azul, entregar después de las 10hs..." />
+          </div>
+          <MapsInputSimple value={destinatario.maps} onChange={v => setDestinatario({...destinatario, maps: v})} />
+
+          {divider}
+
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Horario de entrega preferido</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 6 }}>
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ fontSize: 12, color: "#666" }}>Fecha</span>{optTag}</div>
+                <input type="date" value={destinatario.horarioFecha} onChange={e => setDestinatario({...destinatario, horarioFecha: e.target.value})} />
+              </div>
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ fontSize: 12, color: "#666" }}>Hora</span>{optTag}</div>
+                <input type="time" value={destinatario.horarioHora} onChange={e => setDestinatario({...destinatario, horarioHora: e.target.value})} />
+              </div>
+            </div>
+            <p style={{ fontSize: 11, color: "#999", marginTop: 5 }}>Si el destinatario tiene un horario específico para recibir, indicalo acá.</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── PASO 4: RESUMEN ── */}
+      {paso === 4 && (
+        <div>
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Revisá tu pedido</h2>
+          <p style={{ fontSize: 12, color: "#888", marginBottom: 16 }}>Confirmá los datos antes de publicar.</p>
+
+          {/* Ruta */}
+          <div className="card" style={{ marginBottom: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em" }}>Ruta</span>
+              <button onClick={() => setPaso(1)} style={{ fontSize: 12, color: "#E85D20", background: "none", border: "none", cursor: "pointer", fontWeight: 500 }}>Editar</button>
+            </div>
+            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>{origenLoc}, {origenProv} → {destinoLoc}, {destinoProv}</div>
+            <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Retiro desde: {direccionRetiro}</div>
+            <div style={{ display: "flex", gap: 14, fontSize: 12, color: "#555", flexWrap: "wrap" }}>
+              <span>📅 {form.retiro}{form.horaRetiro ? ` · ${form.horaRetiro}hs` : ""}</span>
+              {form.entrega && <span>🎯 Entrega: {form.entrega}{form.horaEntrega ? ` · ${form.horaEntrega}hs` : ""}</span>}
+            </div>
+          </div>
+
+          {/* Qué mandás */}
+          <div className="card" style={{ marginBottom: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em" }}>¿Qué mandás?</span>
+              <button onClick={() => setPaso(2)} style={{ fontSize: 12, color: "#E85D20", background: "none", border: "none", cursor: "pointer", fontWeight: 500 }}>Editar</button>
+            </div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+              <span style={{ background: "#FEF3EC", color: "#C44A0F", fontSize: 11, padding: "3px 8px", borderRadius: 4, fontWeight: 500 }}>{form.tipo}</span>
+              {form.especial !== "normal" && <span style={{ background: "#FEF3EC", color: "#C44A0F", fontSize: 11, padding: "3px 8px", borderRadius: 4, fontWeight: 500 }}>{form.especial === "fragil" ? "⚠️ Frágil" : form.especial === "refrigerado" ? "❄️ Refrigerado" : "💵 Contra reembolso"}</span>}
+            </div>
+            <div style={{ background: "#F8F8F8", borderRadius: 8, padding: "8px 10px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "20px 1fr 1fr 1fr 1fr 40px", gap: 6, marginBottom: 6 }}>
+                {["#", "Largo", "Ancho", "Alto", "Peso", "Cant."].map(h => <div key={h} style={{ fontSize: 10, color: "#999", textAlign: "center" }}>{h}</div>)}
+              </div>
+              {bultos.map((b, i) => (
+                <div key={b.id} style={{ display: "grid", gridTemplateColumns: "20px 1fr 1fr 1fr 1fr 40px", gap: 6, marginBottom: 4 }}>
+                  <div style={{ fontSize: 12, color: "#999", textAlign: "center" }}>{i + 1}</div>
+                  <div style={{ fontSize: 12, textAlign: "center" }}>{b.largo}cm</div>
+                  <div style={{ fontSize: 12, textAlign: "center" }}>{b.ancho}cm</div>
+                  <div style={{ fontSize: 12, textAlign: "center" }}>{b.alto}cm</div>
+                  <div style={{ fontSize: 12, textAlign: "center" }}>{b.peso}kg</div>
+                  <div style={{ fontSize: 12, textAlign: "center" }}>×{b.cant}</div>
+                </div>
+              ))}
+            </div>
+            {form.descripcion && <p style={{ fontSize: 12, color: "#666", marginTop: 8 }}>{form.descripcion}</p>}
+          </div>
+
+          {/* Destinatario */}
+          <div className="card" style={{ marginBottom: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em" }}>Destinatario</span>
+              <button onClick={() => setPaso(3)} style={{ fontSize: 12, color: "#E85D20", background: "none", border: "none", cursor: "pointer", fontWeight: 500 }}>Editar</button>
+            </div>
+            <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 4 }}>{destinatario.nombre}</div>
+            <div style={{ fontSize: 12, color: "#666", marginBottom: 2 }}>📞 {destinatario.telefono}</div>
+            <div style={{ fontSize: 12, color: "#666", marginBottom: 2 }}>📍 {destinatario.calle}{destinatario.piso ? `, Piso ${destinatario.piso}` : ""}{destinatario.depto ? ` Dto ${destinatario.depto}` : ""} · {destinatario.localidad}</div>
+            {destinatario.referencia && <div style={{ fontSize: 12, color: "#999", marginTop: 4 }}>💬 {destinatario.referencia}</div>}
+            {destinatario.horarioFecha && <div style={{ fontSize: 12, color: "#555", marginTop: 4 }}>🕐 Entrega preferida: {destinatario.horarioFecha}{destinatario.horarioHora ? ` · ${destinatario.horarioHora}hs` : ""}</div>}
+          </div>
+
+          {/* Aviso transportistas */}
+          <div style={{ background: "#FEF3EC", border: "1px solid #F5C4A0", borderRadius: 10, padding: "14px 16px", marginBottom: 16, display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <span style={{ fontSize: 20, flexShrink: 0 }}>📨</span>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: "#C44A0F", marginBottom: 3 }}>
+                {transportistasMatch.length > 0 ? `Se notifica a ${transportistasMatch.length} transportistas` : "Sin transportistas registrados aún para esta ruta"}
+              </div>
+              <div style={{ fontSize: 12, color: "#C44A0F", opacity: 0.85 }}>Cada uno cotiza por separado — solo vos ves todos los precios para comparar.</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Botones */}
+      <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+        {paso > 1
+          ? <button className="btn-secondary" onClick={() => setPaso(p => p - 1)} style={{ flex: 1 }}>← Atrás</button>
+          : <button className="btn-secondary" onClick={() => onNav("empresa-dashboard")} style={{ flex: 1 }}>Cancelar</button>
+        }
+        {paso < TOTAL_PASOS
+          ? <button className="btn-primary" onClick={siguientePaso} style={{ flex: 2, padding: "12px" }}>Continuar →</button>
+          : <button className="btn-primary" onClick={handlePublicar} style={{ flex: 2, padding: "13px", fontSize: 15 }}>Publicar carga</button>
+        }
+      </div>
+    </div>
+  );
+}
+
+function VerOfertas({ onNav, onAceptarOferta, cargas, ofertas }) {
+  const cargasData = cargas || CARGAS_MOCK;
+  const ofertasData = ofertas || OFERTAS_MOCK;
+  const carga = cargasData.find(c => c.estado === 'activo') || cargasData[0] || CARGAS_MOCK[0];
+  const [aceptada, setAceptada] = useState(null);
+  const [cerrado, setCerrado] = useState(false);
+  const [ordenar, setOrdenar] = useState("precio");
+
+  const ofertasCarga = ofertasData.filter(o => o.cargaId === carga.id || !o.cargaId);
+  const ofertasOrdenadas = [...ofertasCarga].sort((a, b) => {
+    if (ordenar === "precio") return a.precio - b.precio;
+    const ta = TRANSPORTISTAS_MOCK.find(t => t.id === a.transportistaId);
+    const tb = TRANSPORTISTAS_MOCK.find(t => t.id === b.transportistaId);
+    return (tb?.calificacion || 0) - (ta?.calificacion || 0);
+  });
+
+  function aceptarOferta(ofertaId) {
+    const oferta = ofertasCarga.find(o => o.id === ofertaId) || ofertasData.find(o => o.id === ofertaId);
+    const transportista = TRANSPORTISTAS_MOCK.find(t => t.id === oferta.transportistaId);
+    const nuevoRemito = {
+      id: generarNumeroRemito(),
+      fecha: new Date().toLocaleDateString("es-AR"),
+      hora: new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }),
+      remitente: { nombre: "Mi Empresa SRL", telefono: "3764 000000", domicilio: carga.empresa, ciudad: carga.origen },
+      destinatario: { nombre: "Destinatario", telefono: "", domicilio: "", ciudad: carga.destino },
+      envio: { descripcion: carga.tipo, tipo: carga.tipo, peso: carga.peso, especial: "normal", bultos: "1", pagaFlete: "remitente" },
+      transportista: { nombre: transportista.nombre, chofer: "Chofer asignado", telefono: "", vehiculo: transportista.vehiculo },
+      flete: oferta.precio,
+      estado: "pendiente-retiro",
+      retiro: oferta.retiro,
+      entregaEst: oferta.entrega,
+    };
+    setAceptada(ofertaId);
+    setCerrado(true);
+    setTimeout(() => {
+      if (onAceptarOferta) onAceptarOferta(nuevoRemito);
+    }, 1500);
+  }
+
+  const menorPrecio = ofertasCarga.length > 0 ? Math.min(...ofertasCarga.map(o => o.precio)) : 0;
+
+  return (
+    <PageWrapper titulo="Comparar ofertas" subtitulo={`${carga.origen} → ${carga.destino} · ${carga.tipo}`}>
+      <div style={{ maxWidth: 700 }}>
+
+        {/* Resumen de la carga */}
+        <div style={{ display: "flex", gap: 10, marginBottom: 20, padding: 14, background: "#fff", borderRadius: 10, border: "1px solid #E0E0E0" }}>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 11, color: "#888" }}>Retiro deseado</div><div style={{ fontWeight: 500, fontSize: 14 }}>{carga.retiro}</div></div>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 11, color: "#888" }}>Entrega deseada</div><div style={{ fontWeight: 500, fontSize: 14 }}>{carga.entrega}</div></div>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 11, color: "#888" }}>Respuestas recibidas</div><div style={{ fontWeight: 600, fontSize: 14, color: "#E85D20" }}>{ofertasCarga.length} transportistas</div></div>
+        </div>
+
+        {/* Aviso subasta cerrada */}
+        {cerrado && (
+          <div style={{ background: "#E1F5EE", border: "1px solid #0F6E56", borderRadius: 10, padding: 16, marginBottom: 20, textAlign: "center" }}>
+            <div style={{ fontWeight: 500, color: "#0F6E56" }}>✓ Oferta aceptada — redirigiendo al seguimiento...</div>
+          </div>
+        )}
+
+        {/* Ordenar */}
+        {!cerrado && (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <p style={{ fontSize: 13, color: "#666" }}>
+              Los transportistas <strong>no ven los precios de los demás</strong>. Solo vos podés comparar.
+            </p>
+            <div style={{ display: "flex", gap: 4, background: "#F5F5F5", padding: 3, borderRadius: 8 }}>
+              {[["precio", "Menor precio"], ["calificacion", "Mejor puntuación"]].map(([val, lbl]) => (
+                <button key={val} onClick={() => setOrdenar(val)} style={{ padding: "5px 12px", borderRadius: 6, background: ordenar === val ? "#fff" : "transparent", color: ordenar === val ? "#1A1A1A" : "#888", border: ordenar === val ? "1px solid #E0E0E0" : "none", fontSize: 12, fontWeight: ordenar === val ? 500 : 400, cursor: "pointer" }}>{lbl}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tarjetas de ofertas */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {ofertasOrdenadas.map((o, i) => {
+            const t = TRANSPORTISTAS_MOCK.find(t => t.id === o.transportistaId);
+            const esMasBarato = o.precio === menorPrecio;
+            const esMejorPuntaje = t && t.calificacion === Math.max(...TRANSPORTISTAS_MOCK.filter(tr => ofertasCarga.find(of => of.transportistaId === tr.id)).map(tr => tr.calificacion));
+            return (
+              <div key={o.id} className="card" style={{ border: aceptada === o.id ? "2px solid #0F6E56" : o.matchRuta ? "2px solid #E85D20" : "1px solid #E0E0E0", position: "relative", opacity: cerrado && aceptada !== o.id ? 0.5 : 1 }}>
+
+                {/* Badges destacados */}
+                <div style={{ position: "absolute", top: 12, right: 14, display: "flex", gap: 6 }}>
+                  {esMasBarato && <span style={{ background: "#E1F5EE", color: "#0F6E56", fontSize: 10, padding: "2px 8px", borderRadius: 5, fontWeight: 600 }}>💰 Más barato</span>}
+                  {esMejorPuntaje && <span style={{ background: "#E6F1FB", color: "#185FA5", fontSize: 10, padding: "2px 8px", borderRadius: 5, fontWeight: 600 }}>⭐ Mejor puntuado</span>}
+                  {o.matchRuta && <span style={{ background: "#FEF3EC", color: "#C44A0F", fontSize: 10, padding: "2px 8px", borderRadius: 5, fontWeight: 600 }}>Hace esta ruta</span>}
+                </div>
+
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+                  {/* Avatar */}
+                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#2C2C2A", display: "flex", alignItems: "center", justifyContent: "center", color: "#E85D20", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{t.foto}</div>
+
+                  <div style={{ flex: 1, paddingTop: 2 }}>
+                    {/* Nombre y puntaje */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, paddingRight: 100 }}>
+                      <span style={{ fontWeight: 600, fontSize: 15 }}>{t.nombre}</span>
+                      {t.verificado && <span className="badge badge-verificado" style={{ fontSize: 10 }}>✓ Verificado</span>}
+                      <span style={{ color: "#E85D20", fontWeight: 500, fontSize: 13 }}>★ {t.calificacion}</span>
+                      <span style={{ fontSize: 12, color: "#999" }}>{t.viajes} viajes</span>
+                    </div>
+
+                    {/* Datos de la oferta */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
+                      <div style={{ background: "#F5F5F5", borderRadius: 8, padding: "10px 12px" }}>
+                        <div style={{ fontSize: 10, color: "#888", marginBottom: 2 }}>Precio</div>
+                        <div style={{ fontWeight: 700, fontSize: 18, color: esMasBarato ? "#0F6E56" : "#1A1A1A" }}>${o.precio.toLocaleString()}</div>
+                      </div>
+                      <div style={{ background: "#F5F5F5", borderRadius: 8, padding: "10px 12px" }}>
+                        <div style={{ fontSize: 10, color: "#888", marginBottom: 2 }}>Retira</div>
+                        <div style={{ fontWeight: 500, fontSize: 13 }}>{o.retiro}</div>
+                      </div>
+                      <div style={{ background: "#F5F5F5", borderRadius: 8, padding: "10px 12px" }}>
+                        <div style={{ fontSize: 10, color: "#888", marginBottom: 2 }}>Entrega estimada</div>
+                        <div style={{ fontWeight: 500, fontSize: 13 }}>{o.entrega}</div>
+                      </div>
+                      <div style={{ background: "#F5F5F5", borderRadius: 8, padding: "10px 12px" }}>
+                        <div style={{ fontSize: 10, color: "#888", marginBottom: 2 }}>Vehículo</div>
+                        <div style={{ fontWeight: 500, fontSize: 13 }}>{t.vehiculo}</div>
+                      </div>
+                    </div>
+
+                    {o.nota && (
+                      <p style={{ fontSize: 13, color: "#555", marginBottom: 12, fontStyle: "italic", background: "#FAFAFA", padding: "8px 10px", borderRadius: 6, borderLeft: "3px solid #E0E0E0" }}>
+                        "{o.nota}"
+                      </p>
+                    )}
+
+                    {!cerrado && (
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="btn-ghost" onClick={() => onNav("chat")} style={{ fontSize: 13, padding: "7px 14px" }}>Consultar</button>
+                        <button className="btn-primary" onClick={() => aceptarOferta(o.id)} style={{ fontSize: 13, padding: "7px 20px" }}>
+                          Elegir este transportista
+                        </button>
+                      </div>
+                    )}
+
+                    {aceptada === o.id && (
+                      <div style={{ fontWeight: 500, color: "#0F6E56", fontSize: 14 }}>✓ Transportista elegido</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Nota al pie */}
+        {!cerrado && (
+          <p style={{ fontSize: 12, color: "#aaa", marginTop: 20, textAlign: "center" }}>
+            Podés seguir esperando más ofertas. Cuando estés listo, elegí el transportista que más te convenga.
+          </p>
+        )}
+      </div>
+    </PageWrapper>
+  );
+}
+
+function SeguimientoEnvio({ onNav, onVerRemito }) {
+  const carga = CARGAS_MOCK[3];
+  const transportista = TRANSPORTISTAS_MOCK[0];
+
+  function verRemito() {
+    const remito = {
+      id: "FL-" + Math.floor(Math.random() * 900000 + 100000),
+      fecha: new Date().toLocaleDateString("es-AR"),
+      hora: new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }),
+      remitente: { nombre: "Mi Empresa SRL", telefono: "3764 000000", domicilio: "Av. López y Planes 123", ciudad: carga.origen },
+      destinatario: { nombre: "Destinatario", telefono: "3764 111111", domicilio: "Calle Falsa 456", ciudad: carga.destino },
+      envio: { descripcion: carga.tipo, tipo: carga.tipo, peso: carga.peso, especial: "normal", bultos: "1", pagaFlete: "remitente" },
+      transportista: { nombre: transportista.nombre, chofer: "Chofer asignado", telefono: "", vehiculo: transportista.vehiculo },
+      flete: 85000,
+      estado: "en-camino",
+      retiro: carga.retiro,
+      entregaEst: carga.entrega,
+    };
+    if (onVerRemito) onVerRemito(remito);
+  }
+  const pasos = [
+    { id: 1, label: "Oferta aceptada", fecha: "01/06 09:15", done: true },
+    { id: 2, label: "Mercadería retirada", fecha: "01/06 14:30", done: true },
+    { id: 3, label: "En camino", fecha: "01/06 15:00", done: true, activo: true },
+    { id: 4, label: "Entregado", fecha: "—", done: false },
+  ];
+
+  return (
+    <PageWrapper titulo="Seguimiento del envío" subtitulo={`${carga.origen} → ${carga.destino}`}>
+      <div style={{ maxWidth: 600 }}>
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 500 }}>Estado actual</h3>
+            <span className="badge badge-en-camino" style={{ fontSize: 13, padding: "5px 12px" }}>🚛 En camino</span>
+          </div>
+          <div style={{ position: "relative" }}>
+            {pasos.map((paso, i) => (
+              <div key={paso.id} style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: i < pasos.length - 1 ? 20 : 0, position: "relative" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: paso.done ? "#E85D20" : "#E0E0E0", display: "flex", alignItems: "center", justifyContent: "center", color: paso.done ? "#fff" : "#999", fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
+                    {paso.done ? "✓" : i + 1}
+                  </div>
+                  {i < pasos.length - 1 && <div style={{ width: 2, height: 28, background: paso.done ? "#E85D20" : "#E0E0E0", marginTop: 4 }} />}
+                </div>
+                <div style={{ paddingTop: 4 }}>
+                  <div style={{ fontWeight: paso.activo ? 600 : 400, color: paso.done ? "#1A1A1A" : "#999" }}>{paso.label}</div>
+                  <div style={{ fontSize: 12, color: "#999", marginTop: 2 }}>{paso.fecha}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="card" style={{ marginBottom: 16 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 500, marginBottom: 12 }}>Transportista</h3>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#2C2C2A", display: "flex", alignItems: "center", justifyContent: "center", color: "#E85D20", fontWeight: 700 }}>{transportista.foto}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 500 }}>{transportista.nombre}</div>
+              <div style={{ fontSize: 13, color: "#666" }}>{transportista.vehiculo} · ★ {transportista.calificacion}</div>
+            </div>
+            <button className="btn-secondary" onClick={() => onNav("chat")} style={{ fontSize: 13 }}>Enviar mensaje</button>
+          </div>
+        </div>
+
+        <div className="card" style={{ marginBottom: 16 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 500, marginBottom: 12 }}>Detalle del envío</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+            {[["Origen", carga.origen], ["Destino", carga.destino], ["Tipo", carga.tipo], ["Peso", carga.peso], ["Retiro", carga.retiro], ["Entrega estimada", carga.entrega]].map(([k, v]) => (
+              <div key={k}>
+                <div style={{ fontSize: 12, color: "#666" }}>{k}</div>
+                <div style={{ fontWeight: 500, fontSize: 14 }}>{v}</div>
+              </div>
+            ))}
+          </div>
+          <button className="btn-secondary" onClick={verRemito} style={{ width: "100%", fontSize: 13 }}>
+            📄 Ver remito y QR
+          </button>
+        </div>
+      </div>
+    </PageWrapper>
+  );
+}
+
+// ─── TRANSPORTISTA SCREENS ───────────────────────────────────────────────────
+
+const COTIZACIONES_MOCK = [
+  { id: 1, origen: "Posadas, Misiones", destino: "Santa Fe Capital", precio: 45000, retiro: "07/06/2026", estado: "esperando" },
+  { id: 2, origen: "Posadas, Misiones", destino: "Buenos Aires, CABA", precio: 42000, retiro: "06/06/2026", estado: "elegido" },
+];
+
+function TransportistaDashboard({ onNav, usuario, cargas }) {
+  const [verTodos, setVerTodos] = useState(false);
+  const cargasData = cargas || CARGAS_MOCK;
+  const pedidosRecibidos = cargasData.filter(c => c.matchRuta && c.estado !== "en-camino");
+  const todasLasCargas = cargasData.filter(c => c.estado !== "en-camino");
+
+  const cardPedido = (c, esNuevo) => (
+    <div key={c.id} className="card" style={{ marginBottom: 10, border: esNuevo ? "2px solid #E85D20" : "1px solid #E0E0E0" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <span style={{ fontWeight: 600, fontSize: 14 }}>{c.origen} → {c.destino}</span>
+        {esNuevo && <span className="badge badge-nueva">Nuevo</span>}
+      </div>
+      <div style={{ fontSize: 12, color: "#666", marginBottom: 2 }}>📦 {c.tipo} · ⚖️ {c.peso}</div>
+      <div style={{ fontSize: 12, color: "#666", marginBottom: 12 }}>📅 Retiro: {c.retiro}{c.entrega ? ` · 🎯 Entrega: ${c.entrega}` : ""}</div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button className="btn-primary" onClick={() => onNav("hacer-oferta")} style={{ flex: 2, fontSize: 13 }}>Cotizar este flete</button>
+        <button className="btn-secondary" style={{ flex: 1, fontSize: 13 }}>Ver detalle</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "24px 14px" }}>
+
+      {/* Saludo */}
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: "#1A1A1A", marginBottom: 4 }}>
+          Hola{usuario?.nombre ? `, ${usuario.nombre}` : ""} 👋
+        </h1>
+        {pedidosRecibidos.length > 0
+          ? <p style={{ fontSize: 14, color: "#555" }}>Tenés <strong style={{ color: "#E85D20" }}>{pedidosRecibidos.length} pedido{pedidosRecibidos.length > 1 ? "s" : ""} nuevo{pedidosRecibidos.length > 1 ? "s" : ""}</strong> esperando tu cotización.</p>
+          : <p style={{ fontSize: 14, color: "#666" }}>No tenés pedidos nuevos por ahora.</p>
+        }
+      </div>
+
+      {/* Pedidos recibidos */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em" }}>📥 Pedidos recibidos</span>
+        <span style={{ fontSize: 11, color: "#aaa" }}>Se limpian todos los días a las 05:00</span>
+      </div>
+
+      {pedidosRecibidos.length > 0
+        ? pedidosRecibidos.map(c => cardPedido(c, true))
+        : (
+          <div className="card" style={{ textAlign: "center", padding: 28, color: "#999", marginBottom: 10 }}>
+            <div style={{ fontSize: 36, marginBottom: 10 }}>📭</div>
+            <p style={{ fontWeight: 500, color: "#666" }}>No hay pedidos nuevos para tus rutas</p>
+            <p style={{ fontSize: 13, marginTop: 6 }}>Cuando una empresa publique una carga que coincida con tus rutas, te va a aparecer acá.</p>
+          </div>
+        )
+      }
+
+      {/* Mis cotizaciones */}
+      <div style={{ marginTop: 24, marginBottom: 10 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em" }}>📋 Mis cotizaciones</span>
+      </div>
+
+      {COTIZACIONES_MOCK.map(cot => (
+        <div key={cot.id} className="card" style={{ marginBottom: 10, borderLeft: `4px solid ${cot.estado === "elegido" ? "#0F6E56" : "#E0E0E0"}` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <span style={{ fontWeight: 500, fontSize: 14 }}>{cot.origen} → {cot.destino}</span>
+                {cot.estado === "elegido"
+                  ? <span className="badge badge-entregado">✓ Te eligieron</span>
+                  : <span className="badge badge-activo">Esperando respuesta</span>
+                }
+              </div>
+              <div style={{ fontSize: 12, color: "#666" }}>💰 Coticé ${cot.precio.toLocaleString()} · Retiro {cot.retiro}</div>
+              <div style={{ fontSize: 11, color: "#aaa", marginTop: 3 }}>
+                {cot.estado === "elegido" ? "Coordinar con la empresa antes del retiro" : "La empresa todavía no eligió transportista"}
+              </div>
+            </div>
+            {cot.estado === "elegido" && (
+              <button className="btn-primary" onClick={() => onNav("mis-viajes")} style={{ fontSize: 12, padding: "7px 12px", marginLeft: 10, flexShrink: 0 }}>Ver detalles</button>
+            )}
+          </div>
+        </div>
+      ))}
+
+      {/* Ver todos */}
+      <button onClick={() => setVerTodos(v => !v)} style={{ width: "100%", marginTop: 12, padding: 13, border: "0.5px solid #E0E0E0", borderRadius: 10, background: "#F5F5F5", color: "#555", fontSize: 13, cursor: "pointer" }}>
+        {verTodos ? "Ocultar todos los envíos ↑" : "Ver todos los envíos disponibles →"}
+      </button>
+      {verTodos && (
+        <div style={{ marginTop: 10 }}>
+          <p style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>Explorá rutas nuevas y decidí si querés agregar más destinos a tus rutas.</p>
+          {todasLasCargas.map(c => cardPedido(c, false))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MisRutas({ onNav }) {
+  const [rutas, setRutas] = useState([
+    { id: 1, origen: "Posadas", destino: "Buenos Aires", paradas: "Corrientes, Santa Fe", dias: ["Lun", "Mié"], tipo: "General" },
+    { id: 2, origen: "Posadas", destino: "Corrientes", paradas: "", dias: ["Mar", "Jue", "Sáb"], tipo: "Refrigerado" },
+  ]);
+  const [agregando, setAgregando] = useState(false);
+  const [nueva, setNueva] = useState({ origen: "", destino: "", paradas: "", dias: [], tipo: "General" });
+  const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+  function toggleDia(d) {
+    setNueva(prev => ({ ...prev, dias: prev.dias.includes(d) ? prev.dias.filter(x => x !== d) : [...prev.dias, d] }));
+  }
+
+  function agregarRuta() {
+    if (!nueva.origen || !nueva.destino || nueva.dias.length === 0) { alert("Completá origen, destino y al menos un día."); return; }
+    setRutas(prev => [...prev, { ...nueva, id: Date.now() }]);
+    setNueva({ origen: "", destino: "", paradas: "", dias: [], tipo: "General" });
+    setAgregando(false);
+  }
+
+  return (
+    <PageWrapper titulo="Mis rutas" subtitulo="Las empresas van a ver tus rutas antes de publicar una carga." accion={<button className="btn-primary" onClick={() => setAgregando(true)}>+ Agregar ruta</button>}>
+
+      {rutas.length === 0 && !agregando && (
+        <div className="card" style={{ textAlign: "center", padding: 32, color: "#666" }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🗺️</div>
+          <p style={{ fontWeight: 500 }}>Todavía no cargaste ninguna ruta</p>
+          <p style={{ fontSize: 13, marginTop: 6 }}>Agregá tus rutas para que las empresas te encuentren más fácil.</p>
+        </div>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+        {rutas.map(r => (
+          <div key={r.id} className="card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6 }}>📍 {r.origen} → {r.destino}</div>
+                {r.paradas && <div style={{ fontSize: 13, color: "#666", marginBottom: 6 }}>Paradas: {r.paradas}</div>}
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {r.dias.map(d => <span key={d} style={{ background: "#FEF3EC", color: "#C44A0F", fontSize: 11, padding: "2px 8px", borderRadius: 4, fontWeight: 500 }}>{d}</span>)}
+                  <span style={{ background: "#F5F5F5", color: "#666", fontSize: 11, padding: "2px 8px", borderRadius: 4 }}>{r.tipo}</span>
+                </div>
+              </div>
+              <button onClick={() => setRutas(prev => prev.filter(x => x.id !== r.id))} style={{ background: "transparent", color: "#ccc", border: "none", fontSize: 18, cursor: "pointer", padding: "0 4px" }}>×</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {agregando && (
+        <div className="card" style={{ border: "2px solid #E85D20" }}>
+          <h3 style={{ fontSize: 15, fontWeight: 500, marginBottom: 14 }}>Nueva ruta</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Origen *</label>
+              <input value={nueva.origen} onChange={e => setNueva({...nueva, origen: e.target.value})} placeholder="Ciudad de salida" />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Destino *</label>
+              <input value={nueva.destino} onChange={e => setNueva({...nueva, destino: e.target.value})} placeholder="Ciudad de llegada" />
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Paradas intermedias (opcional)</label>
+            <input value={nueva.paradas} onChange={e => setNueva({...nueva, paradas: e.target.value})} placeholder="Ej: Corrientes, Santa Fe" />
+          </div>
+          <div className="form-group">
+            <label>Tipo de carga que transportás</label>
+            <select value={nueva.tipo} onChange={e => setNueva({...nueva, tipo: e.target.value})}>
+              {["General", "Refrigerado", "Congelado", "Granel", "Fruta/verdura", "Ganado", "Maquinaria"].map(t => <option key={t}>{t}</option>)}
+            </select>
+          </div>
+          <div className="form-group" style={{ marginBottom: 16 }}>
+            <label>Días que hacés esta ruta *</label>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+              {DIAS.map(d => (
+                <button key={d} onClick={() => toggleDia(d)} style={{ padding: "6px 12px", borderRadius: 6, background: nueva.dias.includes(d) ? "#E85D20" : "#fff", color: nueva.dias.includes(d) ? "#fff" : "#666", border: `1px solid ${nueva.dias.includes(d) ? "#E85D20" : "#E0E0E0"}`, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>{d}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="btn-ghost" onClick={() => setAgregando(false)}>Cancelar</button>
+            <button className="btn-primary" onClick={agregarRuta}>Guardar ruta</button>
+          </div>
+        </div>
+      )}
+    </PageWrapper>
+  );
+}
+
+// ─── MI FLOTA ────────────────────────────────────────────────────────────────
+
+const KEY_FLOTA = "fletar_flota";
+function storageGet(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch { return fallback; }
+}
+function storageSave(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch {}
+}
+
+const FLOTA_SEMILLA = [
+  { id: 1, alias: "Móvil 01 · ABC 123", modelo: "Camión grande / 18 ruedas", tipo: "Camión grande / 18 ruedas", uso: "Ruta", patente: "ABC 123", chofer: "Carlos Ramírez", telefono: "3764 412345", capacidadM3: 90, capacidadKg: 20000 },
+  { id: 2, alias: "Móvil 02 · DEF 456", modelo: "Camión 3/4", tipo: "Camión 3/4", uso: "Ambos", patente: "DEF 456", chofer: "Juan López", telefono: "3764 498765", capacidadM3: 18, capacidadKg: 3500 },
+];
+
+const DB_VEHICULOS = [
+  { nombre: "Fiat Fiorino", categoria: "Utilitario chico", volumenM3: 3.3, cargaKg: 650, alias: ["fiorino"] },
+  { nombre: "Renault Kangoo", categoria: "Utilitario chico", volumenM3: 3.3, cargaKg: 750, alias: ["kangoo", "kangoo express"] },
+  { nombre: "Peugeot Partner", categoria: "Utilitario chico", volumenM3: 3.9, cargaKg: 950, alias: ["partner"] },
+  { nombre: "Citroën Berlingo", categoria: "Utilitario chico", volumenM3: 3.9, cargaKg: 865, alias: ["berlingo"] },
+  { nombre: "Toyota Hiace Furgón", categoria: "Furgón mediano", volumenM3: 6.2, cargaKg: 1200, alias: ["hiace"] },
+  { nombre: "Renault Master L2H2", categoria: "Furgón mediano", volumenM3: 10.8, cargaKg: 1539, alias: ["master"] },
+  { nombre: "Mercedes-Benz Sprinter", categoria: "Furgón mediano", volumenM3: 7.5, cargaKg: 1250, alias: ["sprinter"] },
+  { nombre: "Ford Transit", categoria: "Furgón mediano", volumenM3: 9.0, cargaKg: 1500, alias: ["transit"] },
+  { nombre: "Iveco Daily", categoria: "Furgón mediano", volumenM3: 7.5, cargaKg: 1600, alias: ["daily", "iveco"] },
+  { nombre: "Peugeot Boxer", categoria: "Furgón grande", volumenM3: 11.0, cargaKg: 1800, alias: ["boxer"] },
+  { nombre: "Toyota Hilux", categoria: "Pick-up", volumenM3: null, cargaKg: 1000, alias: ["hilux"] },
+  { nombre: "Ford Ranger", categoria: "Pick-up", volumenM3: null, cargaKg: 1000, alias: ["ranger"] },
+  { nombre: "Volkswagen Amarok", categoria: "Pick-up", volumenM3: null, cargaKg: 1250, alias: ["amarok"] },
+  { nombre: "Camión 3/4", categoria: "Camión", volumenM3: 12.0, cargaKg: 3000, alias: ["camion 3/4", "camión 3/4", "tres cuartos"] },
+  { nombre: "Camión chico (4-5 tn)", categoria: "Camión", volumenM3: 28.0, cargaKg: 5000, alias: ["camion chico", "camión chico"] },
+  { nombre: "Camión mediano (8-10 tn)", categoria: "Camión", volumenM3: 50.0, cargaKg: 10000, alias: ["camion mediano", "camión mediano"] },
+  { nombre: "Camión grande (18 tn)", categoria: "Camión", volumenM3: 80.0, cargaKg: 18000, alias: ["camion grande", "camión grande"] },
+  { nombre: "Semirremolque (30 tn)", categoria: "Camión", volumenM3: 120.0, cargaKg: 30000, alias: ["semi", "semirremolque", "trailer", "18 ruedas"] },
+];
+
+function buscarVehiculos(texto) {
+  if (!texto || texto.length < 2) return [];
+  const q = texto.toLowerCase().trim();
+  return DB_VEHICULOS.filter(v => v.nombre.toLowerCase().includes(q) || v.alias.some(a => a.includes(q))).slice(0, 6);
+}
+
+function SelectorVehiculo({ vehiculo, setVehiculo }) {
+  const [texto, setTexto] = useState(vehiculo?.nombre || "");
+  const [sugerencias, setSugerencias] = useState([]);
+  const [abierto, setAbierto] = useState(false);
+  const ref = React.useRef(null);
+
+  useEffect(() => {
+    function handleClick(e) { if (ref.current && !ref.current.contains(e.target)) setAbierto(false); }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  function handleChange(e) {
+    const val = e.target.value;
+    setTexto(val);
+    setVehiculo(null);
+    const res = buscarVehiculos(val);
+    setSugerencias(res);
+    setAbierto(res.length > 0);
+  }
+
+  function seleccionar(v) {
+    setTexto(v.nombre);
+    setVehiculo(v);
+    setSugerencias([]);
+    setAbierto(false);
+  }
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <input value={texto} onChange={handleChange} placeholder="Ej: Sprinter, Camión 3/4, Kangoo..." onFocus={() => { if (sugerencias.length > 0) setAbierto(true); }} />
+      {abierto && (
+        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid #E0E0E0", borderRadius: 8, zIndex: 10, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", overflow: "hidden" }}>
+          {sugerencias.map((v, i) => (
+            <div key={i} onClick={() => seleccionar(v)} style={{ padding: "10px 14px", cursor: "pointer", borderBottom: i < sugerencias.length - 1 ? "1px solid #F0F0F0" : "none", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#F5F5F5"} onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
+              <div>
+                <div style={{ fontWeight: 500, fontSize: 14 }}>{v.nombre}</div>
+                <div style={{ fontSize: 12, color: "#888" }}>{v.categoria}</div>
+              </div>
+              <div style={{ fontSize: 12, color: "#0F6E56", textAlign: "right" }}>
+                {v.volumenM3 && <div>{v.volumenM3} m³</div>}
+                <div>{v.cargaKg?.toLocaleString()} kg</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MiFlota({ onNav }) {
+  const [flota, setFlota] = useState(() => storageGet(KEY_FLOTA, FLOTA_SEMILLA));
+  const [agregando, setAgregando] = useState(false);
+  const [editandoId, setEditandoId] = useState(null);
+  const FORM_VACIO = { alias: "", modelo: "", tipo: "Camión 3/4", uso: "Ambos", patente: "", chofer: "", telefono: "", capacidadM3: "", capacidadKg: "" };
+  const [form, setForm] = useState(FORM_VACIO);
+  const [vehiculoModelo, setVehiculoModelo] = useState(null);
+
+  const TIPOS_VEHICULO = ["Utilitario chico (Kangoo, Berlingo, etc.)", "Furgón mediano", "Furgón grande", "Pick-up", "Camión 3/4", "Camión mediano", "Camión grande / 18 ruedas", "Semi / Acoplado", "Otro"];
+  const USOS = [
+    { val: "Ciudad", label: "🏙️ Ciudad", desc: "Retiro y reparto urbano" },
+    { val: "Ruta", label: "🛣️ Ruta", desc: "Trayecto entre ciudades" },
+    { val: "Ambos", label: "🔄 Ambos", desc: "Ciudad y ruta" },
+  ];
+
+  const iconosPorTipo = { "Camión 3/4": "🚛", "Camión mediano": "🚛", "Camión grande / 18 ruedas": "🚚", "Semi / Acoplado": "🚚", "Furgón mediano": "🚐", "Furgón grande": "🚐", "Utilitario chico (Kangoo, Berlingo, etc.)": "🚙", "Pick-up": "🛻" };
+
+  function guardar() {
+    if (!form.patente || !form.chofer || !form.capacidadM3 || !form.capacidadKg) { alert("Completá patente, chofer y las capacidades."); return; }
+    const aliasFinal = form.alias.trim() || `${form.modelo || form.tipo} · ${form.patente}`;
+    const base = { ...form, alias: aliasFinal, capacidadM3: parseFloat(form.capacidadM3), capacidadKg: parseFloat(form.capacidadKg) };
+    let nuevaFlota;
+    if (editandoId) { nuevaFlota = flota.map(v => v.id === editandoId ? { ...v, ...base } : v); setEditandoId(null); }
+    else { nuevaFlota = [...flota, { ...base, id: Date.now() }]; }
+    storageSave(KEY_FLOTA, nuevaFlota);
+    setFlota(nuevaFlota);
+    setForm(FORM_VACIO);
+    setVehiculoModelo(null);
+    setAgregando(false);
+  }
+
+  function eliminar(id) {
+    if (!confirm("¿Eliminar este vehículo?")) return;
+    const nueva = flota.filter(v => v.id !== id);
+    storageSave(KEY_FLOTA, nueva);
+    setFlota(nueva);
+  }
+
+  function editar(v) {
+    setForm({ alias: v.alias, modelo: v.modelo || "", tipo: v.tipo, uso: v.uso || "Ambos", patente: v.patente, chofer: v.chofer, telefono: v.telefono || "", capacidadM3: String(v.capacidadM3), capacidadKg: String(v.capacidadKg) });
+    setVehiculoModelo(null);
+    setEditandoId(v.id);
+    setAgregando(true);
+  }
+
+  return (
+    <PageWrapper titulo="Mi flota" subtitulo="Cargá tus vehículos una vez y la app lleva el control de espacio disponible."
+      accion={!agregando && <button className="btn-primary" onClick={() => { setForm(FORM_VACIO); setEditandoId(null); setAgregando(true); }}>+ Agregar vehículo</button>}>
+
+      {flota.length === 0 && !agregando && (
+        <div className="card" style={{ textAlign: "center", padding: 40, color: "#666" }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>🚛</div>
+          <p style={{ fontWeight: 500, fontSize: 16 }}>Todavía no cargaste ningún vehículo</p>
+          <p style={{ fontSize: 13, marginTop: 6 }}>Agregá tus unidades para que la app calcule el espacio disponible.</p>
+        </div>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+        {flota.map(v => {
+          const pctM3 = 0; const pctKg = 0;
+          const colorM3 = "#0F6E56"; const colorKg = "#0F6E56";
+          return (
+            <div key={v.id} className="card">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 10, background: "#E1F5EE", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>
+                    {iconosPorTipo[v.tipo] || "🚛"}
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                      <div style={{ fontWeight: 700, fontSize: 16 }}>{v.alias}</div>
+                      <span style={{ fontSize: 10, background: v.uso === "Ciudad" ? "#E6F1FB" : v.uso === "Ruta" ? "#FEF3EC" : "#E1F5EE", color: v.uso === "Ciudad" ? "#185FA5" : v.uso === "Ruta" ? "#C44A0F" : "#0F6E56", padding: "2px 7px", borderRadius: 4, fontWeight: 600 }}>
+                        {v.uso === "Ciudad" ? "🏙️ Ciudad" : v.uso === "Ruta" ? "🛣️ Ruta" : "🔄 Ambos"}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 13, color: "#5A6A78" }}>{v.tipo}{v.patente ? ` · ${v.patente}` : ""}</div>
+                    <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>👤 {v.chofer}{v.telefono ? ` · 📞 ${v.telefono}` : ""}</div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button onClick={() => editar(v)} style={{ background: "#F0F4F8", color: "#5A6A78", border: "none", borderRadius: 6, padding: "6px 10px", fontSize: 12, cursor: "pointer" }}>✏️ Editar</button>
+                  <button onClick={() => eliminar(v.id)} style={{ background: "#FDEDEC", color: "#C0392B", border: "none", borderRadius: 6, padding: "6px 10px", fontSize: 12, cursor: "pointer" }}>🗑️</button>
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div style={{ background: "#F5F5F5", borderRadius: 8, padding: "10px 12px" }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase", marginBottom: 6 }}>Espacio (m³)</div>
+                  <div style={{ background: "#E0E0E0", borderRadius: 4, height: 8, marginBottom: 8, overflow: "hidden" }}>
+                    <div style={{ width: `${pctM3}%`, height: "100%", background: colorM3, borderRadius: 4 }} />
+                  </div>
+                  <div style={{ fontSize: 12, color: "#0F6E56", fontWeight: 600 }}>Libre: {v.capacidadM3} m³</div>
+                  <div style={{ fontSize: 11, color: "#aaa", marginTop: 3 }}>Capacidad total: {v.capacidadM3} m³</div>
+                </div>
+                <div style={{ background: "#F5F5F5", borderRadius: 8, padding: "10px 12px" }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase", marginBottom: 6 }}>Peso (kg)</div>
+                  <div style={{ background: "#E0E0E0", borderRadius: 4, height: 8, marginBottom: 8, overflow: "hidden" }}>
+                    <div style={{ width: `${pctKg}%`, height: "100%", background: colorKg, borderRadius: 4 }} />
+                  </div>
+                  <div style={{ fontSize: 12, color: "#0F6E56", fontWeight: 600 }}>Libre: {v.capacidadKg?.toLocaleString()} kg</div>
+                  <div style={{ fontSize: 11, color: "#aaa", marginTop: 3 }}>Capacidad total: {v.capacidadKg?.toLocaleString()} kg</div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {agregando && (
+        <div className="card" style={{ border: "2px solid #0F6E56" }}>
+          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>{editandoId ? "Editar vehículo" : "Nuevo vehículo"}</h3>
+
+          <div className="form-group">
+            <label>🔍 Modelo / marca del vehículo</label>
+            <SelectorVehiculo vehiculo={vehiculoModelo} setVehiculo={v => {
+              setVehiculoModelo(v);
+              if (v) setForm(f => ({ ...f, modelo: v.nombre, capacidadM3: String(v.volumenM3 || f.capacidadM3), capacidadKg: String(v.cargaKg || f.capacidadKg) }));
+            }} />
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Número de móvil</label>
+              <input value={form.alias} onChange={e => setForm({...form, alias: e.target.value})} placeholder="Ej: Móvil 01, Unidad Norte..." />
+              <p style={{ fontSize: 11, color: "#888", marginTop: 3 }}>Opcional — se usa modelo + patente si no completás</p>
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Tipo de vehículo *</label>
+              <select value={form.tipo} onChange={e => setForm({...form, tipo: e.target.value})}>
+                {TIPOS_VEHICULO.map(t => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>¿Para qué usás este vehículo?</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              {USOS.map(u => (
+                <div key={u.val} onClick={() => setForm({...form, uso: u.val})}
+                  style={{ flex: 1, border: `2px solid ${form.uso === u.val ? "#0F6E56" : "#DDE3EA"}`, borderRadius: 8, padding: "10px 8px", cursor: "pointer", background: form.uso === u.val ? "#E1F5EE" : "#fff", textAlign: "center" }}>
+                  <div style={{ fontSize: 18 }}>{u.label.split(" ")[0]}</div>
+                  <div style={{ fontSize: 12, fontWeight: form.uso === u.val ? 600 : 400, color: form.uso === u.val ? "#0F6E56" : "#1A1A1A", marginTop: 3 }}>{u.label.split(" ").slice(1).join(" ")}</div>
+                  <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>{u.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Patente *</label>
+              <input value={form.patente} onChange={e => setForm({...form, patente: e.target.value.toUpperCase()})} placeholder="Ej: AB 123 CD" />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Nombre del chofer *</label>
+              <input value={form.chofer} onChange={e => setForm({...form, chofer: e.target.value})} placeholder="Ej: Juan García" />
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Teléfono chofer</label>
+              <input value={form.telefono} onChange={e => setForm({...form, telefono: e.target.value})} placeholder="Ej: 3764 412345" />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Capacidad en m³ *</label>
+              <input type="number" min="0.5" step="0.5" value={form.capacidadM3} onChange={e => setForm({...form, capacidadM3: e.target.value})} placeholder="Ej: 40" />
+              <p style={{ fontSize: 11, color: "#888", marginTop: 3 }}>Se precarga al elegir el modelo</p>
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Capacidad en kg *</label>
+              <input type="number" min="100" step="100" value={form.capacidadKg} onChange={e => setForm({...form, capacidadKg: e.target.value})} placeholder="Ej: 8000" />
+            </div>
+          </div>
+
+          <div style={{ background: "#E1F5EE", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "#0F6E56", marginBottom: 16 }}>
+            💡 Una vez guardado, cuando asignés una carga a este vehículo en "Mis viajes", la app va a descontar el espacio automáticamente.
+          </div>
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <button className="btn-ghost" onClick={() => { setAgregando(false); setEditandoId(null); setForm(FORM_VACIO); }}>Cancelar</button>
+            <button className="btn-primary" onClick={guardar} style={{ flex: 1 }}>{editandoId ? "Guardar cambios" : "Agregar vehículo"}</button>
+          </div>
+        </div>
+      )}
+    </PageWrapper>
+  );
+}
+
+function HacerOferta({ onNav, cargas, onOferta }) {
+  const cargasData = cargas || CARGAS_MOCK;
+  const carga = cargasData.find(c => c.estado === 'nueva' && c.matchRuta) || cargasData[0] || CARGAS_MOCK[0];
+  const [form, setForm] = useState({ precio: "", fechaRetiro: "", horaRetiro: "", entrega: "", nota: "" });
+  const [enviado, setEnviado] = useState(false);
+
+  function enviarOferta() {
+    if (!form.precio || !form.fechaRetiro || !form.horaRetiro) {
+      alert("Completá el precio y la fecha y hora de retiro.");
+      return;
+    }
+    if (onOferta) {
+      onOferta({
+        id: Date.now(),
+        transportistaId: 3,
+        cargaId: carga.id,
+        precio: parseInt(form.precio.replace(/\D/g, '')) || 0,
+        retiro: `${form.fechaRetiro} ${form.horaRetiro}hs`,
+        entrega: form.entrega || "A confirmar",
+        nota: form.nota,
+        matchRuta: true,
+      });
+    }
+    setEnviado(true);
+    setTimeout(() => onNav("trans-dashboard"), 2500);
+  }
+
+  if (enviado) return (
+    <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center", maxWidth: 360 }}>
+        <div style={{ fontSize: 56 }}>🚛</div>
+        <h2 style={{ marginTop: 12 }}>¡Cotización enviada!</h2>
+        <p style={{ color: "#666", marginTop: 8 }}>La empresa va a comparar todas las ofertas y elegirá la que más le convenga. Te avisamos si te eligen.</p>
+        <p style={{ color: "#aaa", fontSize: 13, marginTop: 6 }}>Volviendo a cargas disponibles...</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <PageWrapper titulo="Cotizar este flete">
+      <div style={{ maxWidth: 560 }}>
+
+        {/* Detalle de la carga */}
+        <div className="card" style={{ marginBottom: 20, borderLeft: "4px solid #E85D20" }}>
+          <div style={{ fontSize: 12, color: "#888", marginBottom: 6 }}>PEDIDO DE FLETE</div>
+          <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 6 }}>{carga.origen} → {carga.destino}</div>
+          <div style={{ display: "flex", gap: 16, fontSize: 13, color: "#555", flexWrap: "wrap" }}>
+            <span>📦 {carga.tipo}</span>
+            <span>⚖️ {carga.peso}</span>
+            <span>📅 Retiro deseado: {carga.retiro}</span>
+            <span>🎯 Entrega deseada: {carga.entrega}</span>
+          </div>
+          <div style={{ marginTop: 10, padding: "8px 10px", background: "#FEF3EC", borderRadius: 7, fontSize: 12, color: "#C44A0F" }}>
+            ℹ️ Otros transportistas también recibieron este pedido, pero no pueden ver tus precios ni vos los de ellos. Solo la empresa compara.
+          </div>
+        </div>
+
+        {/* Formulario de cotización */}
+        <div className="card">
+          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 18 }}>Tu cotización</h3>
+
+          {/* Precio */}
+          <div className="form-group">
+            <label>Precio total del flete *</label>
+            <div style={{ position: "relative" }}>
+              <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#666", fontWeight: 500 }}>$</span>
+              <input
+                type="number"
+                value={form.precio}
+                onChange={e => setForm({...form, precio: e.target.value})}
+                placeholder="45000"
+                style={{ paddingLeft: 28, fontSize: 18, fontWeight: 600 }}
+              />
+            </div>
+          </div>
+
+          {/* Retiro */}
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 13, fontWeight: 500, color: "#444", display: "block", marginBottom: 6 }}>¿Cuándo podés retirar? *</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div>
+                <label style={{ fontSize: 11, color: "#888", marginBottom: 3 }}>Fecha</label>
+                <input type="date" value={form.fechaRetiro} onChange={e => setForm({...form, fechaRetiro: e.target.value})} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: "#888", marginBottom: 3 }}>Hora</label>
+                <input type="time" value={form.horaRetiro} onChange={e => setForm({...form, horaRetiro: e.target.value})} />
+              </div>
+            </div>
+          </div>
+
+          {/* Entrega estimada */}
+          <div className="form-group">
+            <label>Entrega estimada</label>
+            <input
+              value={form.entrega}
+              onChange={e => setForm({...form, entrega: e.target.value})}
+              placeholder="Ej: En 48hs, el jueves a la tarde..."
+            />
+          </div>
+
+          {/* Nota */}
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+              <label style={{ margin: 0 }}>Nota para la empresa</label>
+              <span style={{ fontSize: 11, color: "#888", background: "#F5F5F5", padding: "2px 8px", borderRadius: 4 }}>Opcional</span>
+            </div>
+            <textarea
+              value={form.nota}
+              onChange={e => setForm({...form, nota: e.target.value})}
+              placeholder="Ej: Camión disponible, salgo los martes temprano. Seguro de carga incluido."
+              rows={3}
+              style={{ resize: "vertical" }}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+          <button className="btn-secondary" onClick={() => onNav("trans-dashboard")} style={{ flex: 1 }}>Cancelar</button>
+          <button className="btn-primary" onClick={enviarOferta} style={{ flex: 2, padding: "12px" }}>Enviar cotización</button>
+        </div>
+      </div>
+    </PageWrapper>
+  );
+}
+
+function MisViajes({ onNav, onVerRemito }) {
+  const viajes = [
+    { id: 1, origen: "Posadas", destino: "Buenos Aires", empresa: "Mi Empresa SRL", estado: "en-camino", monto: 45000, fecha: "01/06/2026" },
+    { id: 2, origen: "Posadas", destino: "Corrientes", empresa: "Distribuidora Sur", estado: "entregado", monto: 18000, fecha: "28/05/2026" },
+  ];
+
+  function verRemitoViaje(v) {
+    const remito = {
+      id: "FL-" + (v.id * 100000 + 54321),
+      fecha: v.fecha,
+      hora: "09:00",
+      remitente: { nombre: v.empresa, telefono: "3764 000000", domicilio: "Av. Principal 100", ciudad: v.origen },
+      destinatario: { nombre: "Destinatario", telefono: "3764 111111", domicilio: "Calle 456", ciudad: v.destino },
+      envio: { descripcion: "Mercadería general", tipo: "Pallets", peso: "500 kg", especial: "normal", bultos: "3", pagaFlete: "remitente" },
+      transportista: { nombre: "Yo (transportista)", chofer: "Carlos López", telefono: "3764 222222", vehiculo: "Camión 3/4" },
+      flete: v.monto,
+      estado: v.estado === "entregado" ? "entregado" : "en-camino",
+      retiro: v.fecha,
+      entregaEst: "En 2 días",
+    };
+    if (onVerRemito) onVerRemito(remito);
+  }
+  const [estados, setEstados] = useState({ 1: "en-camino", 2: "entregado" });
+
+  const PASOS = ["retirado", "en-camino", "entregado"];
+
+  return (
+    <PageWrapper titulo="Mis viajes activos">
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {viajes.map(v => (
+          <div key={v.id} className="card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 15 }}>{v.origen} → {v.destino}</div>
+                <div style={{ fontSize: 13, color: "#666", marginTop: 2 }}>{v.empresa} · {v.fecha}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontWeight: 600, color: "#E85D20" }}>${v.monto.toLocaleString()}</div>
+                <span className={`badge badge-${estados[v.id]}`}>{estados[v.id] === "en-camino" ? "En camino" : estados[v.id] === "entregado" ? "Entregado" : "Retirado"}</span>
+              </div>
+            </div>
+            {estados[v.id] !== "entregado" && (
+              <div>
+                <div className="divider" />
+                <div style={{ fontSize: 12, color: "#666", marginBottom: 8 }}>Actualizar estado:</div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {PASOS.map(p => (
+                    <button key={p} onClick={() => setEstados(prev => ({ ...prev, [v.id]: p }))} style={{ padding: "6px 12px", borderRadius: 6, background: estados[v.id] === p ? "#E85D20" : "#F5F5F5", color: estados[v.id] === p ? "#fff" : "#666", border: "none", fontSize: 12, cursor: "pointer", fontWeight: estados[v.id] === p ? 500 : 400 }}>
+                      {p === "retirado" ? "Retiré la carga" : p === "en-camino" ? "En camino" : "Entregué"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
+              <button className="btn-ghost" onClick={() => onNav("chat")} style={{ fontSize: 12 }}>Contactar empresa</button>
+              <button className="btn-secondary" onClick={() => verRemitoViaje(v)} style={{ fontSize: 12 }}>📄 Ver remito</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </PageWrapper>
+  );
+}
+
+// ─── CHAT ─────────────────────────────────────────────────────────────────────
+
+function ChatScreen({ usuario, onNav }) {
+  const [mensajes, setMensajes] = useState(MENSAJES_MOCK);
+  const [input, setInput] = useState("");
+  const bottomRef = useRef(null);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [mensajes]);
+
+  function enviar() {
+    if (!input.trim()) return;
+    setMensajes(prev => [...prev, { id: Date.now(), de: usuario?.tipo === "transportista" ? "transportista" : "empresa", texto: input, hora: new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }) }]);
+    setInput("");
+  }
+
+  const esTransportista = usuario?.tipo === "transportista";
+
+  return (
+    <PageWrapper titulo="Chat" subtitulo="Posadas → Buenos Aires · Transportes Norte SA">
+      <div style={{ maxWidth: 600 }}>
+        <div className="card" style={{ height: 380, display: "flex", flexDirection: "column" }}>
+          <div style={{ flex: 1, overflowY: "auto", padding: "4px 0" }}>
+            {mensajes.map(m => {
+              const esMio = (esTransportista && m.de === "transportista") || (!esTransportista && m.de === "empresa");
+              return (
+                <div key={m.id} style={{ display: "flex", justifyContent: esMio ? "flex-end" : "flex-start", marginBottom: 10 }}>
+                  <div style={{ maxWidth: "75%", background: esMio ? "#E85D20" : "#F5F5F5", color: esMio ? "#fff" : "#1A1A1A", borderRadius: esMio ? "12px 12px 2px 12px" : "12px 12px 12px 2px", padding: "8px 12px" }}>
+                    <p style={{ fontSize: 14, margin: 0 }}>{m.texto}</p>
+                    <p style={{ fontSize: 10, marginTop: 4, opacity: 0.7, textAlign: "right" }}>{m.hora}</p>
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={bottomRef} />
+          </div>
+          <div className="divider" style={{ margin: "8px 0" }} />
+          <div style={{ display: "flex", gap: 8 }}>
+            <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && enviar()} placeholder="Escribí un mensaje..." />
+            <button className="btn-primary" onClick={enviar} style={{ padding: "10px 16px", whiteSpace: "nowrap" }}>Enviar</button>
+          </div>
+        </div>
+      </div>
+    </PageWrapper>
+  );
+}
+
+// ─── ADMIN SCREENS ────────────────────────────────────────────────────────────
+
+function AdminDashboard({ onNav }) {
+  return (
+    <PageWrapper titulo="Panel de administración" subtitulo="Bienvenido, Gustavo.">
+      <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+        <StatCard valor={TRANSPORTISTAS_PENDIENTES.length} label="Pendientes de aprobación" color="#E85D20" />
+        <StatCard valor={TRANSPORTISTAS_MOCK.length} label="Transportistas activos" color="#0F6E56" />
+        <StatCard valor={CARGAS_MOCK.length} label="Cargas publicadas" color="#185FA5" />
+        <StatCard valor="$0" label="Comisiones (6 meses gratis)" color="#666" />
+      </div>
+      <div className="card">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 500 }}>Transportistas pendientes de aprobación</h3>
+          <button className="btn-primary" onClick={() => onNav("admin-transportistas")} style={{ fontSize: 12 }}>Ver todos</button>
+        </div>
+        {TRANSPORTISTAS_PENDIENTES.map(t => (
+          <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #F5F5F5" }}>
+            <div>
+              <div style={{ fontWeight: 500 }}>{t.nombre}</div>
+              <div style={{ fontSize: 12, color: "#666" }}>Solicitado {t.fecha} · {t.vehiculo}</div>
+            </div>
+            <button className="btn-primary" onClick={() => onNav("admin-transportistas")} style={{ fontSize: 12 }}>Revisar</button>
+          </div>
+        ))}
+      </div>
+    </PageWrapper>
+  );
+}
+
+function AdminTransportistas() {
+  const [estados, setEstados] = useState({});
+
+  function aprobar(id) { setEstados(prev => ({ ...prev, [id]: "aprobado" })); }
+  function rechazar(id) { setEstados(prev => ({ ...prev, [id]: "rechazado" })); }
+
+  return (
+    <PageWrapper titulo="Aprobar transportistas" subtitulo="Revisá los documentos antes de activar la cuenta.">
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {TRANSPORTISTAS_PENDIENTES.map(t => (
+          <div key={t.id} className="card" style={{ border: estados[t.id] === "aprobado" ? "2px solid #0F6E56" : estados[t.id] === "rechazado" ? "2px solid #C0392B" : "1px solid #E0E0E0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 15 }}>{t.nombre}</div>
+                <div style={{ fontSize: 13, color: "#666", marginTop: 2 }}>Solicitado: {t.fecha} · {t.vehiculo}</div>
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Rutas declaradas:</div>
+                  {t.rutas.map(r => <span key={r} style={{ display: "inline-block", background: "#FEF3EC", color: "#C44A0F", fontSize: 11, padding: "2px 8px", borderRadius: 4, marginRight: 6, marginBottom: 4 }}>{r}</span>)}
+                </div>
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Documentos adjuntos:</div>
+                  {t.docs.map(d => <span key={d} style={{ display: "inline-block", background: "#E6F1FB", color: "#185FA5", fontSize: 11, padding: "2px 8px", borderRadius: 4, marginRight: 6 }}>📄 {d}</span>)}
+                </div>
+              </div>
+              <div>
+                {!estados[t.id] ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <button onClick={() => aprobar(t.id)} style={{ background: "#0F6E56", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, cursor: "pointer", fontWeight: 500 }}>✓ Aprobar</button>
+                    <button onClick={() => rechazar(t.id)} style={{ background: "#fff", color: "#C0392B", border: "1.5px solid #C0392B", borderRadius: 8, padding: "7px 16px", fontSize: 13, cursor: "pointer" }}>✗ Rechazar</button>
+                  </div>
+                ) : (
+                  <span style={{ fontWeight: 500, color: estados[t.id] === "aprobado" ? "#0F6E56" : "#C0392B", fontSize: 14 }}>
+                    {estados[t.id] === "aprobado" ? "✓ Aprobado" : "✗ Rechazado"}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+        <div className="card" style={{ opacity: 0.5 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div style={{ fontWeight: 500 }}>Ver transportistas activos</div>
+              <div style={{ fontSize: 13, color: "#666" }}>{TRANSPORTISTAS_MOCK.length} verificados y activos en la plataforma</div>
+            </div>
+            <span className="badge badge-verificado">{TRANSPORTISTAS_MOCK.filter(t => t.verificado).length} verificados</span>
+          </div>
+        </div>
+      </div>
+    </PageWrapper>
+  );
+}
+
+// ─── REMITO ──────────────────────────────────────────────────────────────────
+
+const REMITO_MOCK = {
+  id: "FL-004821",
+  fecha: "03/06/2026",
+  hora: "11:30",
+  remitente: { nombre: "Nordeste Baterías", telefono: "3765 120111", domicilio: "Quaranta 5501", ciudad: "Posadas, Misiones" },
+  destinatario: { nombre: "Empresa Kenia", telefono: "3751 561853", domicilio: "Avsan Martín 3306", ciudad: "Eldorado, Misiones" },
+  envio: { descripcion: "Batería de 95", tipo: "Caja grande", peso: "28", alto: "40", ancho: "25", largo: "25", especial: "fragil", bultos: "1", pagaFlete: "remitente" },
+  transportista: { nombre: "Trans Norte SRL", chofer: "Aníbal Pérez", telefono: "3764 089321", vehiculo: "Camión 3/4" },
+  flete: 16000,
+  estado: "pendiente-retiro",
+  retiro: "03/06/2026 15:00 hs",
+  entregaEst: "04/06/2026 10:00 hs",
+};
+
+const ESTADOS_REMITO = [
+  { id: "oferta-aceptada", label: "Oferta aceptada" },
+  { id: "pendiente-retiro", label: "Pendiente de retiro" },
+  { id: "retirado", label: "Mercadería retirada" },
+  { id: "en-camino", label: "En camino" },
+  { id: "entregado", label: "Entregado" },
+];
+
+function QRCode({ value, size = 120 }) {
+  const [imgOk, setImgOk] = useState(true);
+  const encoded = encodeURIComponent(value);
+  const src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}&color=2C2C2A&bgcolor=ffffff&margin=4`;
+
+  if (!imgOk) {
+    // Fallback si no hay internet: cuadro con el ID del remito
+    return (
+      <div style={{
+        width: size, height: size, background: "#F5F5F5", border: "2px dashed #ccc",
+        borderRadius: 8, display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center", gap: 4, padding: 8
+      }}>
+        <div style={{ fontSize: 28 }}>📱</div>
+        <div style={{ fontSize: 9, color: "#888", textAlign: "center", lineHeight: 1.3 }}>QR disponible<br/>con internet</div>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      width={size}
+      height={size}
+      alt="QR del remito"
+      style={{ display: "block", borderRadius: 6 }}
+      onError={() => setImgOk(false)}
+    />
+  );
+}
+
+function RemitoScreen({ onNav, usuario, remitoData }) {
+  const remito = remitoData || REMITO_MOCK;
+  const [estado, setEstado] = useState(remito.estado || "pendiente-retiro");
+  const [linkChoferCopiado, setLinkChoferCopiado] = useState(false);
+  const [mostrarLinkChofer, setMostrarLinkChofer] = useState(false);
+
+  const esTransportista = usuario?.tipo === "transportista";
+  const esEmpresa = usuario?.tipo === "empresa";
+
+  const estadoIdx = ESTADOS_REMITO.findIndex(e => e.id === estado);
+  const linkRemito = `${window.location.origin}${window.location.pathname}?remito=${remito.id}`;
+  const linkChofer = `${linkRemito}&rol=chofer`;
+
+  const msgWhatsApp = encodeURIComponent(
+    `Hola ${remito.destinatario.nombre}! Te envío el remito de tu paquete desde Fletar.\n\n` +
+    `📦 Envío: ${remito.remitente.ciudad} → ${remito.destinatario.ciudad}\n` +
+    `🔢 Remito: ${remito.id}\n` +
+    `📅 Entrega estimada: ${remito.entregaEst}\n` +
+    `💵 Flete: $${remito.flete.toLocaleString()} (paga ${remito.envio.pagaFlete === "destinatario" ? "destinatario al recibir" : "remitente"})\n\n` +
+    `Podés ver el estado de tu paquete acá: ${linkRemito}`
+  );
+
+  function avanzarEstado(nuevoEstado) {
+    setEstado(nuevoEstado);
+  }
+
+  function copiarLinkChofer() {
+    navigator.clipboard.writeText(linkChofer).then(() => {
+      setLinkChoferCopiado(true);
+      setTimeout(() => setLinkChoferCopiado(false), 2500);
+    });
+  }
+
+  const especiales = { fragil: "⚠️ Frágil", refrigerado: "❄️ Refrigerado", contrareembolso: "💵 Contra reembolso" };
+
+  return (
+    <PageWrapper
+      titulo={`Remito ${remito.id}`}
+      subtitulo={`${remito.remitente.ciudad} → ${remito.destinatario.ciudad}`}
+      accion={
+        <div style={{ display: "flex", gap: 8 }} className="no-print">
+          <button className="btn-secondary" onClick={() => window.print()} style={{ fontSize: 13 }}>🖨️ Imprimir</button>
+          <button className="btn-ghost" onClick={() => onNav(esTransportista ? "mis-viajes" : "seguimiento")} style={{ fontSize: 13 }}>← Volver</button>
+        </div>
+      }
+    >
+      <div style={{ maxWidth: 680 }} className="remito-print">
+
+        {/* ─── HEADER DEL REMITO ─── */}
+        <div className="remito-header">
+          <FletarLogo size="sm" />
+          <div style={{ textAlign: "center" }}>
+            <div style={{ color: "#fff", fontSize: 11, opacity: 0.6 }}>COMPROBANTE DE ENVÍO</div>
+            <div style={{ color: "#E85D20", fontSize: 18, fontWeight: 700 }}>{remito.id}</div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>{remito.fecha}</div>
+            <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>{remito.hora} hs</div>
+          </div>
+        </div>
+
+        {/* ─── CUERPO ─── */}
+        <div className="remito-body">
+
+          {/* Estado actual */}
+          <div className="remito-status">
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#E85D20", flexShrink: 0 }} />
+            {ESTADOS_REMITO.find(e => e.id === estado)?.label || "Pendiente"}
+          </div>
+
+          {/* Remitente y Destinatario */}
+          <div className="remito-grid-2">
+            <div className="remito-seccion">
+              <div className="remito-seccion-titulo">Remitente</div>
+              <div className="remito-fila"><span className="remito-label">Nombre</span><span className="remito-val">{remito.remitente.nombre}</span></div>
+              <div className="remito-fila"><span className="remito-label">Teléfono</span><span className="remito-val">{remito.remitente.telefono}</span></div>
+              <div className="remito-fila"><span className="remito-label">Domicilio</span><span className="remito-val">{remito.remitente.domicilio}</span></div>
+              <div className="remito-fila"><span className="remito-label">Ciudad</span><span className="remito-val">{remito.remitente.ciudad}</span></div>
+            </div>
+            <div className="remito-seccion">
+              <div className="remito-seccion-titulo">Destinatario</div>
+              <div className="remito-fila"><span className="remito-label">Nombre</span><span className="remito-val">{remito.destinatario.nombre}</span></div>
+              <div className="remito-fila"><span className="remito-label">Teléfono</span><span className="remito-val">{remito.destinatario.telefono}</span></div>
+              <div className="remito-fila"><span className="remito-label">Domicilio</span><span className="remito-val">{remito.destinatario.domicilio}</span></div>
+              <div className="remito-fila"><span className="remito-label">Ciudad</span><span className="remito-val">{remito.destinatario.ciudad}</span></div>
+            </div>
+          </div>
+
+          {/* Detalle del envío */}
+          <div className="remito-seccion" style={{ marginBottom: 12 }}>
+            <div className="remito-seccion-titulo">Detalle del envío</div>
+            <div className="remito-grid-2" style={{ marginBottom: 0, gap: 6 }}>
+              <div className="remito-fila"><span className="remito-label">Mercadería</span><span className="remito-val">{remito.envio.descripcion || "—"}</span></div>
+              <div className="remito-fila"><span className="remito-label">Tipo</span><span className="remito-val">{remito.envio.tipo}</span></div>
+              {remito.envio.peso && <div className="remito-fila"><span className="remito-label">Peso</span><span className="remito-val">{remito.envio.peso} kg</span></div>}
+              {(remito.envio.alto && remito.envio.ancho && remito.envio.largo) && (
+                <div className="remito-fila"><span className="remito-label">Dimensiones</span><span className="remito-val">{remito.envio.alto}×{remito.envio.ancho}×{remito.envio.largo} cm</span></div>
+              )}
+              <div className="remito-fila"><span className="remito-label">Bultos</span><span className="remito-val">{remito.envio.bultos}</span></div>
+              {remito.envio.especial && remito.envio.especial !== "normal" && (
+                <div className="remito-fila"><span className="remito-label">Especial</span><span className="remito-val">{especiales[remito.envio.especial] || remito.envio.especial}</span></div>
+              )}
+              <div className="remito-fila"><span className="remito-label">Flete</span><span className="remito-val naranja">${remito.flete.toLocaleString()}</span></div>
+              <div className="remito-fila"><span className="remito-label">Paga</span><span className="remito-val">{remito.envio.pagaFlete === "destinatario" ? "Destinatario al recibir" : "Remitente"}</span></div>
+            </div>
+          </div>
+
+          {/* QR + Transportista + Timeline */}
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+            {/* QR */}
+            <div style={{ background: "#F5F5F5", borderRadius: 10, padding: 12, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexShrink: 0 }}>
+              <QRCode value={linkRemito} size={110} />
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#E85D20" }}>{remito.id}</div>
+              <div style={{ fontSize: 10, color: "#888", textAlign: "center", maxWidth: 110 }}>Escaneá para ver el remito</div>
+            </div>
+
+            <div style={{ flex: 1 }}>
+              {/* Transportista */}
+              <div className="remito-seccion" style={{ marginBottom: 12 }}>
+                <div className="remito-seccion-titulo">Transportista asignado</div>
+                <div className="remito-fila"><span className="remito-label">Empresa</span><span className="remito-val">{remito.transportista.nombre}</span></div>
+                <div className="remito-fila"><span className="remito-label">Chofer</span><span className="remito-val">{remito.transportista.chofer}</span></div>
+                <div className="remito-fila"><span className="remito-label">Vehículo</span><span className="remito-val">{remito.transportista.vehiculo}</span></div>
+                <div className="remito-fila"><span className="remito-label">Retira</span><span className="remito-val">{remito.retiro}</span></div>
+                <div className="remito-fila"><span className="remito-label">Entrega est.</span><span className="remito-val">{remito.entregaEst}</span></div>
+              </div>
+
+              {/* Timeline */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Estado del envío</div>
+                {ESTADOS_REMITO.map((e, i) => {
+                  const done = i < estadoIdx;
+                  const activo = i === estadoIdx;
+                  return (
+                    <div key={e.id}>
+                      <div className="remito-track-item">
+                        <div className="remito-track-dot" style={{ background: done ? "#E85D20" : activo ? "#fff" : "#E0E0E0", border: activo ? "2px solid #E85D20" : done ? "none" : "2px solid #E0E0E0", boxShadow: activo ? "0 0 0 3px #FEF3EC" : "none" }} />
+                        <span style={{ fontSize: 12, color: activo ? "#E85D20" : done ? "#1A1A1A" : "#aaa", fontWeight: activo ? 600 : 400 }}>{e.label}</span>
+                      </div>
+                      {i < ESTADOS_REMITO.length - 1 && <div className="remito-track-linea" />}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* ─── ACCIONES SEGÚN ROL ─── */}
+          <div style={{ borderTop: "1px solid #E0E0E0", marginTop: 20, paddingTop: 16 }} className="no-print">
+
+            {/* EMPRESA: WhatsApp + link chofer */}
+            {esEmpresa && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  <a
+                    href={`https://wa.me/54${remito.destinatario.telefono.replace(/\D/g, "")}?text=${msgWhatsApp}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ background: "#25D366", color: "#fff", borderRadius: 8, padding: "10px 0", fontSize: 13, fontWeight: 500, textAlign: "center", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                  >
+                    💬 Enviar QR al destinatario
+                  </a>
+                  <button
+                    onClick={() => setMostrarLinkChofer(v => !v)}
+                    style={{ background: "#2C2C2A", color: "#fff", borderRadius: 8, padding: "10px 0", fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                  >
+                    🚛 Generar link para el chofer
+                  </button>
+                </div>
+                {mostrarLinkChofer && (
+                  <div style={{ background: "#F5F5F5", borderRadius: 8, padding: "12px 14px" }}>
+                    <div style={{ fontSize: 12, color: "#666", marginBottom: 8 }}>Enviá este link al chofer por WhatsApp. Al abrirlo podrá confirmar retiro y entrega.</div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <input value={linkChofer} readOnly style={{ flex: 1, fontSize: 11, background: "#fff", color: "#444" }} />
+                      <button
+                        onClick={copiarLinkChofer}
+                        style={{ background: linkChoferCopiado ? "#0F6E56" : "#E85D20", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap", fontWeight: 500 }}
+                      >
+                        {linkChoferCopiado ? "✓ Copiado" : "Copiar"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TRANSPORTISTA / CHOFER: botones de acción */}
+            {esTransportista && (
+              <div>
+                <div style={{ fontSize: 12, color: "#666", marginBottom: 10, background: "#FEF3EC", borderRadius: 8, padding: "8px 12px", borderLeft: "3px solid #E85D20" }}>
+                  🔒 Solo vos podés cambiar el estado — sos el transportista asignado a este envío.
+                </div>
+                {estado === "pendiente-retiro" && (
+                  <button onClick={() => avanzarEstado("retirado")} style={{ width: "100%", background: "#E85D20", color: "#fff", border: "none", borderRadius: 10, padding: "14px", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
+                    📦 Confirmar retiro del paquete
+                  </button>
+                )}
+                {estado === "retirado" && (
+                  <button onClick={() => avanzarEstado("en-camino")} style={{ width: "100%", background: "#185FA5", color: "#fff", border: "none", borderRadius: 10, padding: "14px", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
+                    🚛 Marcar en camino
+                  </button>
+                )}
+                {estado === "en-camino" && (
+                  <button onClick={() => avanzarEstado("entregado")} style={{ width: "100%", background: "#0F6E56", color: "#fff", border: "none", borderRadius: 10, padding: "14px", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
+                    ✅ Confirmar entrega
+                  </button>
+                )}
+                {estado === "entregado" && (
+                  <div style={{ textAlign: "center", padding: 16, background: "#E1F5EE", borderRadius: 10 }}>
+                    <div style={{ fontSize: 32 }}>✅</div>
+                    <div style={{ fontWeight: 600, color: "#0F6E56", marginTop: 8 }}>Entrega confirmada</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* DESTINATARIO (sin login): puede confirmar recepción */}
+            {!usuario && (
+              <div>
+                <div style={{ fontSize: 12, color: "#555", marginBottom: 10 }}>Sos el destinatario de este envío. Cuando recibas el paquete podés confirmar la recepción.</div>
+                {estado === "en-camino" && (
+                  <button onClick={() => avanzarEstado("entregado")} style={{ width: "100%", background: "#0F6E56", color: "#fff", border: "none", borderRadius: 10, padding: "14px", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
+                    ✅ Confirmar que recibí el paquete
+                  </button>
+                )}
+                {estado === "entregado" && (
+                  <div style={{ textAlign: "center", padding: 16, background: "#E1F5EE", borderRadius: 10 }}>
+                    <div style={{ fontWeight: 600, color: "#0F6E56" }}>✓ Entrega confirmada. ¡Gracias!</div>
+                  </div>
+                )}
+                {estado !== "en-camino" && estado !== "entregado" && (
+                  <div style={{ padding: "12px 14px", background: "#F5F5F5", borderRadius: 8, fontSize: 13, color: "#666" }}>
+                    Tu paquete aún no está en camino. El botón de confirmación aparecerá cuando el transportista lo despache.
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+        </div>
+      </div>
+    </PageWrapper>
+  );
+}
+
+// ─── APP ROOT ────────────────────────────────────────────────────────────────
+
+function App() {
+  const params = new URLSearchParams(window.location.search);
+  const demo = params.get('demo');
+  const usuarioInicial = demo === 'empresa'
+    ? { nombre: 'Mi Empresa', email: 'empresa@test.com', tipo: 'empresa' }
+    : demo === 'transportista'
+    ? { nombre: 'Carlos Ramírez', email: 'trans@test.com', tipo: 'transportista' }
+    : null;
+  const screenInicial = demo === 'empresa' ? 'empresa-dashboard' : demo === 'transportista' ? 'trans-dashboard' : 'login';
+
+  const [usuario, setUsuario] = useState(usuarioInicial);
+  const [screen, setScreen] = useState(screenInicial);
+  const [remitoActivo, setRemitoActivo] = useState(null);
+
+  const [cargas, setCargas] = useState(() => {
+    try { const s = localStorage.getItem('fletar_cargas'); return s ? JSON.parse(s) : CARGAS_MOCK; }
+    catch { return CARGAS_MOCK; }
+  });
+  const [ofertas, setOfertas] = useState(() => {
+    try { const s = localStorage.getItem('fletar_ofertas'); return s ? JSON.parse(s) : OFERTAS_MOCK; }
+    catch { return OFERTAS_MOCK; }
+  });
+
+  useEffect(() => {
+    const ch = new BroadcastChannel('fletar_sync');
+    ch.onmessage = (e) => {
+      if (e.data.type === 'cargas') { setCargas(e.data.data); localStorage.setItem('fletar_cargas', JSON.stringify(e.data.data)); }
+      if (e.data.type === 'ofertas') { setOfertas(e.data.data); localStorage.setItem('fletar_ofertas', JSON.stringify(e.data.data)); }
+    };
+    return () => ch.close();
+  }, []);
+
+  function broadcast(type, data) {
+    localStorage.setItem('fletar_' + type, JSON.stringify(data));
+    const ch = new BroadcastChannel('fletar_sync');
+    ch.postMessage({ type, data });
+    ch.close();
+  }
+
+  function addCarga(carga) {
+    setCargas(prev => {
+      const nuevas = [carga, ...prev];
+      broadcast('cargas', nuevas);
+      return nuevas;
+    });
+  }
+
+  function addOferta(oferta) {
+    setOfertas(prev => {
+      const nuevas = [...prev, oferta];
+      broadcast('ofertas', nuevas);
+      return nuevas;
+    });
+    setCargas(prev => {
+      const nuevas = prev.map(c => c.id === oferta.cargaId ? { ...c, ofertas: (c.ofertas || 0) + 1, estado: 'activo' } : c);
+      broadcast('cargas', nuevas);
+      return nuevas;
+    });
+  }
+
+  function handleLogin(u) {
+    setUsuario(u);
+    if (u.tipo === "admin") setScreen("admin-dashboard");
+    else if (u.tipo === "transportista") setScreen("trans-dashboard");
+    else setScreen("empresa-dashboard");
+  }
+
+  function handleNav(dest) {
+    if (dest === "logout") { setUsuario(null); return; }
+    setScreen(dest);
+  }
+
+  if (!usuario) return <AuthScreen onLogin={handleLogin} />;
+
+  const renderScreen = () => {
+    switch (screen) {
+      case "empresa-dashboard": return <EmpresaDashboard onNav={handleNav} usuario={usuario} cargas={cargas} />;
+      case "historial-envios": return <HistorialEnvios onNav={handleNav} cargas={cargas} />;
+      case "publicar-carga": return <PublicarCarga onNav={handleNav} usuario={usuario} onPublicar={addCarga} />;
+      case "ver-ofertas": return <VerOfertas onNav={handleNav} cargas={cargas} ofertas={ofertas} onAceptarOferta={(remito) => { setRemitoActivo(remito); handleNav("remito"); }} />;
+      case "seguimiento": return <SeguimientoEnvio onNav={handleNav} onVerRemito={(r) => { setRemitoActivo(r); handleNav("remito"); }} />;
+      case "remito": return <RemitoScreen onNav={handleNav} usuario={usuario} remitoData={remitoActivo} />;
+      case "chat": return <ChatScreen usuario={usuario} onNav={handleNav} />;
+      case "trans-dashboard": return <TransportistaDashboard onNav={handleNav} usuario={usuario} cargas={cargas} />;
+      case "mis-rutas": return <MisRutas onNav={handleNav} />;
+      case "mi-flota": return <MiFlota onNav={handleNav} />;
+      case "hacer-oferta": return <HacerOferta onNav={handleNav} cargas={cargas} onOferta={addOferta} />;
+      case "mis-viajes": return <MisViajes onNav={handleNav} onVerRemito={(r) => { setRemitoActivo(r); handleNav("remito"); }} />;
+      case "admin-dashboard": return <AdminDashboard onNav={handleNav} />;
+      case "admin-transportistas": return <AdminTransportistas />;
+      default: return <EmpresaDashboard onNav={handleNav} />;
+    }
+  };
+
+  return (
+    <div>
+      <Navbar usuario={usuario} onNav={handleNav} screen={screen} />
+      {renderScreen()}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

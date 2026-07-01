@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Fletar — Prototipo Rutas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F0F4F8;min-height:100vh}
+#app{max-width:780px;margin:0 auto;padding:16px}
+.card{background:#fff;border-radius:14px;border:1px solid #DDE3EA;padding:16px;margin-bottom:12px}
+.card-green{border:1.5px solid #0F6E56;background:#F8FFFC}
+.card-blue{border:1.5px solid #185FA5;background:#F8FAFF}
+label.lbl{font-size:11px;font-weight:600;color:#5A6A78;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;display:block}
+input,select{width:100%;padding:9px 12px;border-radius:8px;border:1px solid #DDE3EA;font-size:14px;outline:none;background:#fff;font-family:inherit}
+input:focus,select:focus{border-color:#0F6E56}
+.btn{padding:9px 16px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-pri{background:#0F6E56;color:#fff}
+.btn-pri:hover{background:#0a5a44}
+.btn-sec{background:#F0F4F8;color:#5A6A78;border:1px solid #DDE3EA}
+.btn-sec:hover{background:#e4e9ee}
+.btn-dng{background:#FEF0F0;color:#A32D2D;border:1px solid #F5C5C5}
+.btn-dng:hover{background:#fde0e0}
+.btn-sm{padding:6px 11px;font-size:12px}
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:10px}
+.tabs{display:flex;background:#fff;border-bottom:1px solid #DDE3EA;margin-bottom:16px}
+.tab{flex:1;padding:13px 8px;font-size:14px;font-weight:500;cursor:pointer;border:none;background:transparent;border-bottom:2.5px solid transparent;color:#5A6A78;font-family:inherit}
+.tab.active{border-bottom-color:#0F6E56;color:#0F6E56;font-weight:700}
+.header{background:#1A1A1A;color:#fff;padding:12px 16px;border-radius:12px 12px 0 0;display:flex;align-items:center;gap:10px}
+.alerta{background:#FFFBE6;border:1px solid #F5DC8A;border-radius:9px;padding:9px 13px;font-size:12px;color:#7A5F00;margin-bottom:16px}
+.stop-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.stop-line{flex:1;height:2px;background:#DDE3EA;min-width:16px;margin-bottom:20px;align-self:flex-start;margin-top:13px}
+.info-box{background:#E1F5EE;border:1px solid #0F6E56;border-radius:9px;padding:11px 14px;margin-bottom:14px}
+.info-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.info-label{font-size:10px;font-weight:600;color:#0F6E56;text-transform:uppercase}
+.info-val{font-size:13px;font-weight:700;color:#1A1A1A;margin-top:2px}
+.hidden{display:none}
+.row{display:flex;gap:8px;align-items:center}
+.stop-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.suc-btn{padding:7px 11px;border-radius:7px;font-size:13px;cursor:pointer;border:1px solid #DDE3EA;background:#F0F4F8;color:#888;flex-shrink:0;font-family:inherit}
+.suc-btn.on{background:#E1F5EE;border-color:#0F6E56;color:#0F6E56}
+.del-btn{padding:7px 11px;border-radius:7px;font-size:13px;cursor:pointer;background:#FEF0F0;color:#A32D2D;border:1px solid #F5C5C5;flex-shrink:0;font-family:inherit}
+.route-card{border:1px solid #DDE3EA;border-radius:12px;padding:13px 15px;margin-bottom:8px;background:#fff}
+.route-stops{display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-top:10px;padding-top:10px;border-top:1px solid #EEF1F4}
+.envio-card{border:1px solid #DDE3EA;border-radius:10px;padding:11px 14px;margin-bottom:8px;background:#fff;display:flex;justify-content:space-between;align-items:flex-start}
+.preview-box{background:#EEF6FF;border-radius:9px;padding:10px 13px;margin-bottom:14px;font-size:12px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <span style="font-size:20px;font-weight:900;color:#4AE09A">F+</span>
+    <span style="font-size:16px;font-weight:700">Fletar</span>
+    <span style="font-size:11px;background:#2A2A2A;color:#888;padding:2px 8px;border-radius:6px;margin-left:4px">Prototipo — Gestión de Rutas</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-central" onclick="showTab('central')">🏢 Central — Crear Rutas</button>
+    <button class="tab" id="tab-sucursal" onclick="showTab('sucursal')">🏪 Sucursal — Cargar Envío</button>
+  </div>
+
+  <div class="alerta">⚠️ <strong>Prototipo de prueba.</strong> Los datos se guardan en el navegador. No están conectados a Firebase ni a la app real. Una vez validado el flujo, se integra a Fletar.</div>
+
+  <!-- ═══ CENTRAL ═══ -->
+  <div id="vista-central">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div>
+        <div style="font-size:18px;font-weight:700;color:#1A1A1A">🗺️ Gestión de Rutas</div>
+        <div style="font-size:12px;color:#5A6A78;margin-top:2px">La central define rutas y asigna sucursales a cada parada</div>
+      </div>
+      <button class="btn btn-pri" onclick="abrirFormRuta()">+ Nueva ruta</button>
+    </div>
+
+    <!-- Formulario nueva/editar ruta -->
+    <div id="form-ruta" class="card card-green hidden" style="margin-bottom:16px">
+      <div style="font-size:15px;font-weight:700;color:#0F6E56;margin-bottom:14px" id="form-titulo">➕ Nueva ruta</div>
+      <label class="lbl">Nombre de la ruta</label>
+      <input id="ruta-nombre" style="margin-bottom:14px" placeholder="Ej: Ruta 2 — Posadas / Iguazú"/>
+      <label class="lbl">Paradas en orden (de inicio a fin)</label>
+      <div style="font-size:11px;color:#888;margin-bottom:10px">Marcá 🏪 en las ciudades donde hay sucursal habilitada para cargar envíos.</div>
+      <div id="paradas-container"></div>
+      <button class="btn btn-sec" style="margin-top:4px;margin-bottom:16px;font-size:12px" onclick="addParada()">+ Agregar parada</button>
+      <div id="preview-ruta" class="preview-box hidden"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-pri" style="flex:2" onclick="guardarRuta()">✓ Guardar ruta</button>
+        <button class="btn btn-sec" style="flex:1" onclick="cerrarFormRuta()">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Lista de rutas -->
+    <div id="lista-rutas"></div>
+  </div>
+
+  <!-- ═══ SUCURSAL ═══ -->
+  <div id="vista-sucursal" class="hidden">
+    <div class="card card-green" style="margin-bottom:16px">
+      <label class="lbl" style="color:#0F6E56">Estoy en la sucursal de...</label>
+      <select id="mi-ciudad" onchange="onCiudadChange()">
+        <option value="">— Elegir ciudad —</option>
+      </select>
+      <div id="suc-info" style="font-size:11px;color:#0F6E56;margin-top:8px"></div>
+    </div>
+
+    <div id="suc-contenido" class="hidden">
+      <div id="rutas-disponibles-label" style="font-size:12px;font-weight:600;color:#5A6A78;margin-bottom:10px"></div>
+      <div id="rutas-disponibles-lista"></div>
+
+      <div class="card card-blue" style="margin-top:8px">
+        <div style="font-size:15px;font-weight:700;color:#185FA5;margin-bottom:14px">📦 Nuevo envío de prueba</div>
+        <label class="lbl">Remitente</label>
+        <input id="env-remitente" style="margin-bottom:12px" placeholder="Nombre del remitente"/>
+        <label class="lbl">Ruta</label>
+        <select id="env-ruta" style="margin-bottom:12px" onchange="onRutaEnvioChange()">
+          <option value="">— Seleccionar ruta —</option>
+        </select>
+        <div id="env-destino-wrap" class="hidden">
+          <label class="lbl">Ciudad de destino</label>
+          <select id="env-destino" style="margin-bottom:12px" onchange="onDestinoChange()">
+            <option value="">— Seleccionar destino —</option>
+          </select>
+        </div>
+        <div id="env-info-tramo" class="hidden info-box">
+          <div class="info-row">
+            <div><div class="info-label">Ruta</div><div class="info-val" id="tramo-ruta"></div></div>
+            <div><div class="info-label">Sentido</div><div class="info-val" id="tramo-sentido"></div></div>
+            <div><div class="info-label">Tramo completo</div><div class="info-val" id="tramo-completo"></div></div>
+            <div><div class="info-label">Tramo específico</div><div class="info-val" id="tramo-especifico"></div></div>
+          </div>
+        </div>
+        <button class="btn btn-pri" style="width:100%;padding:11px" id="btn-registrar" onclick="registrarEnvio()">📦 Registrar envío de prueba</button>
+      </div>
+
+      <div id="envios-lista-wrap" class="hidden" style="margin-top:16px">
+        <div style="font-size:12px;font-weight:600;color:#5A6A78;margin-bottom:8px">ENVÍOS REGISTRADOS</div>
+        <div id="envios-lista"></div>
+        <button class="btn btn-dng btn-sm" onclick="limpiarEnvios()">🗑 Limpiar envíos de prueba</button>
+      </div>
+    </div>
+
+    <div id="suc-placeholder" class="card" style="text-align:center;padding:32px;color:#888">
+      <div style="font-size:28px;margin-bottom:8px">🏪</div>
+      <div style="font-size:14px">Seleccioná tu sucursal para ver las rutas disponibles</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── Colores paradas ─── */
+const COLORS = ['#185FA5','#0F6E56','#7C3D8F','#B8601A','#145C6E','#6E1414','#1A6E4A','#6E4A1A'];
+
+/* ─── Storage ─── */
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+
+/* ─── Estado global ─── */
+let rutas    = lsGet('fp_rutas', {});
+let envios   = lsGet('fp_envios', []);
+let editId   = null;
+let paradas  = ['',''];   // array de strings
+let suc      = {};        // { idx: true } sucursales en cada parada
+
+/* ═══════════════════════════
+   TABS
+═══════════════════════════ */
+function showTab(t){
+  document.getElementById('vista-central').classList.toggle('hidden', t!=='central');
+  document.getElementById('vista-sucursal').classList.toggle('hidden', t!=='sucursal');
+  document.getElementById('tab-central').classList.toggle('active', t==='central');
+  document.getElementById('tab-sucursal').classList.toggle('active', t!=='central');
+  if(t==='sucursal') renderSucursal();
+}
+
+/* ═══════════════════════════
+   CENTRAL — FORMULARIO
+═══════════════════════════ */
+function abrirFormRuta(id){
+  editId = id || null;
+  if(id){
+    const r = rutas[id];
+    document.getElementById('ruta-nombre').value = r.nombre;
+    paradas = [...r.paradas];
+    suc = {...(r.sucursales||{})};
+    document.getElementById('form-titulo').textContent = '✏️ Editar ruta';
+  } else {
+    document.getElementById('ruta-nombre').value = '';
+    paradas = ['',''];
+    suc = {};
+    document.getElementById('form-titulo').textContent = '➕ Nueva ruta';
+  }
+  renderParadas();
+  document.getElementById('form-ruta').classList.remove('hidden');
+  document.getElementById('ruta-nombre').focus();
+}
+
+function cerrarFormRuta(){
+  document.getElementById('form-ruta').classList.add('hidden');
+  document.getElementById('preview-ruta').classList.add('hidden');
+}
+
+function addParada(){
+  paradas.push('');
+  renderParadas();
+}
+
+function removeParada(i){
+  if(paradas.length<=2) return;
+  paradas.splice(i,1);
+  // reindexar sucursales
+  const ns={};
+  Object.keys(suc).forEach(k=>{
+    const n=parseInt(k);
+    if(n<i && suc[k]) ns[n]=true;
+    else if(n>i && suc[k]) ns[n-1]=true;
+  });
+  suc=ns;
+  renderParadas();
+}
+
+function setParadaVal(i,v){
+  paradas[i]=v;
+  updatePreview();
+}
+
+function toggleSuc(i){
+  suc[i] = !suc[i];
+  const btn = document.getElementById('suc-btn-'+i);
+  btn.classList.toggle('on', !!suc[i]);
+  btn.title = suc[i] ? 'Sucursal habilitada ✓' : '¿Hay sucursal aquí?';
+  updatePreview();
+}
+
+function renderParadas(){
+  const c = document.getElementById('paradas-container');
+  c.innerHTML = '';
+  paradas.forEach((p,i)=>{
+    const row = document.createElement('div');
+    row.className = 'stop-row';
+    row.innerHTML = `
+      <div class="stop-dot" style="background:${COLORS[i%COLORS.length]}">${i+1}</div>
+      <input value="${escHtml(p)}"
+        placeholder="${i===0?'Parada 1 (inicio)':i===paradas.length-1?'Última parada':'Parada '+(i+1)}"
+        oninput="setParadaVal(${i},this.value)" style="flex:1"/>
+      <button class="suc-btn ${suc[i]?'on':''}" id="suc-btn-${i}"
+        onclick="toggleSuc(${i})" title="${suc[i]?'Sucursal habilitada ✓':'¿Hay sucursal aquí?'}">🏪</button>
+      ${paradas.length>2?`<button class="del-btn" onclick="removeParada(${i})">✕</button>`:''}
+    `;
+    c.appendChild(row);
+  });
+  updatePreview();
+}
+
+function updatePreview(){
+  const limpias = paradas.filter(p=>p.trim());
+  const box = document.getElementById('preview-ruta');
+  if(limpias.length<2){box.classList.add('hidden');return;}
+  box.classList.remove('hidden');
+  const parts = paradas.map((p,i)=>{
+    if(!p.trim()) return '';
+    const label = suc[i] ? `<strong>🏪 ${escHtml(p)}</strong>` : escHtml(p);
+    return label;
+  }).filter(Boolean).join(' <span style="color:#888;margin:0 4px">→</span> ');
+  box.innerHTML = `<span style="font-weight:600;color:#185FA5">Vista previa: </span>${parts}`;
+}
+
+function guardarRuta(){
+  const nombre = document.getElementById('ruta-nombre').value.trim();
+  const limpias = paradas.map(p=>p.trim()).filter(Boolean);
+  if(!nombre || limpias.length<2){
+    alert('Completá el nombre y al menos 2 paradas.');
+    return;
+  }
+  const id = editId || 'r_'+Date.now();
+  // reindexar suc según paradas limpias
+  const sucFinal={};
+  paradas.forEach((p,i)=>{ if(p.trim() && suc[i]) sucFinal[limpias.indexOf(p.trim())]=true; });
+  rutas[id] = {nombre, paradas:limpias, sucursales:sucFinal};
+  lsSet('fp_rutas', rutas);
+  cerrarFormRuta();
+  renderListaRutas();
+}
+
+function eliminarRuta(id){
+  if(!confirm('¿Eliminar esta ruta?')) return;
+  delete rutas[id];
+  lsSet('fp_rutas', rutas);
+  renderListaRutas();
+}
+
+function renderListaRutas(){
+  const c = document.getElementById('lista-rutas');
+  const ids = Object.keys(rutas);
+  if(ids.length===0){
+    c.innerHTML=`<div class="card" style="text-align:center;padding:32px;color:#888">
+      <div style="font-size:32px;margin-bottom:8px">🗺️</div>
+      <div style="font-size:14px">No hay rutas cargadas todavía.</div>
+      <div style="font-size:12px;margin-top:4px">Creá la primera con el botón de arriba.</div>
+    </div>`;
+    return;
+  }
+  c.innerHTML = ids.map(id=>{
+    const r=rutas[id];
+    const sucCount=Object.values(r.sucursales||{}).filter(Boolean).length;
+    const stopsHtml = r.paradas.map((p,i)=>{
+      const tieneSuc=r.sucursales&&r.sucursales[i];
+      const dot=`<div class="stop-dot" style="background:${COLORS[i%COLORS.length]};width:26px;height:26px;font-size:11px">${i+1}</div>`;
+      const label=`<div style="font-size:11px;font-weight:${tieneSuc?700:400};color:${tieneSuc?'#0F6E56':'#1A1A1A'};text-align:center;max-width:74px;margin-top:4px">${tieneSuc?'🏪 ':''}${escHtml(p)}</div>`;
+      const line=i<r.paradas.length-1?`<div class="stop-line"></div>`:'';
+      return `<div style="display:flex;flex-direction:column;align-items:center">${dot}${label}</div>${line}`;
+    }).join('');
+    return `<div class="route-card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#1A1A1A">${escHtml(r.nombre)}</div>
+          <div style="font-size:12px;color:#5A6A78;margin-top:2px">${r.paradas.length} paradas · ${sucCount} sucursal${sucCount!==1?'es':''}</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sec btn-sm" onclick="abrirFormRuta('${id}')">✏️ Editar</button>
+          <button class="btn btn-dng btn-sm" onclick="eliminarRuta('${id}')">✕ Eliminar</button>
+        </div>
+      </div>
+      <div class="route-stops">${stopsHtml}</div>
+      <div style="font-size:11px;color:#888;margin-top:8px">🏪 = sucursal habilitada para cargar envíos desde esa ciudad</div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════
+   SUCURSAL
+═══════════════════════════ */
+function renderSucursal(){
+  // Ciudades con sucursal
+  const ciudades=[];
+  Object.values(rutas).forEach(r=>{
+    r.paradas.forEach((p,i)=>{
+      if(r.sucursales&&r.sucursales[i]&&!ciudades.includes(p)) ciudades.push(p);
+    });
+  });
+  ciudades.sort();
+  const sel=document.getElementById('mi-ciudad');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Elegir ciudad —</option>'+
+    ciudades.map(c=>`<option value="${escHtml(c)}" ${c===cur?'selected':''}>${escHtml(c)}</option>`).join('');
+  if(ciudades.length===0){
+    document.getElementById('suc-info').textContent='No hay sucursales definidas. La central debe crear rutas y marcar paradas con 🏪.';
+  }
+  if(cur) onCiudadChange();
+}
+
+function onCiudadChange(){
+  const ciudad=document.getElementById('mi-ciudad').value;
+  const info=document.getElementById('suc-info');
+  const cont=document.getElementById('suc-contenido');
+  const ph=document.getElementById('suc-placeholder');
+
+  if(!ciudad){cont.classList.add('hidden');ph.classList.remove('hidden');info.textContent='';return;}
+
+  const misRutas=Object.entries(rutas).filter(([,r])=>r.paradas.includes(ciudad));
+  info.textContent=`✓ Rutas disponibles desde ${ciudad}: ${misRutas.length}`;
+  cont.classList.remove('hidden');
+  ph.classList.add('hidden');
+
+  // Label
+  document.getElementById('rutas-disponibles-label').textContent=`RUTAS DESDE ${ciudad.toUpperCase()}`;
+
+  // Lista de rutas
+  const rl=document.getElementById('rutas-disponibles-lista');
+  rl.innerHTML=misRutas.map(([id,r])=>{
+    const stopsHtml=r.paradas.map((p,i)=>{
+      const esYo=p===ciudad;
+      return `<span class="tag" style="background:${esYo?'#0F6E56':'#F0F4F8'};color:${esYo?'#fff':'#5A6A78'};border:${esYo?'none':'1px solid #DDE3EA'}">${escHtml(p)}</span>`+
+        (i<r.paradas.length-1?`<span style="color:#CDD5E0;font-size:12px;margin:0 2px">→</span>`:'');
+    }).join('');
+    const destinos=r.paradas.filter(p=>p!==ciudad).join(', ');
+    return `<div class="route-card" style="margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700;color:#1A1A1A">${escHtml(r.nombre)}</div>
+      <div style="display:flex;align-items:center;gap:4px;margin-top:8px;flex-wrap:wrap">${stopsHtml}</div>
+      <div style="font-size:11px;color:#888;margin-top:6px">Podés cargar envíos a: ${escHtml(destinos)}</div>
+    </div>`;
+  }).join('');
+
+  // Select rutas en formulario
+  const envRuta=document.getElementById('env-ruta');
+  const curRuta=envRuta.value;
+  envRuta.innerHTML='<option value="">— Seleccionar ruta —</option>'+
+    misRutas.map(([id,r])=>`<option value="${id}" ${id===curRuta?'selected':''}>${escHtml(r.nombre)}</option>`).join('');
+
+  renderEnvios();
+}
+
+function onRutaEnvioChange(){
+  const ciudad=document.getElementById('mi-ciudad').value;
+  const rutaId=document.getElementById('env-ruta').value;
+  const destWrap=document.getElementById('env-destino-wrap');
+  const infoTramo=document.getElementById('env-info-tramo');
+
+  if(!rutaId){destWrap.classList.add('hidden');infoTramo.classList.add('hidden');return;}
+
+  const r=rutas[rutaId];
+  const destinos=r.paradas.filter(p=>p!==ciudad);
+  const sel=document.getElementById('env-destino');
+  sel.innerHTML='<option value="">— Seleccionar destino —</option>'+
+    destinos.map(d=>`<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
+  destWrap.classList.remove('hidden');
+  infoTramo.classList.add('hidden');
+}
+
+function onDestinoChange(){
+  const ciudad=document.getElementById('mi-ciudad').value;
+  const rutaId=document.getElementById('env-ruta').value;
+  const destino=document.getElementById('env-destino').value;
+  const infoBox=document.getElementById('env-info-tramo');
+
+  if(!destino||!rutaId){infoBox.classList.add('hidden');return;}
+
+  const r=rutas[rutaId];
+  const iO=r.paradas.indexOf(ciudad);
+  const iD=r.paradas.indexOf(destino);
+  const esIda=iO<iD;
+  const sentido=esIda?'→ Ida':'← Vuelta';
+  const tramo=esIda
+    ?`${r.paradas[0]} → ${r.paradas[r.paradas.length-1]}`
+    :`${r.paradas[r.paradas.length-1]} → ${r.paradas[0]}`;
+
+  document.getElementById('tramo-ruta').textContent=r.nombre;
+  document.getElementById('tramo-sentido').textContent=sentido;
+  document.getElementById('tramo-completo').textContent=tramo;
+  document.getElementById('tramo-especifico').textContent=`${ciudad} → ${destino}`;
+  infoBox.classList.remove('hidden');
+}
+
+function registrarEnvio(){
+  const ciudad=document.getElementById('mi-ciudad').value;
+  const rutaId=document.getElementById('env-ruta').value;
+  const destino=document.getElementById('env-destino').value;
+  const remitente=document.getElementById('env-remitente').value.trim();
+  if(!ciudad||!rutaId||!destino||!remitente){alert('Completá todos los campos.');return;}
+
+  const r=rutas[rutaId];
+  const iO=r.paradas.indexOf(ciudad);
+  const iD=r.paradas.indexOf(destino);
+  const sentido=iO<iD?'ida':'vuelta';
+
+  envios.unshift({
+    id:'e_'+Date.now(), remitente, origen:ciudad, destino,
+    rutaNombre:r.nombre, sentido,
+    fecha:new Date().toLocaleDateString('es-AR')
+  });
+  lsSet('fp_envios',envios);
+
+  document.getElementById('env-remitente').value='';
+  document.getElementById('env-ruta').value='';
+  document.getElementById('env-destino-wrap').classList.add('hidden');
+  document.getElementById('env-info-tramo').classList.add('hidden');
+
+  const btn=document.getElementById('btn-registrar');
+  btn.textContent='✓ Envío registrado';
+  btn.style.background='#145C3A';
+  setTimeout(()=>{btn.textContent='📦 Registrar envío de prueba';btn.style.background='';},1800);
+
+  renderEnvios();
+}
+
+function limpiarEnvios(){
+  envios=[];lsSet('fp_envios',[]);renderEnvios();
+}
+
+function renderEnvios(){
+  const wrap=document.getElementById('envios-lista-wrap');
+  const lista=document.getElementById('envios-lista');
+  if(envios.length===0){wrap.classList.add('hidden');return;}
+  wrap.classList.remove('hidden');
+  lista.innerHTML=envios.map(e=>`
+    <div class="envio-card">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#1A1A1A">${escHtml(e.remitente)}</div>
+        <div style="font-size:12px;color:#5A6A78;margin-top:2px">${escHtml(e.origen)} → ${escHtml(e.destino)}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px">${escHtml(e.fecha)}</div>
+      </div>
+      <div style="text-align:right">
+        <span class="tag" style="background:${e.sentido==='ida'?'#E6F1FB':'#FEF3EC'};color:${e.sentido==='ida'?'#0C447C':'#C44A0F'}">
+          ${e.sentido==='ida'?'→ Ida':'← Vuelta'}
+        </span>
+        <div style="font-size:11px;color:#888;margin-top:5px;max-width:130px;text-align:right">${escHtml(e.rutaNombre)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function escHtml(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ─── Init ─── */
+renderListaRutas();
+renderEnvios();
+</script>
+</body>
+</html>
