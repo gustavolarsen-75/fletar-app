@@ -265,11 +265,19 @@ const PROVINCIAS = Object.keys(PROVINCIAS_LOCALIDADES).sort();
 const APP_START_TIME = Date.now();
 
 const _sonido = new Howl({ src: ['/notif-cliente.wav'], volume: 1.0, preload: true });
+let _badgeCount = 0;
 
 function pedirPermisoNotificaciones() {
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
+  // Limpiar badge cuando el usuario vuelve a la app
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      _badgeCount = 0;
+      if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
+    }
+  });
 }
 
 function tocarSonido() {
@@ -278,6 +286,8 @@ function tocarSonido() {
 
 function mostrarNotificacion(titulo, cuerpo) {
   tocarSonido();
+  _badgeCount++;
+  if ('setAppBadge' in navigator) navigator.setAppBadge(_badgeCount).catch(() => {});
   if ('Notification' in window && Notification.permission === 'granted') {
     new Notification(titulo, {
       body: cuerpo,
