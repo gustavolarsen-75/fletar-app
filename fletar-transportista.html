@@ -21,6 +21,7 @@
       appId: "1:698884616195:web:c42078e969cdf5268e9e36"
     });
     const db = firebase.database();
+    db.setPersistenceEnabled(true); // caché local — carga instantánea en la 2ª apertura
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
   <style>

@@ -36,6 +36,7 @@
       appId: "1:698884616195:web:c42078e969cdf5268e9e36"
     });
     const db = firebase.database();
+    db.setPersistenceEnabled(true); // caché local — carga instantánea en la 2ª apertura
   </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2755,37 +2756,6 @@ function instalarPWA() {
 
 // Cuando el prompt llega, re-renderizar para mostrar el botón
 window._pwaInstallReadyCallback = function() { render(); };
-
-// ─── BOTÓN BACK DEL TELÉFONO ─────────────────────────────────────────────────
-// CLAVE: usamos '#f' para que la URL sea distinta del start_url del manifest.
-// Algunos WebAPK de Android cierran la app cuando la URL actual coincide con
-// start_url al presionar back, ignorando los pushState con misma URL.
-var _BACK_URL = location.pathname + location.search + '#f';
-history.pushState({ f: 1 }, '', _BACK_URL);
-history.pushState({ f: 1 }, '', _BACK_URL);
-
-var _backHandling = false;
-function _onBack() {
-  history.pushState({ f: 1 }, '', _BACK_URL); // re-trampa con URL distinta
-  if (_backHandling) return;
-  _backHandling = true;
-  setTimeout(function() { _backHandling = false; }, 300);
-
-  if (modalAbierto)         { modalAbierto = null; render(); return; }
-  if (modalSucursalAbierto) { modalSucursalAbierto = null; render(); return; }
-  if (modalAutopickup)      { modalAutopickup = null; render(); return; }
-  if (modalGastoOpen)       { modalGastoOpen = false; render(); return; }
-  if (rendirModalOpen)      { rendirModalOpen = false; rendirGastos = []; render(); return; }
-  if (scannerActivo)        { cerrarScanner(); return; }
-  if (vistaSucDep)          { vistaSucDep = false; selSucDep = new Set(); render(); return; }
-  if (vistaDeposito)        { vistaDeposito = false; aDepositar = new Set(); render(); return; }
-  render(); // root: bloqueado
-}
-window.addEventListener('popstate', _onBack);
-// hashchange como respaldo: cuando el hash cambia de '#f' a '' (primer back)
-window.addEventListener('hashchange', function() {
-  if (location.hash !== '#f') _onBack();
-});
 
 // ─── INICIO ───────────────────────────────────────────────────────────────────
 pedirPermisoNotificacionesChofer();

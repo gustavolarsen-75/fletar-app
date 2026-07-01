@@ -38,6 +38,7 @@
       appId: "1:698884616195:web:c42078e969cdf5268e9e36"
     });
     const db = firebase.database();
+    db.setPersistenceEnabled(true); // caché local — carga instantánea en la 2ª apertura
     const storage = firebase.storage();
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
@@ -2509,29 +2510,6 @@ function App() {
   const shownRating = useRef(new Set());
   const ofertasVistas = useRef(null);
 
-  // Bloquear botón back de Android — '#f' hace la URL distinta del start_url
-  // para que el WebAPK no cierre la app por coincidir con el start_url del manifest
-  useEffect(() => {
-    const BACK_URL = location.pathname + location.search + '#f';
-    const pushTrap = () => {
-      history.pushState({ f: 1 }, '', BACK_URL);
-      history.pushState({ f: 1 }, '', BACK_URL);
-    };
-    pushTrap();
-    const onPopState = () => {
-      history.pushState({ f: 1 }, '', BACK_URL);
-      setScreen('empresa-dashboard');
-    };
-    const onHashChange = () => {
-      if (location.hash !== '#f') { history.pushState({ f: 1 }, '', BACK_URL); setScreen('empresa-dashboard'); }
-    };
-    window.addEventListener('popstate', onPopState);
-    window.addEventListener('hashchange', onHashChange);
-    return () => {
-      window.removeEventListener('popstate', onPopState);
-      window.removeEventListener('hashchange', onHashChange);
-    };
-  }, []);
 
   // Pedir permiso de notificaciones al abrir la app
   useEffect(() => { pedirPermisoNotificaciones(); }, []);
