@@ -2757,18 +2757,22 @@ function instalarPWA() {
 window._pwaInstallReadyCallback = function() { render(); };
 
 // ─── BOTÓN BACK DEL TELÉFONO ─────────────────────────────────────────────────
-// Re-push inmediato en popstate para evitar que Android cierre la app antes
-// de que se ejecute la lógica. Sin hashes — más robusto en WebView/Chrome.
-history.pushState(null, '', location.href);
+// Doble push al inicio: da dos niveles de buffer para que el WebAPK nunca
+// llegue a la entrada "vacía" que cierra la app, aunque el historial inicial
+// del WebAPK empiece en posición 0.
+var _TRAP = { fletar: 1 };
+history.pushState(_TRAP, '', location.href);
+history.pushState(_TRAP, '', location.href);
 
 var _backHandling = false;
 window.addEventListener('popstate', function() {
-  // Re-push ANTES de cualquier lógica — bloquea la salida en Android
-  history.pushState(null, '', location.href);
+  // Re-push doble para mantener siempre el buffer
+  history.pushState(_TRAP, '', location.href);
+  history.pushState(_TRAP, '', location.href);
 
   if (_backHandling) return;
   _backHandling = true;
-  setTimeout(function() { _backHandling = false; }, 200);
+  setTimeout(function() { _backHandling = false; }, 300);
 
   if (modalAbierto)         { modalAbierto = null; render(); return; }
   if (modalSucursalAbierto) { modalSucursalAbierto = null; render(); return; }
