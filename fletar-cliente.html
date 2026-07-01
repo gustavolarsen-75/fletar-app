@@ -2509,6 +2509,20 @@ function App() {
   const shownRating = useRef(new Set());
   const ofertasVistas = useRef(null);
 
+  // Bloquear botón back de Android — doble push para máxima fiabilidad en WebAPK/PWA
+  useEffect(() => {
+    const TRAP = { fletar: true };
+    history.pushState(TRAP, '', location.href);
+    history.pushState(TRAP, '', location.href);
+    const onPopState = () => {
+      history.pushState(TRAP, '', location.href);
+      history.pushState(TRAP, '', location.href);
+      setScreen('empresa-dashboard');
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
   // Pedir permiso de notificaciones al abrir la app
   useEffect(() => { pedirPermisoNotificaciones(); }, []);
 
