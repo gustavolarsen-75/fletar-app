@@ -169,8 +169,9 @@ function fbUpdate(path, id, changes) {
 }
 function fbListen(path, callback) {
   const ref = db.ref(path);
-  ref.on('value', snap => callback(fbSnap(snap)));
-  return () => ref.off();
+  const handler = snap => callback(fbSnap(snap));
+  ref.on('value', handler);
+  return () => ref.off('value', handler); // solo remueve este listener, no todos
 }
 
 // ─── MOCK DATA (semilla inicial) ──────────────────────────────────────────────
