@@ -23,6 +23,7 @@
   </script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
   <script>
     firebase.initializeApp({
@@ -279,6 +280,38 @@ function getCapKg()  { return (vehiculoInfo && vehiculoInfo.capacidadKg)  || par
 function getCapM3()  { return (vehiculoInfo && vehiculoInfo.capacidadM3)  || params.capacidadM3 || 0; }
 function getFecha()  { return params.fecha || new Date().toLocaleDateString('es-AR'); }
 
+// ─── NOTIFICACIONES ──────────────────────────────────────────────────────────
+const APP_START_TIME = Date.now();
+const _sonidoChofer = new Howl({ src: ['/notif-cliente.wav'], volume: 1.0, preload: true });
+let _retirosVistos = null; // null = primera carga todavía no procesada
+let _badgeCount = 0;
+
+function notificarRetiroDisponible(remito) {
+  _sonidoChofer.play();
+  _badgeCount++;
+  if ('setAppBadge' in navigator) navigator.setAppBadge(_badgeCount).catch(() => {});
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('📥 Nuevo retiro disponible', {
+      body: remito.remitente?.nombre || 'Nuevo paquete para retirar',
+      icon: '/icon-chofer-192.png',
+      silent: true,
+    });
+  }
+}
+
+function pedirPermisoNotificacionesChofer() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+  // Limpiar badge cuando el usuario vuelve a la app
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      _badgeCount = 0;
+      if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
+    }
+  });
+}
+
 // ─── ESTADO ───────────────────────────────────────────────────────────────────
 let remitos = [];
 let modalAbierto = null;         // { remitoId, tipo } 'entrega' | 'retiro'
@@ -471,6 +504,19 @@ function cargarRemitos() {
         }
         return r;
       });
+
+    // Detectar nuevos retiros disponibles y notificar
+    const disponiblesActuales = remitos.filter(r => r.estado === 'pendiente-retiro' && !r.vehiculoAsignado);
+    if (_retirosVistos === null) {
+      _retirosVistos = new Set(disponiblesActuales.map(r => r.id));
+    } else {
+      disponiblesActuales.forEach(r => {
+        if (!_retirosVistos.has(r.id)) {
+          _retirosVistos.add(r.id);
+          notificarRetiroDisponible(r);
+        }
+      });
+    }
 
     render();
     // Intentar cargar rutas si no están cargadas aún
@@ -2693,6 +2739,7 @@ window.addEventListener('popstate', function() {
 });
 
 // ─── INICIO ───────────────────────────────────────────────────────────────────
+pedirPermisoNotificacionesChofer();
 render(); // muestra loading
 cargarRemitos();
 </script>
