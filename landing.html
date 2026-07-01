@@ -106,6 +106,16 @@
   .hero-trust-item .ck { color: var(--o); font-weight: 700; }
   .hero-trust-sep { width: 1px; height: 18px; background: rgba(255,255,255,0.15); }
 
+  /* ─── QR INSTALAR (solo desktop) ─── */
+  .hero-qr {
+    position: absolute; z-index: 3; bottom: 24px; right: 24px;
+    background: var(--dk2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px; display: flex; align-items: center; gap: 10px;
+  }
+  .hero-qr img { width: 56px; height: 56px; border-radius: 3px; display: block; background: #fff; }
+  .hero-qr-txt { font-size: 10.5px; font-weight: 700; color: #fff; line-height: 1.35; text-align: left; }
+  .hero-qr-sub { font-size: 9.5px; color: rgba(255,255,255,0.5); margin-top: 3px; font-weight: 500; }
+
   /* ─── SERVICES STRIP ─── */
   .services { background: var(--dk2); border-bottom: 1px solid var(--border); }
   .services-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
@@ -269,12 +279,40 @@
   .footer-copy { font-size: 11px; color: rgba(255,255,255,0.2); }
   .footer-made { font-size: 11px; color: rgba(255,255,255,0.2); }
 
+  /* ─── GATE (clave de acceso) ─── */
+  .gate {
+    position: fixed; inset: 0; z-index: 1000;
+    background: var(--dk);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .gate-box {
+    background: var(--dk2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 40px 32px; max-width: 320px; width: 100%; text-align: center;
+  }
+  .gate-logo { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 22px; }
+  .gate-title { font-size: 13px; color: rgba(255,255,255,0.55); margin-bottom: 20px; line-height: 1.6; }
+  .gate-input {
+    width: 100%; background: #0D1117; border: 1.5px solid var(--border); border-radius: 6px;
+    padding: 12px 14px; font-size: 15px; color: #fff; text-align: center;
+    letter-spacing: 2px; margin-bottom: 14px; outline: none;
+  }
+  .gate-input:focus { border-color: var(--o); }
+  .gate-btn {
+    width: 100%; background: var(--o); color: #fff; font-size: 13px; font-weight: 700;
+    padding: 13px; border: none; border-radius: 6px; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 0.8px; transition: background 0.2s;
+  }
+  .gate-btn:hover { background: var(--o-d); }
+  .gate-error { font-size: 12px; color: var(--o); margin-top: 12px; display: none; }
+
   /* ─── RESPONSIVE ─── */
   @media (max-width: 768px) {
     .nav { padding: 0 20px; }
     .nav-links { display: none; }
     .hero-content { padding: 60px 20px; }
     .hero-h1 { font-size: 40px; }
+    .hero-qr { display: none; }
     .services-grid { grid-template-columns: repeat(2, 1fr); }
     .about { padding: 60px 20px; }
     .about-grid { grid-template-columns: 1fr; gap: 36px; }
@@ -297,6 +335,34 @@
 </style>
 </head>
 <body>
+
+<!-- ─── GATE (clave de acceso, pre-lanzamiento) ─── -->
+<div class="gate" id="gate">
+  <div class="gate-box">
+    <div class="gate-logo">
+      <svg width="30" height="30" viewBox="0 0 38 38">
+        <rect width="38" height="38" rx="9" fill="#E85D20"/>
+        <text font-family="Montserrat,sans-serif" font-size="26" font-weight="900" x="7" y="28" fill="white">F</text>
+        <polygon points="28,24 34,19 28,14 28,18 22,18 22,20 28,20" fill="white" opacity="0.9"/>
+      </svg>
+      <svg width="92" height="30" viewBox="0 0 110 36">
+        <defs>
+          <clipPath id="gate-cl-left"><polygon points="0,36 0,0 63.8,0 39.6,36"/></clipPath>
+          <clipPath id="gate-cl-right"><polygon points="63.8,0 110,0 110,36 39.6,36"/></clipPath>
+        </defs>
+        <text font-family="Montserrat,sans-serif" font-size="32" font-weight="900" y="32" clip-path="url(#gate-cl-left)" fill="#E85D20">fletar</text>
+        <text font-family="Montserrat,sans-serif" font-size="32" font-weight="900" y="32" clip-path="url(#gate-cl-right)" fill="white">fletar</text>
+      </svg>
+    </div>
+    <div class="gate-title">Sitio en preparación.<br>Ingresá la clave de acceso.</div>
+    <input type="password" inputmode="numeric" class="gate-input" id="gateInput" placeholder="••••" maxlength="10" autocomplete="off">
+    <button class="gate-btn" id="gateBtn">Entrar</button>
+    <div class="gate-error" id="gateError">Clave incorrecta.</div>
+  </div>
+</div>
+
+<!-- ─── SITIO ─── -->
+<div id="site-content" style="display:none">
 
 <!-- ─── NAVBAR ─── -->
 <nav class="nav">
@@ -335,7 +401,7 @@
       Sin llamadas, sin intermediarios. 100% desde el celular.
     </p>
     <div class="hero-btns">
-      <a href="fletar-cliente.html" class="btn-primary">📦 Publicar carga</a>
+      <a href="fletar-cliente.html" id="btnPublicarCarga" class="btn-primary">📦 Publicar carga</a>
       <a href="fletar-transportista.html" class="btn-outline">🚛 Soy transportista</a>
     </div>
     <div class="hero-trust">
@@ -344,6 +410,13 @@
       <span class="hero-trust-item"><span class="ck">✓</span> 6 meses gratis</span>
       <div class="hero-trust-sep"></div>
       <span class="hero-trust-item"><span class="ck">✓</span> Sin contratos</span>
+    </div>
+  </div>
+  <div class="hero-qr" id="heroQr">
+    <img id="heroQrImg" src="" alt="QR para instalar la app" width="56" height="56" />
+    <div>
+      <div class="hero-qr-txt">Escaneá para<br>instalar la app</div>
+      <div class="hero-qr-sub">Publicá desde tu cel</div>
     </div>
   </div>
 </section>
@@ -607,6 +680,63 @@
     <div class="footer-made">Hecho en Argentina 🇦🇷</div>
   </div>
 </footer>
+
+</div>
+<!-- fin #site-content -->
+
+<script>
+  (function () {
+    var CLAVE = '2164';
+    var gate = document.getElementById('gate');
+    var content = document.getElementById('site-content');
+    var input = document.getElementById('gateInput');
+    var btn = document.getElementById('gateBtn');
+    var error = document.getElementById('gateError');
+
+    function unlock() {
+      localStorage.setItem('fletarGateOk', '1');
+      gate.style.display = 'none';
+      content.style.display = '';
+    }
+
+    function tryUnlock() {
+      if (input.value === CLAVE) {
+        unlock();
+      } else {
+        error.style.display = 'block';
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    if (localStorage.getItem('fletarGateOk') === '1') {
+      unlock();
+    } else {
+      btn.addEventListener('click', tryUnlock);
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') tryUnlock();
+      });
+    }
+  })();
+
+  (function () {
+    var installUrl = window.location.origin + '/instalar-cliente.html';
+
+    var qrImg = document.getElementById('heroQrImg');
+    if (qrImg) {
+      qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=112x112&data=' + encodeURIComponent(installUrl) + '&color=0D1117&bgcolor=ffffff&margin=2';
+    }
+
+    document.querySelectorAll('a[href="fletar-cliente.html"]').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        if (window.matchMedia('(max-width: 768px)').matches) {
+          e.preventDefault();
+          window.location.href = 'instalar-cliente.html';
+        }
+      });
+    });
+  })();
+</script>
 
 </body>
 </html>
