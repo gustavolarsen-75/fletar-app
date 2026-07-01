@@ -2757,19 +2757,16 @@ function instalarPWA() {
 window._pwaInstallReadyCallback = function() { render(); };
 
 // ─── BOTÓN BACK DEL TELÉFONO ─────────────────────────────────────────────────
-// Doble push al inicio: da dos niveles de buffer para que el WebAPK nunca
-// llegue a la entrada "vacía" que cierra la app, aunque el historial inicial
-// del WebAPK empiece en posición 0.
-var _TRAP = { fletar: 1 };
-history.pushState(_TRAP, '', location.href);
-history.pushState(_TRAP, '', location.href);
+// CLAVE: usamos '#f' para que la URL sea distinta del start_url del manifest.
+// Algunos WebAPK de Android cierran la app cuando la URL actual coincide con
+// start_url al presionar back, ignorando los pushState con misma URL.
+var _BACK_URL = location.pathname + location.search + '#f';
+history.pushState({ f: 1 }, '', _BACK_URL);
+history.pushState({ f: 1 }, '', _BACK_URL);
 
 var _backHandling = false;
-window.addEventListener('popstate', function() {
-  // Re-push doble para mantener siempre el buffer
-  history.pushState(_TRAP, '', location.href);
-  history.pushState(_TRAP, '', location.href);
-
+function _onBack() {
+  history.pushState({ f: 1 }, '', _BACK_URL); // re-trampa con URL distinta
   if (_backHandling) return;
   _backHandling = true;
   setTimeout(function() { _backHandling = false; }, 300);
@@ -2783,6 +2780,11 @@ window.addEventListener('popstate', function() {
   if (vistaSucDep)          { vistaSucDep = false; selSucDep = new Set(); render(); return; }
   if (vistaDeposito)        { vistaDeposito = false; aDepositar = new Set(); render(); return; }
   render(); // root: bloqueado
+}
+window.addEventListener('popstate', _onBack);
+// hashchange como respaldo: cuando el hash cambia de '#f' a '' (primer back)
+window.addEventListener('hashchange', function() {
+  if (location.hash !== '#f') _onBack();
 });
 
 // ─── INICIO ───────────────────────────────────────────────────────────────────

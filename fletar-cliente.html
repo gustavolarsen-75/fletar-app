@@ -2509,18 +2509,28 @@ function App() {
   const shownRating = useRef(new Set());
   const ofertasVistas = useRef(null);
 
-  // Bloquear botón back de Android — doble push para máxima fiabilidad en WebAPK/PWA
+  // Bloquear botón back de Android — '#f' hace la URL distinta del start_url
+  // para que el WebAPK no cierre la app por coincidir con el start_url del manifest
   useEffect(() => {
-    const TRAP = { fletar: true };
-    history.pushState(TRAP, '', location.href);
-    history.pushState(TRAP, '', location.href);
+    const BACK_URL = location.pathname + location.search + '#f';
+    const pushTrap = () => {
+      history.pushState({ f: 1 }, '', BACK_URL);
+      history.pushState({ f: 1 }, '', BACK_URL);
+    };
+    pushTrap();
     const onPopState = () => {
-      history.pushState(TRAP, '', location.href);
-      history.pushState(TRAP, '', location.href);
+      history.pushState({ f: 1 }, '', BACK_URL);
       setScreen('empresa-dashboard');
     };
+    const onHashChange = () => {
+      if (location.hash !== '#f') { history.pushState({ f: 1 }, '', BACK_URL); setScreen('empresa-dashboard'); }
+    };
     window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
+    window.addEventListener('hashchange', onHashChange);
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+      window.removeEventListener('hashchange', onHashChange);
+    };
   }, []);
 
   // Pedir permiso de notificaciones al abrir la app
