@@ -5052,15 +5052,13 @@ function App() {
   const shownRating = useRef(new Set());
   const initialLoadDone = useRef(false);
   const cargasVistas = useRef(null);       // null = primera carga todavía no procesada
-  const remitosAceptadosVistos = useRef(null);
 
   // Pedir permiso de notificaciones al abrir la app
   useEffect(() => { pedirPermisoNotificaciones(); }, []);
 
-  // Notificar nuevo pedido Y oferta aceptada — un solo listener eficiente
+  // Notificar nuevo pedido disponible
   useEffect(() => {
     return fbListen('cargas', arr => {
-      // Nuevo pedido: 'nueva' o 'activo' (nunca 'publicada' — ese estado no existe)
       const disponibles = arr.filter(c => ['nueva', 'activo'].includes(c.estado)).map(c => c.id);
       if (cargasVistas.current === null) {
         cargasVistas.current = new Set(disponibles);
@@ -5071,26 +5069,6 @@ function App() {
             const carga = arr.find(c => c.id === id);
             mostrarNotificacion(
               '📦 Nuevo pedido disponible',
-              `${carga?.origen || ''} → ${carga?.destino || ''}`,
-              '/icon-chofer-192.png'
-            );
-          }
-        });
-      }
-
-      // Oferta aceptada: carga pasó a 'en-camino' con este transportista
-      const aceptadas = arr
-        .filter(c => c.estado === 'en-camino' && c.transportistaAsignado === USUARIO_TRANS.nombre)
-        .map(c => c.id);
-      if (remitosAceptadosVistos.current === null) {
-        remitosAceptadosVistos.current = new Set(aceptadas);
-      } else {
-        aceptadas.forEach(id => {
-          if (!remitosAceptadosVistos.current.has(id)) {
-            remitosAceptadosVistos.current.add(id);
-            const carga = arr.find(c => c.id === id);
-            mostrarNotificacion(
-              '✅ ¡Oferta aceptada!',
               `${carga?.origen || ''} → ${carga?.destino || ''}`,
               '/icon-chofer-192.png'
             );
