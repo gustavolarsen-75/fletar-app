@@ -2504,12 +2504,19 @@ function App() {
   const [remitoACalificar, setRemitoACalificar] = useState(null);
   const [notifCount, setNotifCount] = useState(0);
   const [toastMsg, setToastMsg] = useState(null);
+  const [notifPermission, setNotifPermission] = useState(typeof Notification !== 'undefined' ? Notification.permission : 'granted');
   const toastTimerRef = useRef(null);
   const shownRating = useRef(new Set());
   const ofertasVistas = useRef(null);
 
   // Pedir permiso de notificaciones al abrir la app
   useEffect(() => { pedirPermisoNotificaciones(); }, []);
+
+  async function activarNotificaciones() {
+    if (!('Notification' in window)) return;
+    const perm = await Notification.requestPermission();
+    setNotifPermission(perm);
+  }
 
   // Escuchar eventos de notificación para contador y toast
   useEffect(() => {
@@ -2616,6 +2623,17 @@ function App() {
     <div>
       <Navbar onNav={handleNav} screen={screen} notifCount={notifCount} />
       {renderScreen()}
+      {/* Banner: activar notificaciones */}
+      {notifPermission !== 'granted' && (
+        <div onClick={activarNotificaciones} style={{ position: "fixed", bottom: 16, left: 10, right: 10, zIndex: 9000, background: "#1A2E3B", color: "#fff", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 4px 24px rgba(0,0,0,0.4)", cursor: "pointer" }}>
+          <span style={{ fontSize: 22 }}>🔔</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600, fontSize: 13 }}>Activar notificaciones</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>Tocá acá para recibir alertas de nuevas ofertas</div>
+          </div>
+          <span style={{ background: "#E85D20", color: "#fff", fontSize: 12, fontWeight: 700, padding: "5px 12px", borderRadius: 7, flexShrink: 0 }}>Activar</span>
+        </div>
+      )}
       {/* Toast de notificación en pantalla */}
       {toastMsg && (
         <div style={{ position: "fixed", top: 60, left: 10, right: 10, zIndex: 9000, background: "#1A1A1A", color: "#fff", borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 4px 24px rgba(0,0,0,0.4)" }}>

@@ -398,12 +398,15 @@ function tocarSonido() {
 
 function mostrarNotificacion(titulo, cuerpo, icono) {
   tocarSonido();
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(titulo, {
-      body: cuerpo,
-      icon: icono || '/icon-chofer-192.png',
-      silent: true,
-    });
+  if ('serviceWorker' in navigator && Notification.permission === 'granted') {
+    navigator.serviceWorker.ready.then(reg => {
+      reg.showNotification(titulo, {
+        body: cuerpo,
+        icon: icono || '/icon-chofer-192.png',
+        badge: '/icon-chofer-192.png',
+        silent: true,
+      });
+    }).catch(() => {});
   }
 }
 
@@ -5049,12 +5052,19 @@ function App() {
   const [ciudadesRuta, setCiudadesRuta] = useState({});
   const [remitoACalificar, setRemitoACalificar] = useState(null);
   const [ratingPromedio, setRatingPromedio] = useState(USUARIO_TRANS.calificacion);
+  const [notifPermission, setNotifPermission] = useState(typeof Notification !== 'undefined' ? Notification.permission : 'granted');
   const shownRating = useRef(new Set());
   const initialLoadDone = useRef(false);
   const cargasVistas = useRef(null);       // null = primera carga todavía no procesada
 
   // Pedir permiso de notificaciones al abrir la app
   useEffect(() => { pedirPermisoNotificaciones(); }, []);
+
+  async function activarNotificaciones() {
+    if (!('Notification' in window)) return;
+    const perm = await Notification.requestPermission();
+    setNotifPermission(perm);
+  }
 
   // Notificar nuevo pedido disponible
   useEffect(() => {
@@ -5167,6 +5177,17 @@ function App() {
     <div>
       <Navbar onNav={handleNav} screen={screen} sucursalNombre={sucursalActual?.nombre} rating={ratingPromedio} />
       {renderScreen()}
+      {/* Banner: activar notificaciones y sonido (también desbloquea el AudioContext de Howler) */}
+      {notifPermission !== 'granted' && (
+        <div onClick={activarNotificaciones} style={{ position: "fixed", bottom: 16, left: 10, right: 10, zIndex: 9000, background: "#1A2E3B", color: "#fff", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 4px 24px rgba(0,0,0,0.4)", cursor: "pointer" }}>
+          <span style={{ fontSize: 22 }}>🔔</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600, fontSize: 13 }}>Activar notificaciones y sonido</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>Tocá acá para recibir alertas de nuevos pedidos</div>
+          </div>
+          <span style={{ background: "#0F6E56", color: "#fff", fontSize: 12, fontWeight: 700, padding: "5px 12px", borderRadius: 7, flexShrink: 0 }}>Activar</span>
+        </div>
+      )}
       {remitoACalificar && (
         <RatingModal
           remito={remitoACalificar}
