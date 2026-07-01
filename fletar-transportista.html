@@ -9,6 +9,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
   <script>
     firebase.initializeApp({
       apiKey: "AIzaSyBIhZzpTRlNEG2x9dMdNTQ3ILvcRAaSJ-o",
@@ -383,36 +384,16 @@ function SelectorVehiculo({ vehiculo, setVehiculo }) {
 // ─── NOTIFICACIONES ──────────────────────────────────────────────────────────
 const APP_START_TIME = Date.now();
 
-// Audio element (igual que WhatsApp Web) — más confiable que AudioContext
-const _sonido = new Audio('/notif-trans.wav');
-_sonido.preload = 'auto';
-let _sonidoListo = false;
-let _primando = false;
+const _sonido = new Howl({ src: ['/notif-trans.wav'], volume: 1.0, preload: true });
 
 function pedirPermisoNotificaciones() {
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
-  const primerGesto = () => {
-    if (_sonidoListo || _primando) return;
-    _primando = true;
-    _sonido.volume = 0;
-    _sonido.play().then(() => {
-      _sonido.pause();
-      _sonido.currentTime = 0;
-      _sonido.volume = 1.0;
-      _sonidoListo = true;
-    }).catch(() => { _primando = false; });
-  };
-  ['click', 'touchstart', 'keydown'].forEach(evt =>
-    document.addEventListener(evt, primerGesto, { once: true, passive: true })
-  );
 }
 
 function tocarSonido() {
-  if (!_sonidoListo) return;
-  _sonido.currentTime = 0;
-  _sonido.play().catch(() => {});
+  _sonido.play();
 }
 
 function mostrarNotificacion(titulo, cuerpo, icono) {
