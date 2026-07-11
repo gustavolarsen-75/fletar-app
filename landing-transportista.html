@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fletar para transportistas — Más cargas, más control, menos WhatsApp</title>
+<meta name="description" content="Todo lo que Fletar te da como transportista: cargas al instante, delegar en tus choferes sin perder el control, gestión de sucursales, remitos digitales con QR y mucho más.">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --o: #E85D20;
+    --o-d: #C94A14;
+    --g: #0F6E56;
+    --dk: #0D1117;
+    --dk2: #161B22;
+    --w: #FFFFFF;
+    --lt: #F5F3EE;
+    --border: rgba(255,255,255,0.08);
+  }
+
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--dk); color: #fff; overflow-x: hidden; }
+
+  /* ─── NAVBAR ─── */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,17,23,0.97);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 2px solid var(--o);
+    height: 62px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px;
+  }
+  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .nav-back { color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+  .nav-back:hover { color: #fff; }
+  .nav-cta {
+    background: var(--o); color: #fff; font-size: 12px; font-weight: 700;
+    padding: 10px 22px; border-radius: 5px; text-decoration: none;
+    text-transform: uppercase; letter-spacing: 0.8px; transition: background 0.2s;
+  }
+  .nav-cta:hover { background: var(--o-d); }
+
+  /* ─── HERO ─── */
+  .hero {
+    position: relative; padding: 130px 40px 70px;
+    background: radial-gradient(ellipse at top right, rgba(232,93,32,0.14) 0%, transparent 55%);
+    text-align: center;
+  }
+  .hero-pre {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 11px; font-weight: 700; color: var(--o);
+    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px;
+  }
+  .hero-pre::before, .hero-pre::after { content: ''; display: block; width: 28px; height: 2px; background: var(--o); }
+  .hero-h1 {
+    font-size: 52px; font-weight: 900; line-height: 1.05; letter-spacing: -1.5px;
+    text-transform: uppercase; max-width: 780px; margin: 0 auto 22px;
+  }
+  .hero-h1 span { color: var(--o); }
+  .hero-sub {
+    font-size: 16px; color: rgba(255,255,255,0.6); line-height: 1.8;
+    max-width: 560px; margin: 0 auto 36px;
+  }
+  .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .btn-primary {
+    background: var(--o); color: #fff; font-size: 13px; font-weight: 700;
+    padding: 15px 30px; border-radius: 5px; text-decoration: none;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;
+    border: none; cursor: pointer;
+  }
+  .btn-primary:hover { background: var(--o-d); }
+  .btn-outline {
+    background: transparent; color: #fff; font-size: 13px; font-weight: 700;
+    padding: 14px 28px; border-radius: 5px; border: 2px solid rgba(255,255,255,0.25);
+    text-decoration: none; text-transform: uppercase; letter-spacing: 0.8px;
+    display: inline-flex; align-items: center; gap: 8px; transition: border-color 0.2s;
+    cursor: pointer;
+  }
+  .btn-outline:hover { border-color: rgba(255,255,255,0.6); }
+  .hero-trust { display: flex; align-items: center; gap: 16px; margin-top: 32px; flex-wrap: wrap; justify-content: center; }
+  .hero-trust-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: rgba(255,255,255,0.45); }
+  .hero-trust-item .ck { color: var(--o); font-weight: 700; }
+  .hero-trust-sep { width: 1px; height: 18px; background: rgba(255,255,255,0.15); }
+
+  /* ─── SECTION HEADERS ─── */
+  .section-pre {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 11px; font-weight: 700; color: var(--o);
+    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px;
+  }
+  .section-pre::before { content: ''; display: block; width: 24px; height: 2px; background: var(--o); }
+  .section-h2 { font-size: 32px; font-weight: 900; line-height: 1.15; letter-spacing: -1px; margin-bottom: 14px; text-transform: uppercase; }
+  .section-h2 span { color: var(--o); }
+  .section-head { text-align: center; max-width: 620px; margin: 0 auto 50px; }
+  .section-p { font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.8; }
+
+  /* ─── BENEFICIOS TOP (grid grande) ─── */
+  .top-benefits { padding: 80px 40px 30px; }
+  .tb-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; max-width: 1100px; margin: 0 auto; }
+  .tb-card {
+    background: var(--dk2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 30px 26px; transition: transform 0.2s, border-color 0.2s;
+  }
+  .tb-card:hover { transform: translateY(-3px); border-color: rgba(232,93,32,0.4); }
+  .tb-icon {
+    width: 46px; height: 46px; border-radius: 9px; background: rgba(232,93,32,0.15);
+    display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 18px;
+  }
+  .tb-title { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 9px; letter-spacing: -0.2px; }
+  .tb-text { font-size: 12.5px; color: rgba(255,255,255,0.5); line-height: 1.7; }
+
+  /* ─── VER MAS BOTON ─── */
+  .ver-mas-wrap { text-align: center; padding: 46px 40px 10px; }
+  .ver-mas-sub { font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 14px; }
+
+  /* ─── BENEFICIOS SECUNDARIOS ─── */
+  #mas-beneficios { display: none; }
+  .more-benefits { padding: 70px 40px 90px; background: var(--dk2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .mb-groups { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 46px; }
+  .mb-group-title {
+    font-size: 11px; font-weight: 700; color: var(--o); text-transform: uppercase;
+    letter-spacing: 1.5px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .mb-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px 34px; }
+  .mb-item { display: flex; gap: 14px; align-items: flex-start; }
+  .mb-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; width: 26px; text-align: center; }
+  .mb-item-title { font-size: 13.5px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .mb-item-text { font-size: 12px; color: rgba(255,255,255,0.45); line-height: 1.65; }
+
+  /* ─── FINAL CTA ─── */
+  .final-cta {
+    background: var(--dk); padding: 90px 40px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .final-cta::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(232,93,32,0.09) 0%, transparent 65%);
+  }
+  .final-h { font-size: 40px; font-weight: 900; text-transform: uppercase; letter-spacing: -1.2px; line-height: 1.15; margin-bottom: 14px; position: relative; }
+  .final-h span { color: var(--o); }
+  .final-sub { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 34px; position: relative; max-width: 480px; margin-left: auto; margin-right: auto; }
+  .final-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; position: relative; }
+
+  /* ─── FOOTER ─── */
+  .footer { background: #060A0F; padding: 34px 40px; text-align: center; }
+  .footer-copy { font-size: 11px; color: rgba(255,255,255,0.25); }
+
+  /* ─── GATE (clave de acceso) ─── */
+  .gate {
+    position: fixed; inset: 0; z-index: 1000;
+    background: var(--dk);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .gate-box {
+    background: var(--dk2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 40px 32px; max-width: 320px; width: 100%; text-align: center;
+  }
+  .gate-logo { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 22px; }
+  .gate-title { font-size: 13px; color: rgba(255,255,255,0.55); margin-bottom: 20px; line-height: 1.6; }
+  .gate-input {
+    width: 100%; background: #0D1117; border: 1.5px solid var(--border); border-radius: 6px;
+    padding: 12px 14px; font-size: 15px; color: #fff; text-align: center;
+    letter-spacing: 2px; margin-bottom: 14px; outline: none;
+  }
+  .gate-input:focus { border-color: var(--o); }
+  .gate-btn {
+    width: 100%; background: var(--o); color: #fff; font-size: 13px; font-weight: 700;
+    padding: 13px; border: none; border-radius: 6px; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 0.8px; transition: background 0.2s;
+  }
+  .gate-btn:hover { background: var(--o-d); }
+  .gate-error { font-size: 12px; color: var(--o); margin-top: 12px; display: none; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    .tb-grid { grid-template-columns: repeat(2, 1fr); }
+    .mb-list { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .nav { padding: 0 18px; }
+    .nav-back span.txt { display: none; }
+    .hero { padding: 110px 20px 50px; }
+    .hero-h1 { font-size: 34px; }
+    .top-benefits { padding: 56px 20px 20px; }
+    .tb-grid { grid-template-columns: 1fr; }
+    .more-benefits { padding: 50px 20px 60px; }
+    .final-cta { padding: 60px 20px; }
+    .final-h { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── GATE (clave de acceso, pre-lanzamiento) ─── -->
+<div class="gate" id="gate">
+  <div class="gate-box">
+    <div class="gate-logo">
+      <svg width="30" height="30" viewBox="0 0 38 38">
+        <rect width="38" height="38" rx="9" fill="#E85D20"/>
+        <text font-family="Montserrat,sans-serif" font-size="26" font-weight="900" x="7" y="28" fill="white">F</text>
+        <polygon points="28,24 34,19 28,14 28,18 22,18 22,20 28,20" fill="white" opacity="0.9"/>
+      </svg>
+      <svg width="92" height="30" viewBox="0 0 110 36">
+        <defs>
+          <clipPath id="gate-cl-left"><polygon points="0,36 0,0 63.8,0 39.6,36"/></clipPath>
+          <clipPath id="gate-cl-right"><polygon points="63.8,0 110,0 110,36 39.6,36"/></clipPath>
+        </defs>
+        <text font-family="Montserrat,sans-serif" font-size="32" font-weight="900" y="32" clip-path="url(#gate-cl-left)" fill="#E85D20">fletar</text>
+        <text font-family="Montserrat,sans-serif" font-size="32" font-weight="900" y="32" clip-path="url(#gate-cl-right)" fill="white">fletar</text>
+      </svg>
+    </div>
+    <div class="gate-title">Sitio en preparación.<br>Ingresá la clave de acceso.</div>
+    <input type="password" inputmode="numeric" class="gate-input" id="gateInput" placeholder="••••" maxlength="10" autocomplete="off">
+    <button class="gate-btn" id="gateBtn">Entrar</button>
+    <div class="gate-error" id="gateError">Clave incorrecta.</div>
+  </div>
+</div>
+
+<!-- ─── SITIO ─── -->
+<div id="site-content" style="display:none">
+
+<!-- ─── NAVBAR ─── -->
+<nav class="nav">
+  <a href="landing.html" class="nav-back">
+    <span>←</span><span class="txt">Volver a Fletar</span>
+  </a>
+  <a href="landing.html" class="nav-logo">
+    <svg width="36" height="36" viewBox="0 0 38 38">
+      <rect width="38" height="38" rx="9" fill="#E85D20"/>
+      <text font-family="Montserrat,sans-serif" font-size="26" font-weight="900" x="7" y="28" fill="white">F</text>
+      <polygon points="28,24 34,19 28,14 28,18 22,18 22,20 28,20" fill="white" opacity="0.9"/>
+    </svg>
+    <svg width="110" height="36" viewBox="0 0 110 36">
+      <defs>
+        <clipPath id="cl-left"><polygon points="0,36 0,0 63.8,0 39.6,36"/></clipPath>
+        <clipPath id="cl-right"><polygon points="63.8,0 110,0 110,36 39.6,36"/></clipPath>
+      </defs>
+      <text font-family="Montserrat,sans-serif" font-size="32" font-weight="900" y="32" clip-path="url(#cl-left)" fill="#E85D20">fletar</text>
+      <text font-family="Montserrat,sans-serif" font-size="32" font-weight="900" y="32" clip-path="url(#cl-right)" fill="white">fletar</text>
+    </svg>
+  </a>
+  <a href="fletar-transportista.html" class="nav-cta">Entrar a la app</a>
+</nav>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <div class="hero-pre">Para transportistas · Argentina</div>
+  <h1 class="hero-h1">Más cargas,<br>más <span>control</span>,<br>menos WhatsApp.</h1>
+  <p class="hero-sub">
+    Fletar reemplaza los grupos de WhatsApp, las planillas y las llamadas por
+    un sistema pensado para cómo trabajás de verdad: con tu flota, tus choferes
+    y tus rutas de siempre.
+  </p>
+  <div class="hero-btns">
+    <a href="#beneficios" class="btn-primary">Ver los beneficios ↓</a>
+    <a href="fletar-transportista.html" class="btn-outline">Ya me convenciste, entrar</a>
+  </div>
+  <div class="hero-trust">
+    <span class="hero-trust-item"><span class="ck">✓</span> Sin tarjeta de crédito</span>
+    <div class="hero-trust-sep"></div>
+    <span class="hero-trust-item"><span class="ck">✓</span> 6 meses gratis</span>
+    <div class="hero-trust-sep"></div>
+    <span class="hero-trust-item"><span class="ck">✓</span> Sin contratos</span>
+  </div>
+</section>
+
+<!-- ─── BENEFICIOS TOP ─── -->
+<section class="top-benefits" id="beneficios">
+  <div class="section-head">
+    <div class="section-pre" style="justify-content:center">Lo que más te va a servir</div>
+    <h2 class="section-h2">Los beneficios <span>que importan</span></h2>
+    <p class="section-p">Seis cosas que un grupo de WhatsApp o una planilla nunca te van a dar.</p>
+  </div>
+  <div class="tb-grid">
+    <div class="tb-card">
+      <div class="tb-icon">🪪</div>
+      <div class="tb-title">Delegá en tus choferes sin perder el control</div>
+      <div class="tb-text">Le mandás un link por WhatsApp a cada chofer, sin que necesite crear cuenta. Él ve su ruta del día, escanea el QR de cada paquete para confirmar entregas, y carga lo que cobró y gastó. Vos revisás la rendición al final y sabés exactamente cuánto tenés que recibir.</div>
+    </div>
+    <div class="tb-card">
+      <div class="tb-icon">🔔</div>
+      <div class="tb-title">Avisos de cargas al instante, con sonido</div>
+      <div class="tb-text">Cargá una vez tus rutas habituales y el sistema te agrupa y prioriza automáticamente las cargas que coinciden con tu trayecto. Te avisa con sonido y notificación apenas aparece una nueva, sin que tengas que estar mirando la pantalla.</div>
+    </div>
+    <div class="tb-card">
+      <div class="tb-icon">🏢</div>
+      <div class="tb-title">Varias sucursales desde una sola cuenta</div>
+      <div class="tb-text">Si atendés en más de una ciudad, cada sucursal tiene su propio link y ve solo los pedidos de su zona. Central ve todo, y controla el efectivo y las rendiciones de cada punto sin licencias extra ni configuración complicada.</div>
+    </div>
+    <div class="tb-card">
+      <div class="tb-icon">📦</div>
+      <div class="tb-title">Remito digital con QR, no más papel</div>
+      <div class="tb-text">Cada envío genera un remito con seguimiento, código QR y link para mandarle al cliente por WhatsApp. Imprimís etiqueta para el bulto directo desde la app. Se ve profesional, como un correo, sin que tengas que armar nada de cero.</div>
+    </div>
+    <div class="tb-card">
+      <div class="tb-icon">🚛</div>
+      <div class="tb-title">Tu flota, con los datos técnicos ya cargados</div>
+      <div class="tb-text">Elegís tu vehículo de una lista de más de 40 modelos reales usados en Argentina (Fiorino, Sprinter, Scania, Volvo y más) y el sistema completa solo la capacidad en m³ y kg. Al asignar cargas, te avisa si te pasaste del límite.</div>
+    </div>
+    <div class="tb-card">
+      <div class="tb-icon">⭐</div>
+      <div class="tb-title">Reputación que te diferencia</div>
+      <div class="tb-text">Cada entrega suma a tu calificación, visible para las empresas que publican cargas — igual que en las apps de delivery. Un buen historial te distingue de la competencia informal que solo manda fotos por WhatsApp.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── BOTON VER MAS ─── -->
+<div class="ver-mas-wrap" id="verMasWrap">
+  <button class="btn-outline" id="btnVerMas" style="color:#fff">Quiero ver todos los beneficios ↓</button>
+  <div class="ver-mas-sub">Hay más — gestión de mostrador, control de caja, chat con la empresa y más.</div>
+</div>
+
+<!-- ─── BENEFICIOS SECUNDARIOS (ocultos hasta "ver más") ─── -->
+<section class="more-benefits" id="mas-beneficios">
+  <div class="mb-groups">
+
+    <div>
+      <div class="mb-group-title">Organización del día a día</div>
+      <div class="mb-list">
+        <div class="mb-item">
+          <div class="mb-icon">📊</div>
+          <div>
+            <div class="mb-item-title">Tablero con todo el flujo de trabajo</div>
+            <div class="mb-item-text">Ocho etapas — pedidos, cotizados, aceptados, en depósito, en camino, en sucursal, entregados y rendiciones — para ver de un vistazo en qué está cada envío.</div>
+          </div>
+        </div>
+        <div class="mb-item">
+          <div class="mb-icon">🗺️</div>
+          <div>
+            <div class="mb-item-title">Rutas fijas con matching automático</div>
+            <div class="mb-item-text">Cargás origen, destino y ciudades de paso una sola vez. El sistema detecta paradas intermedias por geolocalización y te sugiere cuáles marcar.</div>
+          </div>
+        </div>
+        <div class="mb-item">
+          <div class="mb-icon">🖥️</div>
+          <div>
+            <div class="mb-item-title">Recepción en mostrador</div>
+            <div class="mb-item-text">Para cuando un cliente lleva el paquete a tu local: calculás el precio por peso, dimensiones o manual, sacás foto y marcás instrucciones especiales en tres pasos.</div>
+          </div>
+        </div>
+        <div class="mb-item">
+          <div class="mb-icon">💵</div>
+          <div>
+            <div class="mb-item-title">Control de caja por turno</div>
+            <div class="mb-item-text">Cada cierre de turno declara efectivo, digital y gastos (combustible, peaje, embalaje y más), y calcula solo el neto a rendir. Sirve para vos o para tus empleados de mostrador.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="mb-group-title">Comunicación y seguimiento</div>
+      <div class="mb-list">
+        <div class="mb-item">
+          <div class="mb-icon">💬</div>
+          <div>
+            <div class="mb-item-title">Chat integrado con la empresa</div>
+            <div class="mb-item-text">Coordiná horarios de retiro y detalles de la carga sin salir de la app ni depender de tener el WhatsApp de cada cliente.</div>
+          </div>
+        </div>
+        <div class="mb-item">
+          <div class="mb-icon">⚡</div>
+          <div>
+            <div class="mb-item-title">Todo se actualiza en tiempo real</div>
+            <div class="mb-item-text">Cambios de estado, ofertas y rendiciones se reflejan al instante en todos tus dispositivos, con caché local para que funcione bien incluso con señal débil.</div>
+          </div>
+        </div>
+        <div class="mb-item">
+          <div class="mb-icon">📱</div>
+          <div>
+            <div class="mb-item-title">Cotizá sin negociar uno a uno</div>
+            <div class="mb-item-text">Ofertás precio y horarios por cada carga publicada, sin que otros transportistas vean tu precio ni vos el de ellos. Compite la empresa que publica, no vos por WhatsApp.</div>
+          </div>
+        </div>
+        <div class="mb-item">
+          <div class="mb-icon">🧾</div>
+          <div>
+            <div class="mb-item-title">Rendición de sucursales centralizada</div>
+            <div class="mb-item-text">Cada sucursal indica cómo te hace llegar el efectivo — con el próximo móvil, transferencia o rendición semanal — y central confirma cada una desde un panel dedicado.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─── FINAL CTA ─── -->
+<section class="final-cta">
+  <h2 class="final-h">Empezá <span>hoy</span>.<br>Es gratis.</h2>
+  <p class="final-sub">Sin tarjeta de crédito · Sin contratos · Configurás tu flota en minutos</p>
+  <div class="final-btns">
+    <a href="fletar-transportista.html" class="btn-primary">🚛 Empezar ahora</a>
+    <a href="landing.html" class="btn-outline">Volver al inicio</a>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer class="footer">
+  <div class="footer-copy">© 2025 Fletar · Todos los derechos reservados</div>
+</footer>
+
+</div>
+<!-- fin #site-content -->
+
+<script>
+  (function () {
+    var CLAVE = '2164';
+    var gate = document.getElementById('gate');
+    var content = document.getElementById('site-content');
+    var input = document.getElementById('gateInput');
+    var btn = document.getElementById('gateBtn');
+    var error = document.getElementById('gateError');
+
+    function unlock() {
+      localStorage.setItem('fletarGateOk', '1');
+      gate.style.display = 'none';
+      content.style.display = '';
+    }
+
+    function tryUnlock() {
+      if (input.value === CLAVE) {
+        unlock();
+      } else {
+        error.style.display = 'block';
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    if (localStorage.getItem('fletarGateOk') === '1') {
+      unlock();
+    } else {
+      btn.addEventListener('click', tryUnlock);
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') tryUnlock();
+      });
+    }
+  })();
+
+  (function () {
+    var btnVerMas = document.getElementById('btnVerMas');
+    var verMasWrap = document.getElementById('verMasWrap');
+    var masBeneficios = document.getElementById('mas-beneficios');
+    if (btnVerMas) {
+      btnVerMas.addEventListener('click', function () {
+        masBeneficios.style.display = 'block';
+        verMasWrap.style.display = 'none';
+        masBeneficios.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  })();
+</script>
+
+</body>
+</html>
