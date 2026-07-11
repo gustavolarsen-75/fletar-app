@@ -162,9 +162,20 @@
   .feat-text strong { color: var(--dk); }
 
   /* ─── HOW IT WORKS ─── */
-  .how { background: var(--lt); padding: 80px 40px; }
+  .how { position: relative; padding: 80px 40px; overflow: hidden; }
+  .how-bg {
+    position: absolute; inset: 0;
+    background-image: url('_MG_8060.JPG');
+    background-size: cover; background-position: center 55%;
+  }
+  .how-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(rgba(13,17,23,0.55), rgba(13,17,23,0.72));
+  }
+  .how-inner { position: relative; z-index: 2; }
   .how-header { text-align: center; margin-bottom: 60px; }
   .how-header .section-pre { justify-content: center; }
+  .how-header .section-h2 { color: #fff; }
   .steps-grid {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
     max-width: 900px; margin: 0 auto; position: relative;
@@ -180,10 +191,10 @@
     display: flex; align-items: center; justify-content: center;
     margin: 0 auto 24px; font-size: 24px; font-weight: 900; color: #fff;
     position: relative; z-index: 1;
-    box-shadow: 0 0 0 6px #fff, 0 0 0 8px rgba(232,93,32,0.15);
+    box-shadow: 0 0 0 6px rgba(255,255,255,0.15), 0 0 0 8px rgba(232,93,32,0.25);
   }
-  .step-title { font-size: 15px; font-weight: 800; color: var(--dk); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 10px; }
-  .step-text { font-size: 13px; color: #666; line-height: 1.7; }
+  .step-title { font-size: 15px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 10px; }
+  .step-text { font-size: 13px; color: rgba(255,255,255,0.95); line-height: 1.7; }
 
   /* ─── STATS ─── */
   .stats { background: var(--dk); padding: 60px 40px; }
@@ -196,9 +207,20 @@
   .stat-label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1.5px; }
 
   /* ─── PRICING ─── */
-  .pricing { background: #fff; padding: 80px 40px; }
+  .pricing { position: relative; padding: 80px 40px; overflow: hidden; }
+  .pricing-bg {
+    position: absolute; inset: 0;
+    background-image: url('_MG_7981.JPG');
+    background-size: cover; background-position: center 60%;
+  }
+  .pricing-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(rgba(13,17,23,0.55), rgba(13,17,23,0.72));
+  }
+  .pricing-inner { position: relative; z-index: 2; }
   .pricing-header { text-align: center; margin-bottom: 50px; }
   .pricing-header .section-pre { justify-content: center; }
+  .pricing-header .section-h2 { color: #fff; }
   .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 900px; margin: 0 auto; }
   .pc {
     border: 1.5px solid #E0DDD8; border-radius: 5px; padding: 36px 28px;
@@ -492,6 +514,9 @@
 
 <!-- ─── HOW IT WORKS ─── -->
 <section id="como-funciona" class="how">
+  <div class="how-bg"></div>
+  <div class="how-overlay"></div>
+  <div class="how-inner">
   <div class="how-header">
     <div class="section-pre">Proceso</div>
     <h2 class="section-h2">Cómo funciona</h2>
@@ -512,6 +537,7 @@
       <div class="step-title">Tu carga viaja</div>
       <p class="step-text">Coordinás directo con el transportista y seguís la entrega en tiempo real hasta el destino.</p>
     </div>
+  </div>
   </div>
 </section>
 
@@ -543,6 +569,9 @@
 
 <!-- ─── PRICING ─── -->
 <section id="precios" class="pricing">
+  <div class="pricing-bg"></div>
+  <div class="pricing-overlay"></div>
+  <div class="pricing-inner">
   <div class="pricing-header">
     <div class="section-pre">Planes y precios</div>
     <h2 class="section-h2">Transparente<br>desde el día uno</h2>
@@ -592,6 +621,7 @@
         <li><span class="pck o">✓</span> Elegís precio y transportista</li>
       </ul>
     </div>
+  </div>
   </div>
 </section>
 

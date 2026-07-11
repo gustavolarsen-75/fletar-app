@@ -3010,14 +3010,14 @@ function MisRutas({ onNav }) {
 
   return (
     <React.Fragment>
-    <PageWrapper titulo="Mis rutas" subtitulo="Las empresas ven tus rutas antes de publicar una carga." accion={!form && <button className="btn-primary" onClick={() => setForm(formVacio())}>+ Agregar ruta</button>}>
+    <PageWrapper titulo="Mis rutas" subtitulo="Las empresas y clientes ven tus rutas antes de publicar una carga." accion={!form && <button className="btn-primary" onClick={() => setForm(formVacio())}>+ Agregar ruta</button>}>
 
       {/* ── Lista ── */}
       {!form && rutas.length === 0 && (
         <div className="card" style={{ textAlign: "center", padding: 32, color: "#5A6A78" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🗺️</div>
           <p style={{ fontWeight: 500 }}>Todavía no cargaste ninguna ruta</p>
-          <p style={{ fontSize: 13, marginTop: 6 }}>Agregá tus rutas para que las empresas te encuentren más fácil.</p>
+          <p style={{ fontSize: 13, marginTop: 6 }}>Agregá tus rutas para que las empresas y clientes te encuentren más fácil.</p>
         </div>
       )}
       {!form && (
@@ -3270,9 +3270,9 @@ function HacerOferta({ onNav, cargaSeleccionada, rutas = [] }) {
       <div style={{ textAlign: "center", maxWidth: 360 }}>
         <div style={{ fontSize: 56 }}>🚛</div>
         <h2 style={{ marginTop: 12 }}>¡Cotización enviada!</h2>
-        <p style={{ color: "#5A6A78", marginTop: 8 }}>La empresa va a ver tu oferta en su app. Te avisamos si te eligen.</p>
+        <p style={{ color: "#5A6A78", marginTop: 8 }}>La empresa o el cliente va a ver tu oferta en su app. Te avisamos si te eligen.</p>
         <div style={{ marginTop: 16, padding: 12, background: "#E1F5EE", borderRadius: 8, fontSize: 13, color: "#0F6E56" }}>
-          ✅ Tu oferta se guardó. La empresa puede verla al recargar su app.
+          ✅ Tu oferta se guardó. La empresa o el cliente puede verla al recargar su app.
         </div>
         <p style={{ color: "#aaa", fontSize: 13, marginTop: 12 }}>Volviendo a cargas disponibles...</p>
       </div>
@@ -3385,7 +3385,7 @@ function HacerOferta({ onNav, cargaSeleccionada, rutas = [] }) {
           )}
 
           <div style={{ marginTop: 12, padding: "8px 10px", background: "#E1F5EE", borderRadius: 7, fontSize: 12, color: "#0F6E56" }}>
-            ℹ️ Otros transportistas también recibieron este pedido, pero no pueden ver tus precios ni vos los de ellos. Solo la empresa compara.
+            ℹ️ Otros transportistas también recibieron este pedido, pero no pueden ver tus precios ni vos los de ellos. Solo la empresa o el cliente compara.
           </div>
         </div>
 
@@ -3437,7 +3437,7 @@ function HacerOferta({ onNav, cargaSeleccionada, rutas = [] }) {
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
-              <label style={{ margin: 0 }}>Nota para la empresa</label>
+              <label style={{ margin: 0 }}>Nota para la empresa o el cliente</label>
               <span style={{ fontSize: 11, color: "#888", background: "#F5F5F5", padding: "2px 8px", borderRadius: 4 }}>Opcional</span>
             </div>
             <textarea value={form.nota} onChange={e => setForm({...form, nota: e.target.value})} placeholder="Ej: Camión disponible, salgo los martes temprano. Seguro de carga incluido." rows={3} style={{ resize: "vertical" }} />
@@ -3504,7 +3504,7 @@ function MisViajes({ onNav, onVerRemito }) {
   );
 
   return (
-    <PageWrapper titulo="Mis viajes" subtitulo="Actualizá el estado para que la empresa vea los cambios en tiempo real.">
+    <PageWrapper titulo="Mis viajes" subtitulo="Actualizá el estado para que la empresa o el cliente vea los cambios en tiempo real.">
       {/* Panel: generar link para chofer */}
       {vehiculosConRemitos.length > 0 && (
         <div className="card" style={{ marginBottom: 20, border: "2px solid #0F6E56" }}>
@@ -3538,7 +3538,7 @@ function MisViajes({ onNav, onVerRemito }) {
         <div className="card" style={{ textAlign: "center", padding: 40, color: "#5A6A78" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🚛</div>
           <p style={{ fontWeight: 500 }}>No tenés viajes asignados todavía</p>
-          <p style={{ fontSize: 13, marginTop: 6 }}>Cuando una empresa acepte tu oferta, el viaje aparece acá.</p>
+          <p style={{ fontSize: 13, marginTop: 6 }}>Cuando una empresa o cliente acepte tu oferta, el viaje aparece acá.</p>
         </div>
       )}
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -3590,7 +3590,7 @@ function MisViajes({ onNav, onVerRemito }) {
 
             {v.estado !== "entregado" && (
               <div>
-                <div style={{ fontSize: 12, color: "#5A6A78", marginBottom: 8 }}>Actualizar estado (la empresa lo ve en tiempo real):</div>
+                <div style={{ fontSize: 12, color: "#5A6A78", marginBottom: 8 }}>Actualizar estado (la empresa o el cliente lo ve en tiempo real):</div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {PASOS.filter(p => p !== "pendiente-retiro").map(p => (
                     <button key={p} onClick={() => actualizarEstado(v.id, p)}
@@ -3602,7 +3602,7 @@ function MisViajes({ onNav, onVerRemito }) {
               </div>
             )}
             <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-              <button className="btn-ghost" onClick={() => onNav("chat")} style={{ fontSize: 12 }}>Contactar empresa</button>
+              <button className="btn-ghost" onClick={() => onNav("chat")} style={{ fontSize: 12 }}>Contactar empresa/cliente</button>
               {onVerRemito && (
                 <button className="btn-secondary" onClick={() => onVerRemito(v)} style={{ fontSize: 12 }}>📄 Ver remito</button>
               )}
@@ -3634,7 +3634,7 @@ function ChatScreen({ onNav }) {
     <PageWrapper titulo="Chat" subtitulo="Posadas → Buenos Aires · Mi Empresa SRL">
       <div style={{ maxWidth: 600 }}>
         <div style={{ marginBottom: 12, padding: "6px 10px", background: "#E1F5EE", borderRadius: 8, fontSize: 12, color: "#0F6E56" }}>
-          💡 Los mensajes que enviés acá también van a aparecer en la app de la empresa.
+          💡 Los mensajes que enviés acá también van a aparecer en la app de la empresa o del cliente.
         </div>
         <div className="card" style={{ height: 380, display: "flex", flexDirection: "column" }}>
           <div style={{ flex: 1, overflowY: "auto", padding: "4px 0" }}>
