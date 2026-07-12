@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fletar — App Fletero</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyBIhZzpTRlNEG2x9dMdNTQ3ILvcRAaSJ-o",
+      authDomain: "fletar-49e36.firebaseapp.com",
+      databaseURL: "https://fletar-49e36-default-rtdb.firebaseio.com",
+      projectId: "fletar-49e36",
+      storageBucket: "fletar-49e36.firebasestorage.app",
+      messagingSenderId: "698884616195",
+      appId: "1:698884616195:web:c42078e969cdf5268e9e36"
+    });
+    const db = firebase.database();
+    db.setPersistenceEnabled(true);
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F0F4F8; color: #1A1A1A; min-height: 100vh; overflow-x: hidden; }
+
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    @media (max-width: 600px) {
+      .g2 { grid-template-columns: 1fr; }
+      div[style*="max-width: 900px"] { padding: 16px 12px !important; }
+      div[style*="max-width: 680px"] { padding: 16px 12px !important; }
+      nav { padding: 0 6px !important; }
+      nav button { font-size: 12px !important; padding: 5px 7px !important; }
+      .card { padding: 12px !important; }
+      input, select, textarea { font-size: 16px !important; }
+    }
+    :root {
+      --azul: #2563EB;
+      --azul-light: #E6EDFB;
+      --azul-dark: #1D4ED8;
+      --naranja: #E85D20;
+      --naranja-light: #FEF3EC;
+      --gris-header: #1A2E3B;
+      --gris-bg: #F0F4F8;
+      --gris-border: #DDE3EA;
+      --gris-text: #5A6A78;
+      --verde: #0F6E56;
+      --verde-light: #E1F5EE;
+    }
+    input, select, textarea { font-family: inherit; font-size: 14px; width: 100%; padding: 10px 12px; border: 1px solid var(--gris-border); border-radius: 8px; outline: none; transition: border-color 0.15s; background: #fff; }
+    input:focus, select:focus, textarea:focus { border-color: var(--azul); }
+    button { font-family: inherit; cursor: pointer; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; transition: opacity 0.15s, transform 0.1s; }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--azul); color: #fff; padding: 10px 20px; }
+    .btn-primary:hover { background: var(--azul-dark); }
+    .btn-secondary { background: #fff; color: var(--azul); border: 1.5px solid var(--azul); padding: 9px 20px; }
+    .btn-ghost { background: transparent; color: var(--gris-text); padding: 8px 16px; }
+    .btn-ghost:hover { background: var(--gris-bg); }
+    .card { background: #fff; border-radius: 12px; border: 1px solid var(--gris-border); padding: 16px; }
+    .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 5px; }
+    .badge-nueva { background: var(--naranja-light); color: #C44A0F; }
+    .badge-activo { background: var(--azul-light); color: var(--azul-dark); }
+    .badge-en-camino { background: #FFF8E1; color: #F57F17; }
+    .badge-entregado { background: var(--verde-light); color: var(--verde); }
+    label { font-size: 13px; font-weight: 500; color: #444; display: block; margin-bottom: 5px; }
+    .form-group { margin-bottom: 14px; }
+    .divider { height: 1px; background: var(--gris-border); margin: 12px 0; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+    .app-banner { background: var(--azul); color: white; text-align: center; padding: 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+
+<div class="app-banner">📦 App Fletero</div>
+
+<div id="root"></div>
+<script type="text/babel">
+
+const { useState, useEffect, useRef } = React;
+
+// ─── HELPERS DE ALMACENAMIENTO ────────────────────────────────────────────────
+function storageGet(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch { return fallback; }
+}
+function storageSave(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch {}
+}
+
+// ─── HELPERS DE FIREBASE ───────────────────────────────────────────────────────
+function fbSnap(snap) {
+  const val = snap.val();
+  if (!val) return [];
+  return Object.values(val).sort((a, b) => (a.id || 0) - (b.id || 0));
+}
+function fbSetItem(path, item) {
+  return db.ref(path + '/' + item.id).set(item);
+}
+function fbUpdate(path, id, changes) {
+  return db.ref(path + '/' + id).update(changes);
+}
+function fbListen(path, callback) {
+  const ref = db.ref(path);
+  ref.on('value', snap => callback(fbSnap(snap)));
+  return () => ref.off();
+}
+
+// ─── PERFIL DEL FLETERO (sin contraseña, se guarda una sola vez) ─────────────
+const KEY_FLETERO_PERFIL = 'fletar_fletero_perfil';
+let _perfilFletero = null;
+try { const _v = localStorage.getItem(KEY_FLETERO_PERFIL); if (_v) _perfilFletero = JSON.parse(_v); } catch {}
+let USUARIO_FLETERO = _perfilFletero; // null si nunca se registró
+
+const VEHICULOS_FLETERO = [
+  "Auto con baúl grande", "Camioneta chica", "Utilitario (Kangoo / Partner)",
+  "Furgón (Trafic / Master)", "Camioneta con caja abierta", "Otro",
+];
+
+// ─── UBICACIÓN (Argentina) — mismo dataset que fletar-cliente.html ───────────
+const GEOREF = 'https://apis.datos.gob.ar/georef/api';
+const CIUDADES_AR = [
+  {ciudad:'Posadas',provincia:'Misiones'},{ciudad:'Puerto Iguazú',provincia:'Misiones'},
+  {ciudad:'Oberá',provincia:'Misiones'},{ciudad:'Eldorado',provincia:'Misiones'},
+  {ciudad:'Apóstoles',provincia:'Misiones'},{ciudad:'Bernardo de Irigoyen',provincia:'Misiones'},
+  {ciudad:'San Vicente',provincia:'Misiones'},{ciudad:'Leandro N. Alem',provincia:'Misiones'},
+  {ciudad:'Corrientes',provincia:'Corrientes'},{ciudad:'Goya',provincia:'Corrientes'},
+  {ciudad:'Resistencia',provincia:'Chaco'},{ciudad:'Formosa',provincia:'Formosa'},
+  {ciudad:'Buenos Aires',provincia:'CABA'},{ciudad:'Rosario',provincia:'Santa Fe'},
+  {ciudad:'Córdoba',provincia:'Córdoba'},{ciudad:'Mendoza',provincia:'Mendoza'},
+  {ciudad:'La Plata',provincia:'Buenos Aires'},{ciudad:'Mar del Plata',provincia:'Buenos Aires'},
+  {ciudad:'San Miguel de Tucumán',provincia:'Tucumán'},{ciudad:'Salta',provincia:'Salta'},
+  {ciudad:'Santa Fe',provincia:'Santa Fe'},{ciudad:'San Juan',provincia:'San Juan'},
+  {ciudad:'Neuquén',provincia:'Neuquén'},{ciudad:'Bahía Blanca',provincia:'Buenos Aires'},
+  {ciudad:'Paraná',provincia:'Entre Ríos'},{ciudad:'Concepción del Uruguay',provincia:'Entre Ríos'},
+  {ciudad:'Concordia',provincia:'Entre Ríos'},{ciudad:'Paso de los Libres',provincia:'Corrientes'},
+].map(c => ({ ...c, label: `${c.ciudad}, ${c.provincia}` }));
+
+function normStr(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+function normProvDisplay(nombre) {
+  if (!nombre) return '';
+  if (normStr(nombre).includes('autonoma') || normStr(nombre).includes('autónoma')) return 'CABA';
+  return nombre.replace(/^Provincia de /i, '').trim();
+}
+function normProvGPS(raw) {
+  return normProvDisplay((raw || '').replace(/ Province$/i, '').replace(/ \(Argentina\)$/i, '').trim());
+}
+
+function CiudadAutocomplete({ value = "", onChange, label, placeholder, mostrarGPS = false, required = false }) {
+  const [inputVal, setInputVal]     = React.useState(value);
+  const [sug, setSug]               = React.useState([]);
+  const [busy, setBusy]             = React.useState(false);
+  const [gpsLoad, setGpsLoad]       = React.useState(false);
+  const [open, setOpen]             = React.useState(false);
+  const timer = React.useRef(null);
+  const gpsProvincia = React.useRef(null);
+  const gpsDisponible = mostrarGPS && !!navigator.geolocation;
+
+  function buscar(q) {
+    clearTimeout(timer.current);
+    if (q.length < 2) { setSug([]); setOpen(false); return; }
+    const provinciaGPS = gpsProvincia.current;
+    const qn = normStr(q);
+    const inmediatas = CIUDADES_AR.filter(c => normStr(c.ciudad).includes(qn))
+      .sort((a, b) => (normStr(a.ciudad).startsWith(qn) ? 0 : 1) - (normStr(b.ciudad).startsWith(qn) ? 0 : 1))
+      .slice(0, 6);
+    if (inmediatas.length > 0) { setSug(inmediatas); setOpen(true); }
+
+    timer.current = setTimeout(() => {
+      setBusy(true);
+      const procesarResultados = (items) => {
+        const seen = new Set();
+        return items
+          .map(loc => {
+            const c = loc.ciudad || loc.nombre || '';
+            const p = loc.provincia || normProvDisplay(loc.provincia?.nombre || '');
+            if (!c || !p) return null;
+            const label = `${c}, ${p}`;
+            return { label, ciudad: c, provincia: p };
+          })
+          .filter(r => {
+            if (!r || !normStr(r.ciudad).includes(qn)) return false;
+            if (seen.has(r.label)) return false;
+            seen.add(r.label); return true;
+          })
+          .sort((a, b) => {
+            if (provinciaGPS) {
+              const aL = normStr(a.provincia) === normStr(provinciaGPS) ? 0 : 1;
+              const bL = normStr(b.provincia) === normStr(provinciaGPS) ? 0 : 1;
+              if (aL !== bL) return aL - bL;
+            }
+            return (normStr(a.ciudad).startsWith(qn) ? 0 : 1) - (normStr(b.ciudad).startsWith(qn) ? 0 : 1);
+          });
+      };
+      const fallbackNominatim = () =>
+        fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)},Argentina&format=json&limit=10&countrycodes=ar&addressdetails=1`)
+          .then(r => r.json())
+          .then(data => {
+            const items = (data || []).map(d => ({
+              ciudad: d.address?.city || d.address?.town || d.address?.village || d.name || '',
+              provincia: normProvGPS(d.address?.state || ''),
+            }));
+            const res = procesarResultados(items);
+            setSug(res.length > 0 ? res : inmediatas);
+            setOpen(res.length > 0 || inmediatas.length > 0);
+            setBusy(false);
+          })
+          .catch(() => { setSug(inmediatas); setOpen(inmediatas.length > 0); setBusy(false); });
+
+      fetch(`${GEOREF}/localidades?nombre=${encodeURIComponent(q)}&max=15&campos=nombre,provincia`)
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(data => {
+          const locs = (data.localidades || []).map(loc => ({
+            ciudad: loc.nombre || '',
+            provincia: normProvDisplay(loc.provincia?.nombre || ''),
+          }));
+          const res = procesarResultados(locs);
+          if (res.length > 0) { setSug(res); setOpen(true); setBusy(false); }
+          else fallbackNominatim();
+        })
+        .catch(fallbackNominatim);
+    }, 350);
+  }
+
+  function sel(item) {
+    setInputVal(item.label);
+    onChange(item.ciudad, item.provincia);
+    setSug([]); setOpen(false);
+  }
+
+  function gps() {
+    setGpsLoad(true);
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&addressdetails=1`)
+          .then(r => r.json())
+          .then(d => {
+            const a = d.address;
+            const ciudad = a.city || a.town || a.village || a.suburb || '';
+            const prov = normProvGPS(a.state || '');
+            gpsProvincia.current = prov;
+            if (ciudad) { setInputVal(`${ciudad}, ${prov}`); onChange(ciudad, prov); }
+            setGpsLoad(false);
+          })
+          .catch(() => setGpsLoad(false));
+      },
+      () => { setGpsLoad(false); },
+      { timeout: 10000, enableHighAccuracy: false }
+    );
+  }
+
+  return (
+    <div style={{ position: "relative" }}>
+      {label && <label style={{ display:"block", fontWeight:500, marginBottom:5, fontSize:13, color:"#444" }}>{label}{required && " *"}</label>}
+      <div style={{ display:"flex", gap:6 }}>
+        <div style={{ position:"relative", flex:1 }}>
+          <input
+            value={inputVal}
+            onChange={e => { setInputVal(e.target.value); buscar(e.target.value); }}
+            onBlur={() => setTimeout(() => setOpen(false), 160)}
+            onFocus={() => sug.length > 0 && setOpen(true)}
+            placeholder={placeholder || "Escribí la ciudad..."}
+            autoComplete="off"
+            style={{ paddingRight: busy ? 30 : undefined }}
+          />
+          {busy && <span style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", fontSize:13, color:"#bbb", pointerEvents:"none" }}>🔍</span>}
+        </div>
+        {gpsDisponible && (
+          <button type="button" onClick={gps} disabled={gpsLoad}
+            title="Detectar mi ubicación actual"
+            style={{ padding:"0 12px", background:gpsLoad?"#F5F5F5":"var(--azul-light)", border:"1.5px solid #B5D4F4", borderRadius:8, cursor:gpsLoad?"wait":"pointer", color:"var(--azul-dark)", fontSize:18, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", minWidth:44 }}>
+            {gpsLoad ? "⏳" : "📍"}
+          </button>
+        )}
+      </div>
+      {open && sug.length > 0 && (
+        <div style={{ position:"absolute", top:"100%", left:0, right:0, background:"#fff", border:"1.5px solid #DDE3EA", borderRadius:10, boxShadow:"0 8px 24px rgba(0,0,0,0.11)", zIndex:500, marginTop:4, overflow:"hidden" }}>
+          {sug.map((s,i) => (
+            <div key={i}
+              onMouseDown={e => { e.preventDefault(); sel(s); }}
+              style={{ padding:"10px 14px", cursor:"pointer", fontSize:13, borderBottom:i<sug.length-1?"1px solid #F5F5F5":"none", display:"flex", alignItems:"center", gap:8 }}
+              onMouseEnter={e => e.currentTarget.style.background="#F5F9FF"}
+              onMouseLeave={e => e.currentTarget.style.background="#fff"}>
+              <span style={{color:"var(--azul)"}}>📍</span>
+              <div>
+                <span style={{fontWeight:500,color:"#1A1A1A"}}>{s.ciudad}</span>
+                {s.provincia && <span style={{color:"#888",marginLeft:6,fontSize:12}}>{s.provincia}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── LOGO ─────────────────────────────────────────────────────────────────────
+function FletarLogo({ size = "sm" }) {
+  const iconSize = size === "lg" ? 52 : 34;
+  const textW = size === "lg" ? 140 : 110;
+  const textH = size === "lg" ? 46 : 36;
+  const fontSize = size === "lg" ? 42 : 32;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: size === "lg" ? 12 : 8 }}>
+      <svg width={iconSize} height={iconSize} viewBox="0 0 38 38">
+        <rect width="38" height="38" rx="9" fill="#E85D20"/>
+        <text fontFamily="Montserrat, sans-serif" fontSize="26" fontWeight="900" x="7" y="28" fill="white">F</text>
+        <polygon points="28,24 34,19 28,14 28,18 22,18 22,20 28,20" fill="white" opacity="0.9"/>
+      </svg>
+      <svg width={textW} height={textH} viewBox={`0 0 ${textW} ${textH}`}>
+        <defs>
+          <clipPath id="cl-left"><polygon points={`0,${textH} 0,0 ${textW * 0.58},0 ${textW * 0.36},${textH}`}/></clipPath>
+          <clipPath id="cl-right"><polygon points={`${textW * 0.58},0 ${textW},0 ${textW},${textH} ${textW * 0.36},${textH}`}/></clipPath>
+        </defs>
+        <text fontFamily="Montserrat, sans-serif" fontSize={fontSize} fontWeight="900" y={textH - 4} clipPath="url(#cl-left)" fill="#E85D20">fletar</text>
+        <text fontFamily="Montserrat, sans-serif" fontSize={fontSize} fontWeight="900" y={textH - 4} clipPath="url(#cl-right)" fill="white">fletar</text>
+      </svg>
+    </div>
+  );
+}
+
+// ─── REGISTRO SIMPLE (sin contraseña) ─────────────────────────────────────────
+function RegistroFletero({ onListo }) {
+  const [form, setForm] = useState({ nombre: "", email: "", telefono: "", ciudad: "", provincia: "", vehiculo: VEHICULOS_FLETERO[0] });
+  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  function enviar() {
+    if (!form.nombre || !form.telefono || !form.ciudad) {
+      alert("Completá tu nombre, teléfono y ciudad para continuar.");
+      return;
+    }
+    const id = 'flt-' + form.telefono.replace(/\D/g, '') + '-' + Date.now().toString(36);
+    const perfil = { ...form, id, creadoEn: Date.now() };
+    USUARIO_FLETERO = perfil;
+    storageSave(KEY_FLETERO_PERFIL, perfil);
+    db.ref(`fleteros/${id}`).set(perfil);
+    onListo(perfil);
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <div style={{ background: "#2C2C2A", flex: "0 0 34%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px 48px" }}>
+        <FletarLogo size="lg" />
+        <p style={{ fontSize: 15, color: "rgba(255,255,255,0.85)", marginTop: 16, textAlign: "center" }}>Ganá un ingreso extra con tu vehículo</p>
+      </div>
+      <div style={{ background: "#fff", flex: 1, borderRadius: "24px 24px 0 0", marginTop: -20, padding: "32px 24px 40px" }}>
+        <div style={{ maxWidth: 420, margin: "0 auto" }}>
+          <h1 style={{ fontSize: 19, fontWeight: 700, marginBottom: 4 }}>Registrate como fletero</h1>
+          <p style={{ fontSize: 13, color: "#888", marginBottom: 22 }}>Sin contraseña, sin trámites. Es gratis.</p>
+
+          <div className="form-group">
+            <label>Nombre y apellido</label>
+            <input value={form.nombre} onChange={e => setF('nombre', e.target.value)} placeholder="Ej: Juan Pérez" />
+          </div>
+          <div className="form-group">
+            <label>Email (para recuperar tu cuenta más adelante)</label>
+            <input type="email" value={form.email} onChange={e => setF('email', e.target.value)} placeholder="juan@email.com" />
+          </div>
+          <div className="form-group">
+            <label>Teléfono / WhatsApp</label>
+            <input type="tel" value={form.telefono} onChange={e => setF('telefono', e.target.value)} placeholder="Ej: 3764 123456" />
+          </div>
+          <div className="form-group">
+            <CiudadAutocomplete
+              label="Tu ciudad" required
+              value={form.ciudad ? `${form.ciudad}${form.provincia ? ", " + form.provincia : ""}` : ""}
+              onChange={(ciudad, prov) => { setF('ciudad', ciudad); setF('provincia', prov); }}
+              mostrarGPS={true}
+              placeholder="Ej: Posadas, Misiones"
+            />
+            <p style={{ fontSize: 11, color: "#888", marginTop: 4 }}>Vas a ver los pedidos de tu misma ciudad.</p>
+          </div>
+          <div className="form-group" style={{ marginBottom: 22 }}>
+            <label>Tu vehículo</label>
+            <select value={form.vehiculo} onChange={e => setF('vehiculo', e.target.value)}>
+              {VEHICULOS_FLETERO.map(v => <option key={v}>{v}</option>)}
+            </select>
+          </div>
+          <button className="btn-primary" style={{ width: "100%", padding: "13px 0", fontSize: 15 }} onClick={enviar}>Empezar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── NAVBAR ───────────────────────────────────────────────────────────────────
+function NavbarFletero({ onNav, screen }) {
+  const navLinks = [
+    { id: "pedidos-disponibles", label: "Pedidos disponibles" },
+    { id: "mis-trabajos", label: "Mis trabajos" },
+  ];
+  return (
+    <nav style={{ background: "#2C2C2A", padding: "0 10px", display: "flex", alignItems: "center", height: 52, position: "sticky", top: 0, zIndex: 100, overflowX: "auto", gap: 4 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginRight: 12, flexShrink: 0 }}>
+        <FletarLogo size="sm" />
+        <span style={{ fontSize: 10, background: "var(--azul)", color: "#fff", padding: "2px 6px", borderRadius: 5, fontWeight: 700, whiteSpace: "nowrap" }}>FLETERO</span>
+      </div>
+      <div style={{ display: "flex", gap: 2, flex: 1 }}>
+        {navLinks.map(l => (
+          <button key={l.id} onClick={() => onNav(l.id)} style={{ background: screen === l.id ? "rgba(37,99,235,0.18)" : "transparent", color: screen === l.id ? "var(--azul)" : "rgba(255,255,255,0.7)", border: "none", padding: "6px 10px", borderRadius: 6, fontSize: 13, fontWeight: screen === l.id ? 500 : 400, cursor: "pointer", whiteSpace: "nowrap" }}>
+            {l.label}
+          </button>
+        ))}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--azul)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 600 }}>{(USUARIO_FLETERO?.nombre || "?")[0].toUpperCase()}</div>
+      </div>
+    </nav>
+  );
+}
+
+// ─── PEDIDOS DISPONIBLES ───────────────────────────────────────────────────────
+function PedidosDisponibles({ onNav, onCotizar }) {
+  const [cargas, setCargas] = useState([]);
+  const [ofertas, setOfertas] = useState([]);
+
+  useEffect(() => {
+    const unsubC = fbListen('cargas', arr => setCargas(arr));
+    const unsubO = fbListen('ofertas', arr => setOfertas(arr));
+    return () => { unsubC(); unsubO(); };
+  }, []);
+
+  const miCiudad = normStr(USUARIO_FLETERO?.ciudad);
+  const misOfertasIds = new Set(ofertas.filter(o => o.fleteroId === USUARIO_FLETERO?.id).map(o => o.cargaId));
+
+  const disponibles = cargas
+    .filter(c => c.tipoEnvio === "expres-local")
+    .filter(c => ["nueva", "activo"].includes(c.estado))
+    .filter(c => normStr(c.ciudad) === miCiudad)
+    .filter(c => !misOfertasIds.has(c.id))
+    .sort((a, b) => b.id - a.id);
+
+  return (
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 16px" }}>
+      <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 4 }}>Pedidos disponibles</h1>
+      <p style={{ fontSize: 13, color: "#888", marginBottom: 20 }}>En {USUARIO_FLETERO?.ciudad || "tu ciudad"}</p>
+
+      {disponibles.length === 0 && (
+        <div className="card" style={{ textAlign: "center", padding: 40, color: "#aaa" }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>📭</div>
+          Todavía no hay pedidos en tu zona.<br/>Te vamos a avisar apenas aparezca uno.
+        </div>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {disponibles.map(c => (
+          <div key={c.id} className="card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 8 }}>
+              <div>
+                <span className={`badge ${c.estado === "activo" ? "badge-activo" : "badge-nueva"}`}>{c.tipo}</span>
+              </div>
+              <div style={{ fontSize: 11, color: "#aaa" }}>{c.ofertas || 0} cotizaci{c.ofertas === 1 ? "ón" : "ones"}</div>
+            </div>
+            {c.descripcion && <div style={{ fontSize: 13, color: "#444", marginBottom: 10 }}>{c.descripcion}</div>}
+            <div style={{ fontSize: 12.5, color: "#5A6A78", marginBottom: 4 }}>📍 Retiro: {c.direccionRetiro || c.origen}</div>
+            <div style={{ fontSize: 12.5, color: "#5A6A78", marginBottom: 10 }}>🏁 Entrega: {c.destino}</div>
+            <div style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>🗓️ {c.fechaDeseada} {c.horaDeseada && `· ${c.horaDeseada}hs`}</div>
+            <button className="btn-primary" style={{ width: "100%" }} onClick={() => onCotizar(c)}>Cotizar</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── COTIZAR PEDIDO ────────────────────────────────────────────────────────────
+function CotizarPedido({ carga, onNav }) {
+  const [form, setForm] = useState({ precio: "", nota: "" });
+  const [enviado, setEnviado] = useState(false);
+
+  function enviarCotizacion() {
+    if (!form.precio) { alert("Ingresá un precio."); return; }
+    const nuevaOferta = {
+      id: Date.now(),
+      cargaId: carga.id,
+      clienteId: carga.empresaId || null,
+      clienteNombre: carga.empresa || null,
+      esFletero: true,
+      fleteroId: USUARIO_FLETERO.id,
+      fleteroNombre: USUARIO_FLETERO.nombre,
+      fleteroTelefono: USUARIO_FLETERO.telefono,
+      // mismos nombres de campo que usa una oferta de transportista, para
+      // reutilizar sin cambios la pantalla "Ver ofertas" del cliente
+      transportistaId: USUARIO_FLETERO.id,
+      transportistaNombre: USUARIO_FLETERO.nombre,
+      calificacion: null,
+      viajes: 0,
+      verificado: false,
+      vehiculo: USUARIO_FLETERO.vehiculo,
+      foto: (USUARIO_FLETERO.nombre || "?")[0].toUpperCase(),
+      precio: parseInt(form.precio),
+      retiro: carga.fechaDeseada ? `${carga.fechaDeseada}${carga.horaDeseada ? " " + carga.horaDeseada + "hs" : ""}` : "A coordinar",
+      entrega: "El mismo día",
+      nota: form.nota,
+      matchRuta: false,
+    };
+    fbSetItem('ofertas', nuevaOferta);
+    db.ref('cargas/' + carga.id + '/ofertas').transaction(n => (n || 0) + 1);
+    if (carga.estado === "nueva") fbUpdate('cargas', carga.id, { estado: "activo" });
+    setEnviado(true);
+    setTimeout(() => onNav("pedidos-disponibles"), 2200);
+  }
+
+  if (enviado) return (
+    <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center", maxWidth: 360 }}>
+        <div style={{ fontSize: 56 }}>✅</div>
+        <h2 style={{ marginTop: 12, fontSize: 20 }}>¡Cotización enviada!</h2>
+        <p style={{ color: "#888", marginTop: 8, fontSize: 14 }}>Te avisamos si el cliente la acepta.</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px" }}>
+      <button className="btn-ghost" style={{ marginBottom: 12, padding: "6px 0" }} onClick={() => onNav("pedidos-disponibles")}>← Volver</button>
+      <div className="card">
+        <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 4 }}>{carga.tipo}</h2>
+        <p style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>{carga.descripcion}</p>
+        <div className="divider"></div>
+        <div className="form-group" style={{ marginTop: 14 }}>
+          <label>Tu precio</label>
+          <input type="number" inputMode="numeric" value={form.precio} onChange={e => setForm(f => ({ ...f, precio: e.target.value }))} placeholder="Ej: 8000" />
+        </div>
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label>Nota (opcional)</label>
+          <input value={form.nota} onChange={e => setForm(f => ({ ...f, nota: e.target.value }))} placeholder="Ej: puedo pasar hoy a la tarde" />
+        </div>
+      </div>
+      <button className="btn-primary" style={{ width: "100%", marginTop: 16, padding: "13px 0", fontSize: 15 }} onClick={enviarCotizacion}>Enviar cotización</button>
+    </div>
+  );
+}
+
+// ─── MIS TRABAJOS ──────────────────────────────────────────────────────────────
+function MisTrabajos() {
+  const [remitos, setRemitos] = useState([]);
+
+  useEffect(() => fbListen('remitos', arr => setRemitos(arr)), []);
+
+  const mios = remitos.filter(r => r.esFletero && r.fleteroId === USUARIO_FLETERO?.id);
+  const activos = mios.filter(r => r.estado !== "entregado").sort((a, b) => b.id.localeCompare ? b.id.localeCompare(a.id) : 0);
+  const entregados = mios.filter(r => r.estado === "entregado");
+
+  function salirAEntregar(r) {
+    fbUpdate('remitos', r.id, { estado: "en-camino" });
+  }
+  function marcarEntregado(r) {
+    fbUpdate('remitos', r.id, { estado: "entregado" });
+  }
+
+  return (
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 16px" }}>
+      <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 20 }}>Mis trabajos</h1>
+
+      {activos.length === 0 && entregados.length === 0 && (
+        <div className="card" style={{ textAlign: "center", padding: 40, color: "#aaa" }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>🗂️</div>
+          Todavía no tenés trabajos aceptados.
+        </div>
+      )}
+
+      {activos.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <h3 style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10 }}>En curso</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {activos.map(r => (
+              <div key={r.id} className="card">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <span style={{ fontWeight: 500, fontSize: 14 }}>{r.empresaNombre}</span>
+                  <span className={`badge ${r.estado === "en-camino" ? "badge-en-camino" : "badge-nueva"}`}>{r.estado === "en-camino" ? "En camino" : "Pendiente de retiro"}</span>
+                </div>
+                <div style={{ fontSize: 12.5, color: "#5A6A78", marginBottom: 4 }}>📍 Retiro: {r.remitente?.domicilio}</div>
+                <div style={{ fontSize: 12.5, color: "#5A6A78", marginBottom: 12 }}>🏁 Entrega: {r.destinatario?.domicilio}</div>
+                {r.estado === "pendiente-retiro" && (
+                  <button className="btn-primary" style={{ width: "100%" }} onClick={() => salirAEntregar(r)}>Salí a entregar</button>
+                )}
+                {r.estado === "en-camino" && (
+                  <button className="btn-primary" style={{ width: "100%" }} onClick={() => marcarEntregado(r)}>Marcar entregado</button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {entregados.length > 0 && (
+        <div>
+          <h3 style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10 }}>Entregados</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {entregados.map(r => (
+              <div key={r.id} className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 13.5 }}>{r.empresaNombre}</span>
+                <span className="badge badge-entregado">✓ Entregado</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── CALIFICACIÓN POST-ENTREGA ─────────────────────────────────────────────────
+function RatingModal({ remito, pregunta, nombre, onCalificar, onOmitir, accentColor }) {
+  const [estrellas, setEstrellas] = useState(0);
+  const [hover, setHover] = useState(0);
+  return (
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: "#fff", borderRadius: 16, padding: "24px 20px", width: "100%", maxWidth: 340, textAlign: "center" }}>
+        <div style={{ fontSize: 40, marginBottom: 8 }}>✅</div>
+        <div style={{ fontWeight: 600, fontSize: 16, color: "#1A1A1A", marginBottom: 4 }}>¡Trabajo entregado!</div>
+        <div style={{ borderTop: "1px solid #f0f0f0", paddingTop: 16, marginTop: 8 }}>
+          <div style={{ fontSize: 14, color: "#444", marginBottom: 12 }}>{pregunta} <strong>{nombre}</strong>?</div>
+          <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 16 }}>
+            {[1,2,3,4,5].map(n => (
+              <span key={n} onClick={() => setEstrellas(n)} onMouseEnter={() => setHover(n)} onMouseLeave={() => setHover(0)}
+                style={{ fontSize: 34, cursor: "pointer", color: n <= (hover || estrellas) ? accentColor : "#ddd", userSelect: "none" }}>★</span>
+            ))}
+          </div>
+          <button disabled={estrellas === 0} onClick={() => onCalificar(estrellas)}
+            style={{ background: estrellas > 0 ? accentColor : "#ccc", color: "#fff", border: "none", borderRadius: 8, padding: "10px 0", fontSize: 14, fontWeight: 500, cursor: estrellas > 0 ? "pointer" : "default", width: "100%", marginBottom: 8 }}>
+            Enviar calificación
+          </button>
+          <button onClick={onOmitir} style={{ background: "transparent", border: "none", color: "#bbb", fontSize: 12, cursor: "pointer" }}>Omitir</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── APP ────────────────────────────────────────────────────────────────────
+function App() {
+  const [registrado, setRegistrado] = useState(!!USUARIO_FLETERO);
+  const [screen, setScreen] = useState("pedidos-disponibles");
+  const [cargaCotizando, setCargaCotizando] = useState(null);
+  const [remitoACalificar, setRemitoACalificar] = useState(null);
+  const shownRating = useRef(new Set());
+
+  useEffect(() => {
+    if (!registrado) return;
+    return fbListen('remitos', arr => {
+      const pendiente = arr.find(r =>
+        r.esFletero && r.fleteroId === USUARIO_FLETERO?.id &&
+        r.estado === "entregado" &&
+        r.calificacionTransportista == null &&
+        !shownRating.current.has(r.id)
+      );
+      if (pendiente) {
+        shownRating.current.add(pendiente.id);
+        setRemitoACalificar(pendiente);
+      }
+    });
+  }, [registrado]);
+
+  function onNav(id) {
+    setCargaCotizando(null);
+    setScreen(id);
+  }
+  function onCotizar(carga) {
+    setCargaCotizando(carga);
+    setScreen("cotizar");
+  }
+  function calificar(estrellas) {
+    if (remitoACalificar) fbUpdate('remitos', remitoACalificar.id, { calificacionTransportista: estrellas });
+    setRemitoACalificar(null);
+  }
+  function omitirCalificacion() {
+    if (remitoACalificar) fbUpdate('remitos', remitoACalificar.id, { calificacionTransportista: 0 });
+    setRemitoACalificar(null);
+  }
+
+  if (!registrado) {
+    return <RegistroFletero onListo={() => setRegistrado(true)} />;
+  }
+
+  return (
+    <div>
+      <NavbarFletero onNav={onNav} screen={screen} />
+      {screen === "pedidos-disponibles" && <PedidosDisponibles onNav={onNav} onCotizar={onCotizar} />}
+      {screen === "cotizar" && cargaCotizando && <CotizarPedido carga={cargaCotizando} onNav={onNav} />}
+      {screen === "mis-trabajos" && <MisTrabajos />}
+
+      {remitoACalificar && (
+        <RatingModal
+          remito={remitoACalificar}
+          pregunta="¿Cómo calificás a"
+          nombre={remitoACalificar.empresaNombre}
+          accentColor="#2563EB"
+          onCalificar={calificar}
+          onOmitir={omitirCalificacion}
+        />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+</script>
+</body>
+</html>

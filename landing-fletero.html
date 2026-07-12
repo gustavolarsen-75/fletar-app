@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fletar para fleteros — Ganá un ingreso extra con tu vehículo</title>
+<meta name="description" content="Sumate como fletero particular a Fletar: fletes rápidos dentro de tu ciudad, vos elegís qué pedidos tomar, siempre gratis, sin comisión.">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --o: #E85D20;
+    --o-d: #C94A14;
+    --g: #0F6E56;
+    --b: #2563EB;
+    --b-d: #1D4ED8;
+    --dk: #0D1117;
+    --dk2: #161B22;
+    --w: #FFFFFF;
+    --lt: #F5F3EE;
+    --border: rgba(255,255,255,0.08);
+  }
+
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--dk); color: #fff; overflow-x: hidden; }
+
+  /* ─── NAVBAR ─── */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,17,23,0.97);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 2px solid var(--b);
+    height: 62px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px;
+  }
+  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .nav-back { color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+  .nav-back:hover { color: #fff; }
+  .nav-cta {
+    background: var(--b); color: #fff; font-size: 12px; font-weight: 700;
+    padding: 10px 22px; border-radius: 5px; border: none; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 0.8px; transition: background 0.2s;
+  }
+  .nav-cta:hover { background: var(--b-d); }
+
+  /* ─── HERO ─── */
+  .hero {
+    position: relative; padding: 130px 40px 70px;
+    text-align: center; overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background-image: url('hero-landing.jpg');
+    background-size: cover; background-position: center 30%;
+  }
+  .hero-overlay {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at top right, rgba(37,99,235,0.22) 0%, transparent 55%),
+      linear-gradient(rgba(13,17,23,0.6), rgba(13,17,23,0.75));
+  }
+  .hero-content { position: relative; z-index: 2; }
+  .hero-pre {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 11px; font-weight: 700; color: var(--b);
+    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px;
+  }
+  .hero-pre::before, .hero-pre::after { content: ''; display: block; width: 28px; height: 2px; background: var(--b); }
+  .hero-h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 44px; font-weight: 800; line-height: 1.2; letter-spacing: -0.5px;
+    max-width: 680px; margin: 0 auto 22px;
+  }
+  .hero-sub {
+    font-size: 16px; color: rgba(255,255,255,0.88); line-height: 1.8;
+    max-width: 540px; margin: 0 auto 36px;
+  }
+  .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .btn-primary {
+    background: var(--b); color: #fff; font-size: 13px; font-weight: 700;
+    padding: 15px 30px; border-radius: 5px; text-decoration: none;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;
+    border: none; cursor: pointer;
+  }
+  .btn-primary:hover { background: var(--b-d); }
+  .btn-outline {
+    background: transparent; color: #fff; font-size: 13px; font-weight: 700;
+    padding: 14px 28px; border-radius: 5px; border: 2px solid rgba(255,255,255,0.25);
+    text-decoration: none; text-transform: uppercase; letter-spacing: 0.8px;
+    display: inline-flex; align-items: center; gap: 8px; transition: border-color 0.2s;
+    cursor: pointer;
+  }
+  .btn-outline:hover { border-color: rgba(255,255,255,0.6); }
+  .hero-trust { display: flex; align-items: center; gap: 16px; margin-top: 32px; flex-wrap: wrap; justify-content: center; }
+  .hero-trust-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: rgba(255,255,255,0.85); }
+  .hero-trust-item .ck { color: var(--b); font-weight: 700; }
+  .hero-trust-sep { width: 1px; height: 18px; background: rgba(255,255,255,0.15); }
+
+  /* ─── SECTION HEADERS ─── */
+  .section-pre {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 11px; font-weight: 700; color: var(--b);
+    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px;
+  }
+  .section-pre::before { content: ''; display: block; width: 24px; height: 2px; background: var(--b); }
+  .section-h2 { font-size: 32px; font-weight: 900; line-height: 1.15; letter-spacing: -1px; margin-bottom: 14px; text-transform: uppercase; }
+  .section-h2 span { color: var(--b); }
+  .section-head { text-align: center; max-width: 620px; margin: 0 auto 50px; }
+  .section-p { font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.8; }
+
+  /* ─── BENEFICIOS (grid grande) ─── */
+  .top-benefits { position: relative; padding: 80px 40px 90px; overflow: hidden; }
+  .tb-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; max-width: 1100px; margin: 0 auto; }
+  .tb-card {
+    background: var(--b); border-radius: 10px;
+    padding: 30px 26px; transition: transform 0.2s;
+  }
+  .tb-card:hover { transform: translateY(-3px); }
+  .tb-icon {
+    width: 46px; height: 46px; border-radius: 9px; background: rgba(0,0,0,0.15);
+    display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 18px;
+  }
+  .tb-title { font-family: 'Montserrat', sans-serif; font-size: 17px; font-weight: 800; color: #fff; margin-bottom: 10px; letter-spacing: -0.2px; line-height: 1.3; }
+  .tb-text { font-size: 12.5px; color: rgba(255,255,255,0.85); line-height: 1.7; }
+
+  /* ─── FINAL CTA ─── */
+  .final-cta {
+    background: var(--dk2); padding: 90px 40px; text-align: center;
+    position: relative; overflow: hidden; border-top: 1px solid var(--border);
+  }
+  .final-cta::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(37,99,235,0.10) 0%, transparent 65%);
+  }
+  .final-h { font-size: 40px; font-weight: 900; text-transform: uppercase; letter-spacing: -1.2px; line-height: 1.15; margin-bottom: 14px; position: relative; }
+  .final-h span { color: var(--b); }
+  .final-sub { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 34px; position: relative; max-width: 480px; margin-left: auto; margin-right: auto; }
+  .final-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; position: relative; }
+
+  /* ─── FOOTER ─── */
+  .footer { background: #060A0F; padding: 34px 40px; text-align: center; }
+  .footer-copy { font-size: 11px; color: rgba(255,255,255,0.25); }
+
+  /* ─── GATE (clave de acceso) ─── */
+  .gate {
+    position: fixed; inset: 0; z-index: 1000;
+    background: var(--dk);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .gate-box {
+    background: var(--dk2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 40px 32px; max-width: 320px; width: 100%; text-align: center;
+  }
+  .gate-logo { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 22px; }
+  .gate-title { font-size: 13px; color: rgba(255,255,255,0.55); margin-bottom: 20px; line-height: 1.6; }
+  .gate-input {
+    width: 100%; background: #0D1117; border: 1.5px solid var(--border); border-radius: 6px;
+    padding: 12px 14px; font-size: 15px; color: #fff; text-align: center;
+    letter-spacing: 2px; margin-bottom: 14px; outline: none;
+  }
+  .gate-input:focus { border-color: var(--b); }
+  .gate-btn {
+    width: 100%; background: var(--b); color: #fff; font-size: 13px; font-weight: 700;
+    padding: 13px; border: none; border-radius: 6px; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 0.8px; transition: background 0.2s;
+  }
+  .gate-btn:hover { background: var(--b-d); }
+  .gate-error { font-size: 12px; color: var(--o); margin-top: 12px; display: none; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    .tb-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .nav { padding: 0 18px; }
+    .nav-back span.txt { display: none; }
+    .hero { padding: 110px 20px 50px; }
+    .hero-h1 { font-size: 30px; }
+    .top-benefits { padding: 56px 20px 60px; }
+    .tb-grid { grid-template-columns: 1fr; }
+    .final-cta { padding: 60px 20px; }
+    .final-h { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── GATE (clave de acceso, pre-lanzamiento) ─── -->
+<div class="gate" id="gate">
+  <div class="gate-box">
+    <div class="gate-logo">
+      <svg width="30" height="30" viewBox="0 0 38 38">
+        <rect width="38" height="38" rx="9" fill="#E85D20"/>
+        <text font-family="Montserrat,sans-serif" font-size="26" font-weight="900" x="7" y="28" fill="white">F</text>
+        <polygon points="28,24 34,19 28,14 28,18 22,18 22,20 28,20" fill="white" opacity="0.9"/>
+      </svg>
+      <svg width="92" height="30" viewBox="0 0 110 36">
+        <defs>
+          <clipPath id="gate-cl-left"><polygon points="0,36 0,0 63.8,0 39.6,36"/></clipPath>
+          <clipPath id="gate-cl-right"><polygon points="63.8,0 110,0 110,36 39.6,36"/></clipPath>
+        </defs>
+        <text font-family="Montserrat,sans-serif" font-size="32" font-weight="900" y="32" clip-path="url(#gate-cl-left)" fill="#E85D20">fletar</text>
+        <text font-family="Montserrat,sans-serif" font-size="32" font-weight="900" y="32" clip-path="url(#gate-cl-right)" fill="white">fletar</text>
+      </svg>
+    </div>
+    <div class="gate-title">Sitio en preparación.<br>Ingresá la clave de acceso.</div>
+    <input type="password" inputmode="numeric" class="gate-input" id="gateInput" placeholder="••••" maxlength="10" autocomplete="off">
+    <button class="gate-btn" id="gateBtn">Entrar</button>
+    <div class="gate-error" id="gateError">Clave incorrecta.</div>
+  </div>
+</div>
+
+<!-- ─── SITIO ─── -->
+<div id="site-content" style="display:none">
+
+<!-- ─── NAVBAR ─── -->
+<nav class="nav">
+  <a href="landing.html" class="nav-back">
+    <span>←</span><span class="txt">Volver a Fletar</span>
+  </a>
+  <a href="landing.html" class="nav-logo">
+    <svg width="36" height="36" viewBox="0 0 38 38">
+      <rect width="38" height="38" rx="9" fill="#E85D20"/>
+      <text font-family="Montserrat,sans-serif" font-size="26" font-weight="900" x="7" y="28" fill="white">F</text>
+      <polygon points="28,24 34,19 28,14 28,18 22,18 22,20 28,20" fill="white" opacity="0.9"/>
+    </svg>
+    <svg width="110" height="36" viewBox="0 0 110 36">
+      <defs>
+        <clipPath id="cl-left"><polygon points="0,36 0,0 63.8,0 39.6,36"/></clipPath>
+        <clipPath id="cl-right"><polygon points="63.8,0 110,0 110,36 39.6,36"/></clipPath>
+      </defs>
+      <text font-family="Montserrat,sans-serif" font-size="32" font-weight="900" y="32" clip-path="url(#cl-left)" fill="#E85D20">fletar</text>
+      <text font-family="Montserrat,sans-serif" font-size="32" font-weight="900" y="32" clip-path="url(#cl-right)" fill="white">fletar</text>
+    </svg>
+  </a>
+  <button class="nav-cta" id="btnAnotarmeNav">Quiero anotarme</button>
+</nav>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+  <div class="hero-pre">Fletero particular · Argentina</div>
+  <h1 class="hero-h1">Ganá un ingreso extra con tu vehículo.</h1>
+  <p class="hero-sub">
+    Fletes rápidos dentro de tu ciudad, cuando vos quieras. Vos elegís qué
+    pedidos tomar y a qué precio. Siempre gratis, sin comisión.
+  </p>
+  <div class="hero-btns">
+    <a href="#beneficios" class="btn-primary">Ver los beneficios ↓</a>
+    <button class="btn-outline" id="btnAnotarmeHero">Quiero anotarme</button>
+  </div>
+  <div class="hero-trust">
+    <span class="hero-trust-item"><span class="ck">✓</span> Siempre gratis</span>
+    <div class="hero-trust-sep"></div>
+    <span class="hero-trust-item"><span class="ck">✓</span> Sin comisión</span>
+    <div class="hero-trust-sep"></div>
+    <span class="hero-trust-item"><span class="ck">✓</span> Vos elegís tus horarios</span>
+  </div>
+  </div>
+</section>
+
+<!-- ─── BENEFICIOS ─── -->
+<section class="top-benefits" id="beneficios">
+  <div class="section-head">
+    <div class="section-pre" style="justify-content:center">Por qué sumarte</div>
+    <h2 class="section-h2">Lo que <span>ganás</span> como fletero</h2>
+    <p class="section-p">Un ingreso extra con tu propio vehículo, a tu ritmo.</p>
+  </div>
+  <div class="tb-grid">
+    <div class="tb-card">
+      <div class="tb-icon">💰</div>
+      <div class="tb-title">Ingreso extra</div>
+      <div class="tb-text">Sumá un ingreso extra con tu vehículo, sin necesidad de dedicarte full time. Trabajás cuando vos querés.</div>
+    </div>
+    <div class="tb-card">
+      <div class="tb-icon">🆓</div>
+      <div class="tb-title">Siempre gratis</div>
+      <div class="tb-text">Sin comisión ni suscripción, a diferencia de otras apps de delivery. Lo que cotizás es lo que cobrás.</div>
+    </div>
+    <div class="tb-card">
+      <div class="tb-icon">✅</div>
+      <div class="tb-title">Vos elegís</div>
+      <div class="tb-text">Decidís qué pedidos tomar y a qué precio cotizar. Nadie te asigna nada a la fuerza.</div>
+    </div>
+    <div class="tb-card">
+      <div class="tb-icon">📍</div>
+      <div class="tb-title">En tu ciudad</div>
+      <div class="tb-text">Pedidos dentro de tu misma ciudad. Sin viajes largos ni pasar noches afuera de tu casa.</div>
+    </div>
+    <div class="tb-card">
+      <div class="tb-icon">🤝</div>
+      <div class="tb-title">Cobrás directo</div>
+      <div class="tb-text">Coordinás el pago directo con el cliente al momento de la entrega, sin intermediarios.</div>
+    </div>
+    <div class="tb-card">
+      <div class="tb-icon">📱</div>
+      <div class="tb-title">Simple</div>
+      <div class="tb-text">Sin llamadas ni papeles. Todo se maneja desde el celular, igual que el resto de Fletar.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FINAL CTA ─── -->
+<section class="final-cta">
+  <h2 class="final-h">Sumate <span>cuando quieras</span>.<br>Es gratis.</h2>
+  <p class="final-sub">Sin comisión · Sin suscripción · Vos manejás tus tiempos</p>
+  <div class="final-btns">
+    <button class="btn-primary" id="btnAnotarmeFinal">📦 Quiero anotarme</button>
+    <a href="landing.html" class="btn-outline">Volver al inicio</a>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer class="footer">
+  <div class="footer-copy">© 2025 Fletar · Todos los derechos reservados</div>
+</footer>
+
+</div>
+<!-- fin #site-content -->
+
+<script>
+  (function () {
+    var CLAVE = '2164';
+    var gate = document.getElementById('gate');
+    var content = document.getElementById('site-content');
+    var input = document.getElementById('gateInput');
+    var btn = document.getElementById('gateBtn');
+    var error = document.getElementById('gateError');
+
+    function unlock() {
+      localStorage.setItem('fletarGateOk', '1');
+      gate.style.display = 'none';
+      content.style.display = '';
+    }
+
+    function tryUnlock() {
+      if (input.value === CLAVE) {
+        unlock();
+      } else {
+        error.style.display = 'block';
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    if (localStorage.getItem('fletarGateOk') === '1') {
+      unlock();
+    } else {
+      btn.addEventListener('click', tryUnlock);
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') tryUnlock();
+      });
+    }
+  })();
+
+  (function () {
+    function avisar() {
+      alert('Muy pronto vamos a abrir las inscripciones de fletero. ¡Te vamos a avisar apenas esté lista!');
+    }
+    ['btnAnotarmeNav', 'btnAnotarmeHero', 'btnAnotarmeFinal'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('click', avisar);
+    });
+  })();
+</script>
+
+</body>
+</html>

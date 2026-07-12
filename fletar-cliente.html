@@ -1101,6 +1101,8 @@ function PublicarEnvioExpres({ onNav, onVolverSelector }) {
   const [form, setForm] = useState({
     tipo: "Muebles",
     descripcion: "",
+    ciudad: "",
+    provincia: "",
     direccionRetiro: USUARIO_CLIENTE?.direccion || "",
     mapsRetiro: "",
     direccionEntrega: "",
@@ -1114,6 +1116,7 @@ function PublicarEnvioExpres({ onNav, onVolverSelector }) {
 
   function siguientePaso() {
     if (paso === 1 && !form.descripcion) { alert("Contanos brevemente qué mandás."); return; }
+    if (paso === 2 && !form.ciudad) { alert("Seleccioná tu ciudad desde el listado de sugerencias."); return; }
     if (paso === 2 && (!form.direccionRetiro || !form.direccionEntrega)) { alert("Completá la dirección de retiro y de entrega."); return; }
     if (paso === 3) { handlePublicar(); return; }
     setPaso(p => p + 1);
@@ -1143,13 +1146,15 @@ function PublicarEnvioExpres({ onNav, onVolverSelector }) {
       matchRuta: false,
       descripcion: form.descripcion,
       especial: "normal",
+      ciudad: form.ciudad,
+      provincia: form.provincia,
       direccionRetiro: form.direccionRetiro,
       mapsRetiro: form.mapsRetiro,
       destinatario: {
         nombre: "",
         telefono: "",
         domicilio: form.direccionEntrega,
-        ciudad: USUARIO_CLIENTE?.ciudad || "",
+        ciudad: form.ciudad,
         referencia: "",
         maps: form.mapsEntrega,
       },
@@ -1243,6 +1248,16 @@ function PublicarEnvioExpres({ onNav, onVolverSelector }) {
         {/* ══ PASO 2: RETIRO Y ENTREGA ══ */}
         {paso === 2 && <div className="card" style={{ marginBottom: 16 }}>
           <h3 style={{ fontSize: 15, fontWeight: 500, marginBottom: 16 }}>Retiro y entrega</h3>
+          <div className="form-group">
+            <CiudadAutocomplete
+              label="Tu ciudad" required
+              value={form.ciudad ? `${form.ciudad}${form.provincia ? ", " + form.provincia : ""}` : ""}
+              onChange={(ciudad, prov) => { upd('ciudad', ciudad); upd('provincia', prov); }}
+              mostrarGPS={true}
+              placeholder="Ej: Posadas, Misiones"
+            />
+            <p style={{ fontSize: 11, color: "#888", marginTop: 4 }}>Así los fleteros de tu zona pueden ver el pedido.</p>
+          </div>
           <div className="form-group">
             <label>Dirección de retiro</label>
             <input value={form.direccionRetiro} onChange={e => upd('direccionRetiro', e.target.value)} placeholder="Calle, número, ciudad" />
@@ -1970,7 +1985,7 @@ function VerOfertas({ onNav, cargaSeleccionada, onAceptar }) {
       },
       envio: { descripcion: carga.descripcion || carga.tipo, tipo: carga.tipo, peso: carga.peso, pesoCobrable: carga.totalCobrable || null, especial: carga.especial || "normal", bultos: carga.bultos || "1", pagaFlete: "remitente" },
       observacionSistema: carga.observacionSistema || null,
-      transportista: { nombre: oferta.transportistaNombre, chofer: oferta.transportistaNombre, telefono: "", vehiculo: oferta.vehiculo },
+      transportista: { nombre: oferta.transportistaNombre, chofer: oferta.transportistaNombre, telefono: oferta.fleteroTelefono || "", vehiculo: oferta.vehiculo },
       flete: oferta.precio,
       estado: "pendiente-retiro",
       retiro: oferta.retiro,
@@ -1980,6 +1995,9 @@ function VerOfertas({ onNav, cargaSeleccionada, onAceptar }) {
       transportistaNombre: oferta.transportistaNombre,
       empresaNombre: perfil.nombre || USUARIO_CLIENTE.nombre,
       empresaId: USUARIO_CLIENTE.id,
+      esFletero: !!oferta.esFletero,
+      fleteroId: oferta.fleteroId || null,
+      fleteroNombre: oferta.fleteroNombre || null,
       fotoUrl: (carga.fotosBase64 && carga.fotosBase64[0]) || carga.fotoBase64 || null,
       fotosUrl: carga.fotosBase64 || null,
       quienPaga: carga.quienPaga || 'remitente',

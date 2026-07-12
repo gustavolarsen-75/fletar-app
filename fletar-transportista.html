@@ -590,7 +590,7 @@ function TransportistaDashboard({ onNav, setCargaSeleccionada, setRemitoActivo, 
   }, []);
 
   useEffect(() => {
-    const unC  = fbListen('cargas',  arr => setCargas(arr));
+    const unC  = fbListen('cargas',  arr => setCargas(arr.filter(c => c.tipoEnvio !== "expres-local")));
     const unO  = fbListen('ofertas', arr => setOfertas(arr));
     const unR  = fbListen('remitos', arr => setRemitos(arr));
     const crRef = db.ref(`ciudadesRuta/${USUARIO_TRANS.id}`);
@@ -5086,7 +5086,8 @@ function App() {
 
   // Notificar nuevo pedido disponible
   useEffect(() => {
-    return fbListen('cargas', arr => {
+    return fbListen('cargas', arrRaw => {
+      const arr = arrRaw.filter(c => c.tipoEnvio !== "expres-local");
       const disponibles = arr.filter(c => ['nueva', 'activo'].includes(c.estado)).map(c => c.id);
       if (cargasVistas.current === null) {
         cargasVistas.current = new Set(disponibles);

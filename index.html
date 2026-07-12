@@ -87,6 +87,15 @@
     margin-bottom: 36px; max-width: 480px;
   }
   .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
+  .hero-work-chooser { margin-top: 26px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.12); max-width: 480px; }
+  .hwc-label { font-size: 10.5px; color: rgba(255,255,255,0.45); margin-bottom: 10px; }
+  .hwc-row { display: flex; gap: 10px; }
+  .hwc-card { flex: 1; border-radius: 8px; padding: 12px 14px; text-decoration: none; transition: transform 0.2s; }
+  .hwc-card:hover { transform: translateY(-2px); }
+  .hwc-card.g { background: var(--g); }
+  .hwc-card.b { background: #2563EB; }
+  .hwc-title { font-size: 12px; font-weight: 700; color: #fff; }
+  .hwc-sub { font-size: 10.5px; color: rgba(255,255,255,0.75); margin-top: 3px; }
   .btn-primary {
     background: var(--o); color: #fff; font-size: 13px; font-weight: 700;
     padding: 15px 30px; border-radius: 5px; text-decoration: none;
@@ -424,7 +433,19 @@
     </p>
     <div class="hero-btns">
       <a href="fletar-cliente.html" id="btnPublicarCarga" class="btn-primary">📦 Publicar carga</a>
-      <a href="landing-transportista.html" class="btn-outline">🚛 Soy transportista</a>
+    </div>
+    <div class="hero-work-chooser">
+      <div class="hwc-label">¿Tenés vehículo? Generá ingresos extra</div>
+      <div class="hwc-row">
+        <a href="landing-transportista.html" class="hwc-card g">
+          <div class="hwc-title">🚛 Transportista empresa</div>
+          <div class="hwc-sub">Servicio de paquetería</div>
+        </a>
+        <a href="landing-fletero.html" class="hwc-card b">
+          <div class="hwc-title">📦 Fletero particular</div>
+          <div class="hwc-sub">Fletes en tu ciudad</div>
+        </a>
+      </div>
     </div>
     <div class="hero-trust">
       <span class="hero-trust-item"><span class="ck">✓</span> Sin tarjeta de crédito</span>
@@ -683,7 +704,8 @@
       <div class="footer-col-title">Plataforma</div>
       <ul class="footer-links">
         <li><a href="fletar-cliente.html">Publicar carga</a></li>
-        <li><a href="landing-transportista.html">Soy transportista</a></li>
+        <li><a href="landing-transportista.html">Transportista empresa</a></li>
+        <li><a href="landing-fletero.html">Fletero particular</a></li>
         <li><a href="#como-funciona">Cómo funciona</a></li>
         <li><a href="#precios">Precios</a></li>
       </ul>
