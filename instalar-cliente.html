@@ -27,15 +27,27 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: #F5F3EE;
+    background: #0D1117;
     color: #0D1117;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 32px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-bg {
+    position: fixed; inset: 0;
+    background-image: url('_MG_8060.JPG');
+    background-size: cover; background-position: center 55%;
+  }
+  .page-overlay {
+    position: fixed; inset: 0;
+    background: linear-gradient(rgba(13,17,23,0.55), rgba(13,17,23,0.72));
   }
   .card {
+    position: relative; z-index: 2;
     width: 100%;
     max-width: 360px;
     background: #fff;
@@ -71,6 +83,14 @@
   .btn-install:hover { background: #C94A14; }
   .btn-install:disabled { opacity: 0.5; cursor: default; }
 
+  .btn-enter {
+    width: 100%; background: #0F6E56; color: #fff; font-size: 13px; font-weight: 700;
+    padding: 16px; border: none; border-radius: 7px; margin-bottom: 18px;
+    text-transform: uppercase; letter-spacing: 0.6px; cursor: pointer;
+    text-decoration: none; display: block; transition: background 0.2s;
+  }
+  .btn-enter:hover { background: #0B5744; }
+
   .ios-note {
     width: 100%; background: #F5F3EE; border-radius: 10px; padding: 14px 16px;
     font-size: 12px; color: #444; line-height: 1.7; margin-bottom: 18px; text-align: left;
@@ -84,6 +104,9 @@
 </style>
 </head>
 <body>
+
+<div class="page-bg"></div>
+<div class="page-overlay"></div>
 
 <div class="card">
   <svg class="logo" width="56" height="56" viewBox="0 0 192 192">
@@ -124,8 +147,14 @@
 
   <button id="btnInstalar" class="btn-install hidden">Instalar app</button>
 
+  <a id="btnEntrar" class="btn-enter" href="fletar-cliente.html">Ingresar a la app</a>
+
   <div id="iosNote" class="ios-note hidden">
     Tocá el ícono de <b>compartir</b> (el cuadradito con la flecha hacia arriba) y elegí <b>"Agregar a pantalla de inicio"</b>.
+  </div>
+
+  <div id="androidNote" class="ios-note hidden">
+    Tocá el menú <b>⋮</b> (arriba a la derecha de tu navegador) y elegí <b>"Instalar app"</b> o <b>"Agregar a pantalla de inicio"</b>.
   </div>
 
   <a id="linkChrome" class="link-chrome" href="fletar-cliente.html">Seguir usando desde Chrome →</a>
@@ -135,8 +164,21 @@
   var deferredPrompt = null;
   var btn = document.getElementById('btnInstalar');
   var iosNote = document.getElementById('iosNote');
+  var androidNote = document.getElementById('androidNote');
 
-  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  var ua = navigator.userAgent || '';
+  var isIOS = /iphone|ipad|ipod/i.test(ua) && !window.MSStream;
+  var isAndroid = /android/i.test(ua);
+  var isInApp = /\bWhatsApp\b|FBAN|FBAV|Instagram|Line\//i.test(ua);
+
+  // Si entramos desde el navegador interno de WhatsApp/Instagram/Facebook en
+  // Android, ese navegador nunca puede instalar apps — lo mandamos directo a
+  // Chrome sin que la persona tenga que hacer nada.
+  if (isInApp && isAndroid) {
+    var target = window.location.href.replace(/^https?:\/\//, '');
+    var fallbackUrl = encodeURIComponent(window.location.href);
+    window.location.href = 'intent://' + target + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + fallbackUrl + ';end';
+  }
 
   window.addEventListener('beforeinstallprompt', function (e) {
     e.preventDefault();
@@ -157,8 +199,19 @@
     window.location.href = 'fletar-cliente.html';
   });
 
-  if (isIOS) {
+  if (isIOS && isInApp) {
+    iosNote.innerHTML = 'Tocá <b>⋯</b> arriba a la derecha y elegí <b>"Abrir en Safari"</b>. Ahí vas a poder instalar la app.';
     iosNote.classList.remove('hidden');
+  } else if (isIOS) {
+    iosNote.classList.remove('hidden');
+  } else if (isAndroid && !isInApp) {
+    // Respaldo: si a los 2 segundos el botón automático no apareció,
+    // mostramos las instrucciones manuales.
+    setTimeout(function () {
+      if (!deferredPrompt) {
+        androidNote.classList.remove('hidden');
+      }
+    }, 2000);
   }
 
   // Si ya está instalada (corriendo en modo standalone), va directo a la app

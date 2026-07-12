@@ -931,6 +931,9 @@ function HistorialEnvios({ onNav, onVerOfertas, onVerSeguimiento }) {
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
             <span style={{ fontWeight: 500, fontSize: 14 }}>{c.origen} → {c.destino}</span>
             <span className={`badge badge-${c.estado}`}>{c.estado === "en-camino" ? "En camino" : c.estado === "activo" ? "Con ofertas" : "Nueva"}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 6, background: c.tipoEnvio === "expres-local" ? "#E1F5EE" : "#EBF3FD", color: c.tipoEnvio === "expres-local" ? "#085041" : "#0C447C" }}>
+              {c.tipoEnvio === "expres-local" ? "Exprés" : "Entre ciudades"}
+            </span>
           </div>
           <div style={{ fontSize: 12, color: "#888" }}>
             {c.tipo} · Retiro {c.retiro}
@@ -1048,6 +1051,237 @@ function comprimirImagen(file, maxPx = 900, quality = 0.70) {
   });
 }
 
+// ─── NUEVO ENVÍO: SELECTOR DE TIPO ────────────────────────────────────────────
+function NuevoEnvio({ onNav }) {
+  const [tipoElegido, setTipoElegido] = useState(null);
+
+  if (tipoElegido === "larga-distancia") return <PublicarCarga onNav={onNav} />;
+  if (tipoElegido === "expres-local") return <PublicarEnvioExpres onNav={onNav} onVolverSelector={() => setTipoElegido(null)} />;
+
+  return (
+    <PageWrapper titulo="Nuevo envío" subtitulo="Elegí una opción para empezar">
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 460 }}>
+        <div className="card" onClick={() => setTipoElegido("larga-distancia")}
+          style={{ cursor: "pointer", border: "2px solid #E85D20", display: "flex", gap: 14, alignItems: "flex-start" }}>
+          <div style={{ fontSize: 26 }}>🚛</div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3 }}>Entre ciudades</div>
+            <div style={{ fontSize: 13, color: "#888", lineHeight: 1.5 }}>Con transportistas profesionales. Ideal para cargas grandes o larga distancia.</div>
+          </div>
+        </div>
+        <div className="card" onClick={() => setTipoElegido("expres-local")}
+          style={{ cursor: "pointer", border: "1.5px solid #E0E0E0", display: "flex", gap: 14, alignItems: "flex-start" }}>
+          <div style={{ fontSize: 26 }}>⚡</div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3 }}>Exprés en tu ciudad</div>
+            <div style={{ fontSize: 13, color: "#888", lineHeight: 1.5 }}>Con fleteros locales. Ideal para mudanzas chicas o entregas el mismo día.</div>
+          </div>
+        </div>
+      </div>
+      <button className="btn-secondary" onClick={() => onNav("empresa-dashboard")} style={{ marginTop: 20 }}>Cancelar</button>
+    </PageWrapper>
+  );
+}
+
+// ─── PUBLICAR ENVÍO EXPRÉS (local, dentro de la misma ciudad) ─────────────────
+const TIPOS_EXPRES = [
+  { val: "Muebles", icon: "🛋️" },
+  { val: "Mudanza", icon: "📦" },
+  { val: "Electrodomésticos", icon: "🧊" },
+  { val: "Ropa y cajas", icon: "👕" },
+  { val: "Materiales", icon: "🧱" },
+  { val: "Otro", icon: "💬" },
+];
+
+function PublicarEnvioExpres({ onNav, onVolverSelector }) {
+  const [paso, setPaso] = useState(1);
+  const TOTAL_PASOS = 3;
+  const LABELS_PASO = ["Qué mandás", "Retiro y entrega", "Fecha y hora"];
+
+  const [form, setForm] = useState({
+    tipo: "Muebles",
+    descripcion: "",
+    direccionRetiro: USUARIO_CLIENTE?.direccion || "",
+    mapsRetiro: "",
+    direccionEntrega: "",
+    mapsEntrega: "",
+    fecha: "",
+    hora: "",
+  });
+  const [enviado, setEnviado] = useState(false);
+
+  function upd(k, v) { setForm(f => ({ ...f, [k]: v })); }
+
+  function siguientePaso() {
+    if (paso === 1 && !form.descripcion) { alert("Contanos brevemente qué mandás."); return; }
+    if (paso === 2 && (!form.direccionRetiro || !form.direccionEntrega)) { alert("Completá la dirección de retiro y de entrega."); return; }
+    if (paso === 3) { handlePublicar(); return; }
+    setPaso(p => p + 1);
+    window.scrollTo(0, 0);
+  }
+  function pasoAnterior() {
+    if (paso === 1) { onVolverSelector ? onVolverSelector() : onNav("empresa-dashboard"); return; }
+    setPaso(p => p - 1);
+    window.scrollTo(0, 0);
+  }
+
+  function handlePublicar() {
+    if (!form.fecha || !form.hora) { alert("Completá la fecha y hora de retiro."); return; }
+    const id = Date.now();
+    const nuevaCarga = {
+      id,
+      tipoEnvio: "expres-local",
+      empresa: USUARIO_CLIENTE.nombre,
+      origen: form.direccionRetiro,
+      destino: form.direccionEntrega,
+      tipo: form.tipo,
+      peso: "—",
+      retiro: form.fecha,
+      entrega: "—",
+      estado: "nueva",
+      ofertas: 0,
+      matchRuta: false,
+      descripcion: form.descripcion,
+      especial: "normal",
+      direccionRetiro: form.direccionRetiro,
+      mapsRetiro: form.mapsRetiro,
+      destinatario: {
+        nombre: "",
+        telefono: "",
+        domicilio: form.direccionEntrega,
+        ciudad: USUARIO_CLIENTE?.ciudad || "",
+        referencia: "",
+        maps: form.mapsEntrega,
+      },
+      fechaDeseada: form.fecha,
+      horaDeseada: form.hora,
+      empresaId: USUARIO_CLIENTE.id,
+      publishedAt: new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }),
+      publishedDate: new Date().toLocaleDateString("es-AR"),
+      quienPaga: "remitente",
+    };
+    fbSetItem('cargas', nuevaCarga);
+    setEnviado(true);
+    setTimeout(() => { onNav("empresa-dashboard"); }, 2200);
+  }
+
+  if (enviado) return (
+    <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center", maxWidth: 400, padding: "0 20px" }}>
+        <div style={{ fontSize: 56 }}>✅</div>
+        <h2 style={{ marginTop: 12, fontSize: 22 }}>¡Pedido publicado!</h2>
+        <p style={{ color: "#555", marginTop: 10, fontSize: 15, lineHeight: 1.5 }}>
+          Los fleteros de tu ciudad van a poder verlo y cotizarte.
+        </p>
+        <p style={{ color: "#aaa", fontSize: 12, marginTop: 10 }}>Redirigiendo...</p>
+      </div>
+    </div>
+  );
+
+  const BarraProgreso = () => (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0, marginBottom: 8 }}>
+        {LABELS_PASO.map((label, i) => {
+          const num = i + 1;
+          const activo = num === paso;
+          const completo = num < paso;
+          return (
+            <React.Fragment key={num}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: completo || activo ? "#0F6E56" : "#E0E0E0", color: completo || activo ? "#fff" : "#999", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, transition: "all 0.2s" }}>
+                  {completo ? "✓" : num}
+                </div>
+                <span style={{ fontSize: 10, color: activo || completo ? "#0F6E56" : "#aaa", fontWeight: activo ? 600 : 400, whiteSpace: "nowrap" }}>{label}</span>
+              </div>
+              {i < LABELS_PASO.length - 1 && (
+                <div style={{ width: 40, height: 2, background: completo ? "#0F6E56" : "#E0E0E0", marginBottom: 18, transition: "background 0.2s" }} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const BotonesNav = ({ labelContinuar }) => (
+    <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+      <button className="btn-secondary" onClick={pasoAnterior} style={{ flex: 1 }}>
+        {paso === 1 ? "Cancelar" : "← Atrás"}
+      </button>
+      <button className="btn-primary" onClick={siguientePaso} style={{ flex: 2, background: "#0F6E56" }}>
+        {labelContinuar || "Continuar →"}
+      </button>
+    </div>
+  );
+
+  return (
+    <div style={{ maxWidth: 620, margin: "0 auto", padding: "16px 12px", width: "100%" }}>
+      <BarraProgreso />
+      <div>
+
+        {/* ══ PASO 1: QUÉ MANDÁS ══ */}
+        {paso === 1 && <div className="card" style={{ marginBottom: 16 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 500, marginBottom: 16 }}>¿Qué mandás?</h3>
+          <div className="form-group">
+            <label>Tipo</label>
+            <div className="g4">
+              {TIPOS_EXPRES.map(t => (
+                <div key={t.val} onClick={() => upd('tipo', t.val)}
+                  style={{ border: `2px solid ${form.tipo === t.val ? "#0F6E56" : "#E0E0E0"}`, borderRadius: 8, padding: "10px 8px", cursor: "pointer", background: form.tipo === t.val ? "#E1F5EE" : "#fff", textAlign: "center" }}>
+                  <div style={{ fontSize: 20 }}>{t.icon}</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, marginTop: 4 }}>{t.val}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Descripción breve</label>
+            <textarea rows={3} value={form.descripcion} onChange={e => upd('descripcion', e.target.value)} placeholder="Ej: sofá 3 cuerpos + mesa ratona, 2 piso con ascensor..." />
+          </div>
+        </div>}
+
+        {/* ══ PASO 2: RETIRO Y ENTREGA ══ */}
+        {paso === 2 && <div className="card" style={{ marginBottom: 16 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 500, marginBottom: 16 }}>Retiro y entrega</h3>
+          <div className="form-group">
+            <label>Dirección de retiro</label>
+            <input value={form.direccionRetiro} onChange={e => upd('direccionRetiro', e.target.value)} placeholder="Calle, número, ciudad" />
+          </div>
+          <div className="form-group">
+            <label>Link de Google Maps del retiro (opcional)</label>
+            <input value={form.mapsRetiro} onChange={e => upd('mapsRetiro', e.target.value)} placeholder="Pegá el link de tu ubicación" />
+          </div>
+          <div className="form-group">
+            <label>Dirección de entrega</label>
+            <input value={form.direccionEntrega} onChange={e => upd('direccionEntrega', e.target.value)} placeholder="Ej: Av. Mitre 540, Posadas" />
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Link de Google Maps de la entrega (opcional)</label>
+            <input value={form.mapsEntrega} onChange={e => upd('mapsEntrega', e.target.value)} placeholder="Pegá el link de la ubicación" />
+          </div>
+        </div>}
+
+        {/* ══ PASO 3: FECHA Y HORA ══ */}
+        {paso === 3 && <div className="card" style={{ marginBottom: 16 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 500, marginBottom: 16 }}>¿Cuándo lo retiramos?</h3>
+          <div className="g2">
+            <div className="form-group">
+              <label>Fecha</label>
+              <input type="date" value={form.fecha} onChange={e => upd('fecha', e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label>Hora</label>
+              <input type="time" value={form.hora} onChange={e => upd('hora', e.target.value)} />
+            </div>
+          </div>
+        </div>}
+
+      </div>
+      <BotonesNav labelContinuar={paso === 3 ? "Publicar pedido →" : "Continuar →"} />
+    </div>
+  );
+}
+
 function PublicarCarga({ onNav }) {
   const [paso, setPaso] = useState(1);
   const TOTAL_PASOS = 5;
@@ -1155,6 +1389,7 @@ function PublicarCarga({ onNav }) {
     const pesoTexto = hayPaquetes ? `${totalCobrable} kg cobrable` : "— kg";
     const nuevaCarga = {
       id,
+      tipoEnvio: "larga-distancia",
       empresa: USUARIO_CLIENTE.nombre,
       origen: `${origenLoc}, ${origenProv}`,
       destino: `${destinoLoc}, ${destinoProv}`,
@@ -2612,7 +2847,7 @@ function App() {
     switch (screen) {
       case "empresa-dashboard": return <EmpresaDashboard onNav={handleNav} onVerOfertas={(carga) => { setCargaSeleccionada(carga); handleNav("ver-ofertas"); }} onVerRemito={(r) => { setRemitoActivo(r); handleNav("remito"); }} />;
       case "historial-envios": return <HistorialEnvios onNav={handleNav} onVerOfertas={(carga) => { setCargaSeleccionada(carga); handleNav("ver-ofertas"); }} onVerSeguimiento={(c) => { setCargaSeleccionada(c); handleNav("seguimiento"); }} />;
-      case "publicar-carga": return <PublicarCarga onNav={handleNav} />;
+      case "publicar-carga": return <NuevoEnvio onNav={handleNav} />;
       case "ver-ofertas": return <VerOfertas onNav={handleNav} cargaSeleccionada={cargaSeleccionada} onAceptar={(remito) => { setRemitoActivo(remito); handleNav("remito"); }} />;
       case "seguimiento": return <SeguimientoEnvio onNav={handleNav} cargaSeleccionada={cargaSeleccionada} onVerRemito={(r) => { setRemitoActivo(r); handleNav("remito"); }} />;
       case "remito": return <RemitoScreen onNav={handleNav} remito={remitoActivo || storageGet(KEY_REMITOS, []).slice(-1)[0] || null} />;
