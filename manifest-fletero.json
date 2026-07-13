@@ -1,0 +1,25 @@
+{
+  "name": "Fletar — Fletero",
+  "short_name": "Fletar",
+  "description": "Recibí pedidos de fletes en tu ciudad y ganá un ingreso extra",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "/fletar-fletero.html",
+  "scope": "/",
+  "background_color": "#2563EB",
+  "theme_color": "#2563EB",
+  "icons": [
+    {
+      "src": "/icon-fletero-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-fletero-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

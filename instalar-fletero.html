@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Instalar Fletar Fletero</title>
+<meta name="description" content="Instalá la app de Fletar Fletero en tu celular para recibir pedidos." />
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest-fletero.json" />
+<meta name="theme-color" content="#2563EB" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Fletar" />
+<link rel="apple-touch-icon" href="/icon-fletero-192.png" />
+<link rel="icon" type="image/png" href="/icon-fletero-192.png" />
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw-fletero.js').catch(() => {});
+    });
+  }
+</script>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #0D1117;
+    color: #0D1117;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-bg {
+    position: fixed; inset: 0;
+    background-image: url('_MG_8060.JPG');
+    background-size: cover; background-position: center 55%;
+  }
+  .page-overlay {
+    position: fixed; inset: 0;
+    background: linear-gradient(rgba(13,17,23,0.55), rgba(13,17,23,0.72));
+  }
+  .card {
+    position: relative; z-index: 2;
+    width: 100%;
+    max-width: 360px;
+    background: #fff;
+    border-radius: 18px;
+    padding: 36px 26px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border: 1px solid #E5E3DC;
+  }
+  .logo { border-radius: 14px; margin-bottom: 18px; }
+  h1 { font-size: 20px; font-weight: 800; line-height: 1.3; letter-spacing: -0.3px; margin-bottom: 8px; }
+  .sub { font-size: 13px; color: #8A8A85; line-height: 1.6; margin-bottom: 26px; max-width: 280px; }
+
+  .badges { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-bottom: 26px; }
+  .badge {
+    background: #fff; border: 1px solid #E5E3DC; border-radius: 10px;
+    padding: 16px 8px; display: flex; flex-direction: column; align-items: center;
+  }
+  .badge-ic {
+    width: 32px; height: 32px; border-radius: 50%; background: #0D1117;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 10px;
+  }
+  .badge-txt { font-size: 11.5px; font-weight: 700; color: #0D1117; line-height: 1.3; }
+
+  .btn-install {
+    width: 100%; background: #2563EB; color: #fff; font-size: 13px; font-weight: 700;
+    padding: 16px; border: none; border-radius: 7px; margin-bottom: 18px;
+    text-transform: uppercase; letter-spacing: 0.6px; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-install:hover { background: #1D4ED8; }
+  .btn-install:disabled { opacity: 0.5; cursor: default; }
+
+  .btn-enter {
+    width: 100%; background: #1D4ED8; color: #fff; font-size: 13px; font-weight: 700;
+    padding: 16px; border: none; border-radius: 7px; margin-bottom: 18px;
+    text-transform: uppercase; letter-spacing: 0.6px; cursor: pointer;
+    text-decoration: none; display: block; transition: background 0.2s;
+  }
+  .btn-enter:hover { background: #1741B0; }
+
+  .ios-note {
+    width: 100%; background: #F5F3EE; border-radius: 10px; padding: 14px 16px;
+    font-size: 12px; color: #444; line-height: 1.7; margin-bottom: 18px; text-align: left;
+  }
+  .ios-note b { color: #0D1117; }
+
+  .link-chrome { font-size: 12px; color: #8A8A85; font-weight: 500; text-decoration: none; }
+  .link-chrome:hover { color: #444; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="page-bg"></div>
+<div class="page-overlay"></div>
+
+<div class="card">
+  <svg class="logo" width="56" height="56" viewBox="0 0 192 192">
+    <rect width="192" height="192" rx="32" fill="#2563EB"/>
+    <text x="35" y="141" font-family="Montserrat, Arial, sans-serif" font-size="131" font-weight="900" fill="white">F</text>
+    <polygon points="141,121 172,96 141,71 141,91 111,91 111,101 141,101" fill="white" opacity="0.9"/>
+  </svg>
+
+  <h1>Instalá la app para recibir pedidos</h1>
+  <p class="sub">Directo desde tu navegador, sin pasos complicados</p>
+
+  <div class="badges">
+    <div class="badge">
+      <div class="badge-ic">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 11 14 11 22 21 10 13 10 13 2"/></svg>
+      </div>
+      <div class="badge-txt">30 segundos</div>
+    </div>
+    <div class="badge">
+      <div class="badge-ic">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+      </div>
+      <div class="badge-txt">Sin Play Store ni App Store</div>
+    </div>
+    <div class="badge">
+      <div class="badge-ic">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+      </div>
+      <div class="badge-txt">Sin APK</div>
+    </div>
+    <div class="badge">
+      <div class="badge-ic">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+      </div>
+      <div class="badge-txt">En tu pantalla como cualquier app</div>
+    </div>
+  </div>
+
+  <button id="btnInstalar" class="btn-install hidden">Instalar app</button>
+
+  <a id="btnEntrar" class="btn-enter" href="fletar-fletero.html">Ingresar a la app</a>
+
+  <div id="iosNote" class="ios-note hidden">
+    Tocá el ícono de <b>compartir</b> (el cuadradito con la flecha hacia arriba) y elegí <b>"Agregar a pantalla de inicio"</b>.
+  </div>
+
+  <div id="androidNote" class="ios-note hidden">
+    Tocá el menú <b>⋮</b> (arriba a la derecha de tu navegador) y elegí <b>"Instalar app"</b> o <b>"Agregar a pantalla de inicio"</b>.
+  </div>
+
+  <a id="linkChrome" class="link-chrome" href="fletar-fletero.html">Seguir usando desde Chrome →</a>
+</div>
+
+<script>
+  var deferredPrompt = null;
+  var btn = document.getElementById('btnInstalar');
+  var iosNote = document.getElementById('iosNote');
+  var androidNote = document.getElementById('androidNote');
+
+  var ua = navigator.userAgent || '';
+  var isIOS = /iphone|ipad|ipod/i.test(ua) && !window.MSStream;
+  var isAndroid = /android/i.test(ua);
+  var isInApp = /\bWhatsApp\b|FBAN|FBAV|Instagram|Line\//i.test(ua);
+
+  // Si entramos desde el navegador interno de WhatsApp/Instagram/Facebook en
+  // Android, ese navegador nunca puede instalar apps — lo mandamos directo a
+  // Chrome sin que la persona tenga que hacer nada.
+  if (isInApp && isAndroid) {
+    var target = window.location.href.replace(/^https?:\/\//, '');
+    var fallbackUrl = encodeURIComponent(window.location.href);
+    window.location.href = 'intent://' + target + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + fallbackUrl + ';end';
+  }
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    btn.classList.remove('hidden');
+  });
+
+  btn.addEventListener('click', function () {
+    if (!deferredPrompt) return;
+    btn.disabled = true;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function () {
+      deferredPrompt = null;
+    });
+  });
+
+  window.addEventListener('appinstalled', function () {
+    window.location.href = 'fletar-fletero.html';
+  });
+
+  if (isIOS && isInApp) {
+    iosNote.innerHTML = 'Tocá <b>⋯</b> arriba a la derecha y elegí <b>"Abrir en Safari"</b>. Ahí vas a poder instalar la app.';
+    iosNote.classList.remove('hidden');
+  } else if (isIOS) {
+    iosNote.classList.remove('hidden');
+  } else if (isAndroid && !isInApp) {
+    // Respaldo: si a los 2 segundos el botón automático no apareció,
+    // mostramos las instrucciones manuales.
+    setTimeout(function () {
+      if (!deferredPrompt) {
+        androidNote.classList.remove('hidden');
+      }
+    }, 2000);
+  }
+
+  // Si ya está instalada (corriendo en modo standalone), va directo a la app
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+    window.location.href = 'fletar-fletero.html';
+  }
+</script>
+
+</body>
+</html>
