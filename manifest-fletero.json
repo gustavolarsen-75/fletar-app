@@ -5,7 +5,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "start_url": "/fletar-fletero.html",
-  "scope": "/",
+  "scope": "/fletar-fletero.html",
   "background_color": "#2563EB",
   "theme_color": "#2563EB",
   "icons": [

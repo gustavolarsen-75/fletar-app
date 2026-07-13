@@ -67,7 +67,8 @@ self.addEventListener('fetch', e => {
       fetch(e.request)
         .then(response => {
           if (response && response.status === 200) {
-            caches.open(VERSION).then(cache => cache.put(e.request, response.clone()));
+            const copia = response.clone();
+            caches.open(VERSION).then(cache => cache.put(e.request, copia));
           }
           return response;
         })
@@ -81,7 +82,8 @@ self.addEventListener('fetch', e => {
     caches.match(e.request).then(cached => {
       const red = fetch(e.request).then(response => {
         if (response && response.status === 200 && response.type !== 'opaque') {
-          caches.open(VERSION).then(cache => cache.put(e.request, response.clone()));
+          const copia = response.clone();
+          caches.open(VERSION).then(cache => cache.put(e.request, copia));
         }
         return response;
       }).catch(() => null);
