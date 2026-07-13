@@ -2,8 +2,25 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Fletar — App Fletero</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest-fletero.json" />
+  <meta name="theme-color" content="#2563EB" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Fletar" />
+  <link rel="apple-touch-icon" href="/icon-fletero-192.png" />
+  <link rel="icon" type="image/png" href="/icon-fletero-192.png" />
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw-fletero.js').catch(() => {});
+      });
+    }
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -145,6 +162,15 @@ const CIUDADES_AR = [
 function normStr(s) {
   return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
+// GeoRef y Nominatim a veces devuelven el nombre oficial del municipio
+// ("Municipio de Posadas") en vez del nombre de la ciudad a secas ("Posadas").
+// Sacamos ese prefijo para que coincida con el resto de la app.
+function limpiarCiudad(nombre) {
+  return (nombre || '').replace(/^(Municipio|Comuna|Partido|Departamento) de /i, '').trim();
+}
+function normCiudad(s) {
+  return normStr(limpiarCiudad(s));
+}
 function normProvDisplay(nombre) {
   if (!nombre) return '';
   if (normStr(nombre).includes('autonoma') || normStr(nombre).includes('autónoma')) return 'CABA';
@@ -180,7 +206,7 @@ function CiudadAutocomplete({ value = "", onChange, label, placeholder, mostrarG
         const seen = new Set();
         return items
           .map(loc => {
-            const c = loc.ciudad || loc.nombre || '';
+            const c = limpiarCiudad(loc.ciudad || loc.nombre || '');
             const p = loc.provincia || normProvDisplay(loc.provincia?.nombre || '');
             if (!c || !p) return null;
             const label = `${c}, ${p}`;
@@ -205,7 +231,7 @@ function CiudadAutocomplete({ value = "", onChange, label, placeholder, mostrarG
           .then(r => r.json())
           .then(data => {
             const items = (data || []).map(d => ({
-              ciudad: d.address?.city || d.address?.town || d.address?.village || d.name || '',
+              ciudad: limpiarCiudad(d.address?.city || d.address?.town || d.address?.village || d.name || ''),
               provincia: normProvGPS(d.address?.state || ''),
             }));
             const res = procesarResultados(items);
@@ -244,7 +270,7 @@ function CiudadAutocomplete({ value = "", onChange, label, placeholder, mostrarG
           .then(r => r.json())
           .then(d => {
             const a = d.address;
-            const ciudad = a.city || a.town || a.village || a.suburb || '';
+            const ciudad = limpiarCiudad(a.city || a.town || a.village || a.suburb || '');
             const prov = normProvGPS(a.state || '');
             gpsProvincia.current = prov;
             if (ciudad) { setInputVal(`${ciudad}, ${prov}`); onChange(ciudad, prov); }
@@ -428,13 +454,13 @@ function PedidosDisponibles({ onNav, onCotizar }) {
     return () => { unsubC(); unsubO(); };
   }, []);
 
-  const miCiudad = normStr(USUARIO_FLETERO?.ciudad);
+  const miCiudad = normCiudad(USUARIO_FLETERO?.ciudad);
   const misOfertasIds = new Set(ofertas.filter(o => o.fleteroId === USUARIO_FLETERO?.id).map(o => o.cargaId));
 
   const disponibles = cargas
     .filter(c => c.tipoEnvio === "expres-local")
     .filter(c => ["nueva", "activo"].includes(c.estado))
-    .filter(c => normStr(c.ciudad) === miCiudad)
+    .filter(c => normCiudad(c.ciudad) === miCiudad)
     .filter(c => !misOfertasIds.has(c.id))
     .sort((a, b) => b.id - a.id);
 
