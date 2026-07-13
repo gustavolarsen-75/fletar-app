@@ -91,11 +91,19 @@
   }
   .btn-enter:hover { background: #1741B0; }
 
-  .ios-note {
-    width: 100%; background: #F5F3EE; border-radius: 10px; padding: 14px 16px;
-    font-size: 12px; color: #444; line-height: 1.7; margin-bottom: 18px; text-align: left;
+  .steps-note {
+    width: 100%; background: #F5F3EE; border-radius: 10px; padding: 16px;
+    margin-bottom: 18px; text-align: left;
   }
-  .ios-note b { color: #0D1117; }
+  .step-title { font-size: 12px; font-weight: 700; color: #0D1117; margin-bottom: 12px; }
+  .step-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; font-size: 12px; color: #444; line-height: 1.5; }
+  .step-row:last-child { margin-bottom: 0; }
+  .step-num {
+    flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: #2563EB;
+    color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center;
+    justify-content: center; margin-top: 1px;
+  }
+  .step-row b { color: #0D1117; }
 
   .link-chrome { font-size: 12px; color: #8A8A85; font-weight: 500; text-decoration: none; }
   .link-chrome:hover { color: #444; }
@@ -149,12 +157,17 @@
 
   <a id="btnEntrar" class="btn-enter" href="fletar-fletero.html">Ingresar a la app</a>
 
-  <div id="iosNote" class="ios-note hidden">
-    Tocá el ícono de <b>compartir</b> (el cuadradito con la flecha hacia arriba) y elegí <b>"Agregar a pantalla de inicio"</b>.
+  <div id="iosNote" class="steps-note hidden">
+    <div class="step-title">Agregá el ícono a tu pantalla</div>
+    <div class="step-row"><span class="step-num">1</span><span>Tocá el ícono de <b>compartir</b> (el cuadradito con la flecha hacia arriba)</span></div>
+    <div class="step-row"><span class="step-num">2</span><span>Elegí <b>"Agregar a pantalla de inicio"</b></span></div>
   </div>
 
-  <div id="androidNote" class="ios-note hidden">
-    Tocá el menú <b>⋮</b> (arriba a la derecha de tu navegador) y elegí <b>"Instalar app"</b> o <b>"Agregar a pantalla de inicio"</b>.
+  <div id="androidNote" class="steps-note hidden">
+    <div class="step-title">Agregá el ícono a tu pantalla</div>
+    <div class="step-row"><span class="step-num">1</span><span>Tocá el menú <b>⋮</b> arriba a la derecha del navegador</span></div>
+    <div class="step-row"><span class="step-num">2</span><span>Elegí <b>"Agregar a la pantalla de inicio"</b> (o "Instalar app" si aparece)</span></div>
+    <div class="step-row"><span class="step-num">3</span><span>Confirmá tocando <b>"Agregar"</b> — listo</span></div>
   </div>
 
   <a id="linkChrome" class="link-chrome" href="fletar-fletero.html">Seguir usando desde Chrome →</a>
