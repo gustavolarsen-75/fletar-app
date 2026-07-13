@@ -28,6 +28,19 @@
         { "key": "Content-Type", "value": "application/javascript" },
         { "key": "Service-Worker-Allowed", "value": "/" }
       ]
+    },
+    {
+      "source": "/manifest-fletero.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    },
+    {
+      "source": "/sw-fletero.js",
+      "headers": [
+        { "key": "Content-Type", "value": "application/javascript" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
     }
   ]
 }
