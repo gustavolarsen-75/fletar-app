@@ -419,27 +419,46 @@ function RegistroFletero({ onListo }) {
 
 // ─── NAVBAR ───────────────────────────────────────────────────────────────────
 function NavbarFletero({ onNav, screen }) {
-  const navLinks = [
-    { id: "pedidos-disponibles", label: "Pedidos disponibles" },
-    { id: "mis-trabajos", label: "Mis trabajos" },
-  ];
   return (
-    <nav style={{ background: "#2C2C2A", padding: "0 10px", display: "flex", alignItems: "center", height: 52, position: "sticky", top: 0, zIndex: 100, overflowX: "auto", gap: 4 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginRight: 12, flexShrink: 0 }}>
+    <nav style={{ background: "#2C2C2A", padding: "0 10px", display: "flex", alignItems: "center", height: 52, position: "sticky", top: 0, zIndex: 100, gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
         <FletarLogo size="sm" />
         <span style={{ fontSize: 10, background: "var(--azul)", color: "#fff", padding: "2px 6px", borderRadius: 5, fontWeight: 700, whiteSpace: "nowrap" }}>FLETERO</span>
       </div>
-      <div style={{ display: "flex", gap: 2, flex: 1 }}>
-        {navLinks.map(l => (
-          <button key={l.id} onClick={() => onNav(l.id)} style={{ background: screen === l.id ? "rgba(37,99,235,0.18)" : "transparent", color: screen === l.id ? "var(--azul)" : "rgba(255,255,255,0.7)", border: "none", padding: "6px 10px", borderRadius: 6, fontSize: 13, fontWeight: screen === l.id ? 500 : 400, cursor: "pointer", whiteSpace: "nowrap" }}>
-            {l.label}
-          </button>
-        ))}
-      </div>
+      <button onClick={() => onNav("inicio")} style={{ background: screen === "inicio" ? "rgba(37,99,235,0.18)" : "transparent", color: screen === "inicio" ? "var(--azul)" : "rgba(255,255,255,0.7)", border: "none", padding: "6px 10px", borderRadius: 6, fontSize: 13, fontWeight: screen === "inicio" ? 500 : 400, cursor: "pointer", whiteSpace: "nowrap" }}>
+        Inicio
+      </button>
+      <div style={{ flex: 1 }} />
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
         <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--azul)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 600 }}>{(USUARIO_FLETERO?.nombre || "?")[0].toUpperCase()}</div>
       </div>
     </nav>
+  );
+}
+
+// ─── INICIO ─────────────────────────────────────────────────────────────────
+function InicioFletero({ onNav }) {
+  return (
+    <div style={{ maxWidth: 520, margin: "0 auto", padding: "24px 16px" }}>
+      <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 2 }}>Hola, {(USUARIO_FLETERO?.nombre || "").split(" ")[0]}</h1>
+      <p style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>¿Qué querés hacer hoy?</p>
+      <button onClick={() => onNav("pedidos-disponibles")} style={{ background: "#2563EB", color: "#fff", border: "none", borderRadius: 14, padding: "16px", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 12, width: "100%", marginBottom: 12 }}>
+        <span style={{ fontSize: 26, flexShrink: 0 }}>📦</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 2 }}>Pedidos disponibles</div>
+          <div style={{ fontSize: 12, opacity: 0.85 }}>Mirá los envíos en tu zona</div>
+        </div>
+        <span style={{ fontSize: 20, opacity: 0.7 }}>›</span>
+      </button>
+      <button onClick={() => onNav("mis-trabajos")} style={{ background: "#1D4ED8", color: "#fff", border: "none", borderRadius: 14, padding: "16px", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 12, width: "100%" }}>
+        <span style={{ fontSize: 26, flexShrink: 0 }}>🧾</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 2 }}>Mis trabajos</div>
+          <div style={{ fontSize: 12, opacity: 0.85 }}>Pedidos que ya aceptaste</div>
+        </div>
+        <span style={{ fontSize: 20, opacity: 0.7 }}>›</span>
+      </button>
+    </div>
   );
 }
 
@@ -576,6 +595,9 @@ function MisTrabajos() {
   const activos = mios.filter(r => r.estado !== "entregado").sort((a, b) => b.id.localeCompare ? b.id.localeCompare(a.id) : 0);
   const entregados = mios.filter(r => r.estado === "entregado");
 
+  function irARetirar(r) {
+    fbUpdate('remitos', r.id, { estado: "retirado" });
+  }
   function salirAEntregar(r) {
     fbUpdate('remitos', r.id, { estado: "en-camino" });
   }
@@ -602,11 +624,16 @@ function MisTrabajos() {
               <div key={r.id} className="card">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                   <span style={{ fontWeight: 500, fontSize: 14 }}>{r.empresaNombre}</span>
-                  <span className={`badge ${r.estado === "en-camino" ? "badge-en-camino" : "badge-nueva"}`}>{r.estado === "en-camino" ? "En camino" : "Pendiente de retiro"}</span>
+                  <span className={`badge ${r.estado === "en-camino" ? "badge-en-camino" : r.estado === "retirado" ? "badge-activo" : "badge-nueva"}`}>
+                    {r.estado === "en-camino" ? "En camino" : r.estado === "retirado" ? "Retirado" : "Pendiente de retiro"}
+                  </span>
                 </div>
                 <div style={{ fontSize: 12.5, color: "#5A6A78", marginBottom: 4 }}>📍 Retiro: {r.remitente?.domicilio}</div>
                 <div style={{ fontSize: 12.5, color: "#5A6A78", marginBottom: 12 }}>🏁 Entrega: {r.destinatario?.domicilio}</div>
                 {r.estado === "pendiente-retiro" && (
+                  <button className="btn-primary" style={{ width: "100%" }} onClick={() => irARetirar(r)}>Ir a retirar</button>
+                )}
+                {r.estado === "retirado" && (
                   <button className="btn-primary" style={{ width: "100%" }} onClick={() => salirAEntregar(r)}>Salí a entregar</button>
                 )}
                 {r.estado === "en-camino" && (
@@ -666,7 +693,7 @@ function RatingModal({ remito, pregunta, nombre, onCalificar, onOmitir, accentCo
 // ─── APP ────────────────────────────────────────────────────────────────────
 function App() {
   const [registrado, setRegistrado] = useState(!!USUARIO_FLETERO);
-  const [screen, setScreen] = useState("pedidos-disponibles");
+  const [screen, setScreen] = useState("inicio");
   const [cargaCotizando, setCargaCotizando] = useState(null);
   const [remitoACalificar, setRemitoACalificar] = useState(null);
   const shownRating = useRef(new Set());
@@ -711,6 +738,7 @@ function App() {
   return (
     <div>
       <NavbarFletero onNav={onNav} screen={screen} />
+      {screen === "inicio" && <InicioFletero onNav={onNav} />}
       {screen === "pedidos-disponibles" && <PedidosDisponibles onNav={onNav} onCotizar={onCotizar} />}
       {screen === "cotizar" && cargaCotizando && <CotizarPedido carga={cargaCotizando} onNav={onNav} />}
       {screen === "mis-trabajos" && <MisTrabajos />}

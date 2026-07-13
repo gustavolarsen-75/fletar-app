@@ -42,11 +42,11 @@
   .nav-back { color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
   .nav-back:hover { color: #fff; }
   .nav-cta {
-    background: var(--b); color: #fff; font-size: 12px; font-weight: 700;
+    background: #0F6E56; color: #fff; font-size: 12px; font-weight: 700;
     padding: 10px 22px; border-radius: 5px; border: none; cursor: pointer;
     text-transform: uppercase; letter-spacing: 0.8px; transition: background 0.2s;
   }
-  .nav-cta:hover { background: var(--b-d); }
+  .nav-cta:hover { background: #0B5744; }
 
   /* ─── HERO ─── */
   .hero {
@@ -97,6 +97,12 @@
     cursor: pointer;
   }
   .btn-outline:hover { border-color: rgba(255,255,255,0.6); }
+  .btn-outline.btn-descargar, .btn-primary.btn-descargar {
+    background: #0F6E56; border-color: #0F6E56; transition: background 0.2s, border-color 0.2s;
+  }
+  .btn-outline.btn-descargar:hover, .btn-primary.btn-descargar:hover {
+    background: #0B5744; border-color: #0B5744;
+  }
   .hero-trust { display: flex; align-items: center; gap: 16px; margin-top: 32px; flex-wrap: wrap; justify-content: center; }
   .hero-trust-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: rgba(255,255,255,0.85); }
   .hero-trust-item .ck { color: var(--b); font-weight: 700; }
@@ -240,7 +246,7 @@
       <text font-family="Montserrat,sans-serif" font-size="32" font-weight="900" y="32" clip-path="url(#cl-right)" fill="white">fletar</text>
     </svg>
   </a>
-  <button class="nav-cta" id="btnAnotarmeNav">Quiero anotarme</button>
+  <button class="nav-cta" id="btnAnotarmeNav">Descargar app</button>
 </nav>
 
 <!-- ─── HERO ─── -->
@@ -256,7 +262,7 @@
   </p>
   <div class="hero-btns">
     <a href="#beneficios" class="btn-primary">Ver los beneficios ↓</a>
-    <button class="btn-outline" id="btnAnotarmeHero">Quiero anotarme</button>
+    <button class="btn-outline btn-descargar" id="btnAnotarmeHero">Descargar app</button>
   </div>
   <div class="hero-trust">
     <span class="hero-trust-item"><span class="ck">✓</span> Siempre gratis</span>
@@ -314,7 +320,7 @@
   <h2 class="final-h">Sumate <span>cuando quieras</span>.<br>Es gratis.</h2>
   <p class="final-sub">Sin comisión · Sin suscripción · Vos manejás tus tiempos</p>
   <div class="final-btns">
-    <button class="btn-primary" id="btnAnotarmeFinal">📦 Quiero anotarme</button>
+    <button class="btn-primary btn-descargar" id="btnAnotarmeFinal">📦 Descargar app</button>
     <a href="landing.html" class="btn-outline">Volver al inicio</a>
   </div>
 </section>
