@@ -364,7 +364,11 @@
 
   (function () {
     function avisar() {
-      alert('Muy pronto vamos a abrir las inscripciones de fletero. ¡Te vamos a avisar apenas esté lista!');
+      if (window.matchMedia('(max-width: 768px)').matches) {
+        window.location.href = 'instalar-fletero.html';
+      } else {
+        window.location.href = 'fletar-fletero.html';
+      }
     }
     ['btnAnotarmeNav', 'btnAnotarmeHero', 'btnAnotarmeFinal'].forEach(function (id) {
       var el = document.getElementById(id);
