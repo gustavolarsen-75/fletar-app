@@ -2759,6 +2759,7 @@ function App() {
   const [notifCount, setNotifCount] = useState(0);
   const [toastMsg, setToastMsg] = useState(null);
   const [notifPermission, setNotifPermission] = useState(typeof Notification !== 'undefined' ? Notification.permission : 'granted');
+  const [notifBannerCerrado, setNotifBannerCerrado] = useState(false);
   const toastTimerRef = useRef(null);
   const shownRating = useRef(new Set());
   const ofertasVistas = useRef(null);
@@ -2879,14 +2880,15 @@ function App() {
       <Navbar onNav={handleNav} screen={screen} notifCount={notifCount} />
       {renderScreen()}
       {/* Banner: activar notificaciones */}
-      {notifPermission !== 'granted' && (
-        <div onClick={activarNotificaciones} style={{ position: "fixed", bottom: 16, left: 10, right: 10, zIndex: 9000, background: "#1A2E3B", color: "#fff", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 4px 24px rgba(0,0,0,0.4)", cursor: "pointer" }}>
-          <span style={{ fontSize: 22 }}>🔔</span>
-          <div style={{ flex: 1 }}>
+      {notifPermission !== 'granted' && !notifBannerCerrado && (
+        <div style={{ position: "fixed", bottom: 16, left: 10, right: 10, zIndex: 9000, background: "#1A2E3B", color: "#fff", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 4px 24px rgba(0,0,0,0.4)" }}>
+          <span onClick={activarNotificaciones} style={{ fontSize: 22, cursor: "pointer" }}>🔔</span>
+          <div onClick={activarNotificaciones} style={{ flex: 1, cursor: "pointer" }}>
             <div style={{ fontWeight: 600, fontSize: 13 }}>Activar notificaciones</div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>Tocá acá para recibir alertas de nuevas ofertas</div>
           </div>
-          <span style={{ background: "#E85D20", color: "#fff", fontSize: 12, fontWeight: 700, padding: "5px 12px", borderRadius: 7, flexShrink: 0 }}>Activar</span>
+          <span onClick={activarNotificaciones} style={{ background: "#E85D20", color: "#fff", fontSize: 12, fontWeight: 700, padding: "5px 12px", borderRadius: 7, flexShrink: 0, cursor: "pointer" }}>Activar</span>
+          <span onClick={() => setNotifBannerCerrado(true)} style={{ color: "rgba(255,255,255,0.5)", fontSize: 16, cursor: "pointer", padding: "0 2px", flexShrink: 0 }}>✕</span>
         </div>
       )}
       {/* Toast de notificación en pantalla */}
