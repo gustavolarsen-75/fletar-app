@@ -4,8 +4,9 @@
   "description": "Publicá tus cargas y recibí ofertas de transportistas",
   "display": "standalone",
   "orientation": "portrait",
-  "start_url": "/fletar-cliente.html",
-  "scope": "/",
+  "id": "https://cliente.fletar.app/",
+  "start_url": "https://cliente.fletar.app/fletar-cliente.html",
+  "scope": "https://cliente.fletar.app/",
   "background_color": "#E85D20",
   "theme_color": "#E85D20",
   "icons": [

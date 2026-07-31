@@ -416,7 +416,7 @@
     <a href="#como-funciona" class="nav-link">Cómo funciona</a>
     <a href="#servicios" class="nav-link">Servicios</a>
     <a href="#precios" class="nav-link">Precios</a>
-    <a href="fletar-cliente.html" class="nav-cta">Empezar gratis</a>
+    <a href="https://cliente.fletar.app/fletar-cliente.html" class="nav-cta">Empezar gratis</a>
   </div>
 </nav>
 
@@ -432,7 +432,7 @@
       Sin llamadas, sin intermediarios. 100% desde el celular.
     </p>
     <div class="hero-btns">
-      <a href="fletar-cliente.html" id="btnPublicarCarga" class="btn-primary">📦 Publicar carga</a>
+      <a href="https://cliente.fletar.app/fletar-cliente.html" id="btnPublicarCarga" class="btn-primary">📦 Publicar carga</a>
     </div>
     <div class="hero-work-chooser">
       <div class="hwc-label">¿Tenés vehículo? Generá ingresos extra</div>
@@ -467,25 +467,25 @@
 <!-- ─── SERVICES STRIP ─── -->
 <section id="servicios" class="services">
   <div class="services-grid">
-    <a href="fletar-cliente.html" class="svc">
+    <a href="https://cliente.fletar.app/fletar-cliente.html" class="svc">
       <div class="svc-icon">🚛</div>
       <div class="svc-title">Carga general</div>
       <div class="svc-desc">Larga distancia, todo el país</div>
       <div class="svc-line"></div>
     </a>
-    <a href="fletar-cliente.html" class="svc">
+    <a href="https://cliente.fletar.app/fletar-cliente.html" class="svc">
       <div class="svc-icon">⚡</div>
       <div class="svc-title">Flete express</div>
       <div class="svc-desc">Envíos urgentes, mismo día</div>
       <div class="svc-line"></div>
     </a>
-    <a href="fletar-cliente.html" class="svc">
+    <a href="https://cliente.fletar.app/fletar-cliente.html" class="svc">
       <div class="svc-icon">❄️</div>
       <div class="svc-title">Carga especial</div>
       <div class="svc-desc">Frío, frágil y sobredimensionado</div>
       <div class="svc-line"></div>
     </a>
-    <a href="fletar-cliente.html" class="svc">
+    <a href="https://cliente.fletar.app/fletar-cliente.html" class="svc">
       <div class="svc-icon">📦</div>
       <div class="svc-title">Mudanzas</div>
       <div class="svc-desc">Residencial y comercial</div>
@@ -685,7 +685,7 @@
   <h2 class="final-h">Empezá <span>hoy</span>.<br>Es gratis.</h2>
   <p class="final-sub">Sin tarjeta de crédito · Sin contratos · En menos de 5 minutos</p>
   <div class="final-btns">
-    <a href="fletar-cliente.html" class="btn-primary">📦 Publicar mi primera carga</a>
+    <a href="https://cliente.fletar.app/fletar-cliente.html" class="btn-primary">📦 Publicar mi primera carga</a>
     <a href="https://transportista.fletar.app/landing-transportista.html" class="btn-outline">🚛 Registrarme como transportista</a>
   </div>
 </section>
@@ -703,7 +703,7 @@
     <div>
       <div class="footer-col-title">Plataforma</div>
       <ul class="footer-links">
-        <li><a href="fletar-cliente.html">Publicar carga</a></li>
+        <li><a href="https://cliente.fletar.app/fletar-cliente.html">Publicar carga</a></li>
         <li><a href="https://transportista.fletar.app/landing-transportista.html">Transportista empresa</a></li>
         <li><a href="https://fletero.fletar.app/landing-fletero.html">Fletero particular</a></li>
         <li><a href="#como-funciona">Cómo funciona</a></li>
@@ -772,18 +772,18 @@
   })();
 
   (function () {
-    var installUrl = window.location.origin + '/instalar-cliente.html';
+    var installUrl = 'https://cliente.fletar.app/instalar-cliente.html';
 
     var qrImg = document.getElementById('heroQrImg');
     if (qrImg) {
       qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=112x112&data=' + encodeURIComponent(installUrl) + '&color=0D1117&bgcolor=ffffff&margin=2';
     }
 
-    document.querySelectorAll('a[href="fletar-cliente.html"]').forEach(function (link) {
+    document.querySelectorAll('a[href="https://cliente.fletar.app/fletar-cliente.html"]').forEach(function (link) {
       link.addEventListener('click', function (e) {
         if (window.matchMedia('(max-width: 768px)').matches) {
           e.preventDefault();
-          window.location.href = 'instalar-cliente.html';
+          window.location.href = installUrl;
         }
       });
     });
