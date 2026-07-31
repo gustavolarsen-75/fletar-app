@@ -142,21 +142,32 @@ const VEHICULOS_FLETERO = [
 // ─── UBICACIÓN (Argentina) — mismo dataset que fletar-cliente.html ───────────
 const GEOREF = 'https://apis.datos.gob.ar/georef/api';
 const CIUDADES_AR = [
-  {ciudad:'Posadas',provincia:'Misiones'},{ciudad:'Puerto Iguazú',provincia:'Misiones'},
-  {ciudad:'Oberá',provincia:'Misiones'},{ciudad:'Eldorado',provincia:'Misiones'},
-  {ciudad:'Apóstoles',provincia:'Misiones'},{ciudad:'Bernardo de Irigoyen',provincia:'Misiones'},
-  {ciudad:'San Vicente',provincia:'Misiones'},{ciudad:'Leandro N. Alem',provincia:'Misiones'},
-  {ciudad:'Corrientes',provincia:'Corrientes'},{ciudad:'Goya',provincia:'Corrientes'},
-  {ciudad:'Resistencia',provincia:'Chaco'},{ciudad:'Formosa',provincia:'Formosa'},
-  {ciudad:'Buenos Aires',provincia:'CABA'},{ciudad:'Rosario',provincia:'Santa Fe'},
-  {ciudad:'Córdoba',provincia:'Córdoba'},{ciudad:'Mendoza',provincia:'Mendoza'},
-  {ciudad:'La Plata',provincia:'Buenos Aires'},{ciudad:'Mar del Plata',provincia:'Buenos Aires'},
-  {ciudad:'San Miguel de Tucumán',provincia:'Tucumán'},{ciudad:'Salta',provincia:'Salta'},
-  {ciudad:'Santa Fe',provincia:'Santa Fe'},{ciudad:'San Juan',provincia:'San Juan'},
-  {ciudad:'Neuquén',provincia:'Neuquén'},{ciudad:'Bahía Blanca',provincia:'Buenos Aires'},
-  {ciudad:'Paraná',provincia:'Entre Ríos'},{ciudad:'Concepción del Uruguay',provincia:'Entre Ríos'},
-  {ciudad:'Concordia',provincia:'Entre Ríos'},{ciudad:'Paso de los Libres',provincia:'Corrientes'},
+  {ciudad:'Posadas',provincia:'Misiones',lat:-27.3671,lon:-55.8961},{ciudad:'Puerto Iguazú',provincia:'Misiones',lat:-25.5952,lon:-54.5734},
+  {ciudad:'Oberá',provincia:'Misiones',lat:-27.4881,lon:-55.1200},{ciudad:'Eldorado',provincia:'Misiones',lat:-26.4008,lon:-54.6420},
+  {ciudad:'Apóstoles',provincia:'Misiones',lat:-27.9074,lon:-55.7565},{ciudad:'Bernardo de Irigoyen',provincia:'Misiones',lat:-26.2540,lon:-53.6427},
+  {ciudad:'San Vicente',provincia:'Misiones',lat:-26.9576,lon:-54.9930},{ciudad:'Leandro N. Alem',provincia:'Misiones',lat:-27.5997,lon:-55.3320},
+  {ciudad:'Corrientes',provincia:'Corrientes',lat:-27.4692,lon:-58.8306},{ciudad:'Goya',provincia:'Corrientes',lat:-29.1391,lon:-59.2666},
+  {ciudad:'Resistencia',provincia:'Chaco',lat:-27.4512,lon:-58.9867},{ciudad:'Formosa',provincia:'Formosa',lat:-26.1849,lon:-58.1731},
+  {ciudad:'Buenos Aires',provincia:'CABA',lat:-34.6037,lon:-58.3816},{ciudad:'Rosario',provincia:'Santa Fe',lat:-32.9468,lon:-60.6393},
+  {ciudad:'Córdoba',provincia:'Córdoba',lat:-31.4201,lon:-64.1888},{ciudad:'Mendoza',provincia:'Mendoza',lat:-32.8895,lon:-68.8458},
+  {ciudad:'La Plata',provincia:'Buenos Aires',lat:-34.9214,lon:-57.9544},{ciudad:'Mar del Plata',provincia:'Buenos Aires',lat:-38.0055,lon:-57.5426},
+  {ciudad:'San Miguel de Tucumán',provincia:'Tucumán',lat:-26.8241,lon:-65.2226},{ciudad:'Salta',provincia:'Salta',lat:-24.7859,lon:-65.4117},
+  {ciudad:'Santa Fe',provincia:'Santa Fe',lat:-31.6333,lon:-60.7000},{ciudad:'San Juan',provincia:'San Juan',lat:-31.5375,lon:-68.5364},
+  {ciudad:'Neuquén',provincia:'Neuquén',lat:-38.9516,lon:-68.0591},{ciudad:'Bahía Blanca',provincia:'Buenos Aires',lat:-38.7183,lon:-62.2663},
+  {ciudad:'Paraná',provincia:'Entre Ríos',lat:-31.7333,lon:-60.5238},{ciudad:'Concepción del Uruguay',provincia:'Entre Ríos',lat:-32.4825,lon:-58.2372},
+  {ciudad:'Concordia',provincia:'Entre Ríos',lat:-31.3928,lon:-58.0209},{ciudad:'Paso de los Libres',provincia:'Corrientes',lat:-29.7000,lon:-57.0900},
 ].map(c => ({ ...c, label: `${c.ciudad}, ${c.provincia}` }));
+
+// Distancia real entre dos puntos (fórmula de Haversine), usada para el radio
+// de 30 km que separa envíos de fletero particular de cargas de larga distancia.
+function distKm(lat1, lon1, lat2, lon2) {
+  if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return null;
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
 
 function normStr(s) {
   return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -209,7 +220,7 @@ function CiudadAutocomplete({ value = "", onChange, label, placeholder, mostrarG
             const p = loc.provincia || normProvDisplay(loc.provincia?.nombre || '');
             if (!c || !p) return null;
             const label = `${c}, ${p}`;
-            return { label, ciudad: c, provincia: p };
+            return { label, ciudad: c, provincia: p, lat: loc.lat, lon: loc.lon };
           })
           .filter(r => {
             if (!r || !normStr(r.ciudad).includes(qn)) return false;
@@ -232,6 +243,8 @@ function CiudadAutocomplete({ value = "", onChange, label, placeholder, mostrarG
             const items = (data || []).map(d => ({
               ciudad: limpiarCiudad(d.address?.city || d.address?.town || d.address?.village || d.name || ''),
               provincia: normProvGPS(d.address?.state || ''),
+              lat: d.lat != null ? parseFloat(d.lat) : null,
+              lon: d.lon != null ? parseFloat(d.lon) : null,
             }));
             const res = procesarResultados(items);
             setSug(res.length > 0 ? res : inmediatas);
@@ -240,12 +253,14 @@ function CiudadAutocomplete({ value = "", onChange, label, placeholder, mostrarG
           })
           .catch(() => { setSug(inmediatas); setOpen(inmediatas.length > 0); setBusy(false); });
 
-      fetch(`${GEOREF}/localidades?nombre=${encodeURIComponent(q)}&max=15&campos=nombre,provincia`)
+      fetch(`${GEOREF}/localidades?nombre=${encodeURIComponent(q)}&max=15&campos=nombre,provincia,centroide`)
         .then(r => r.ok ? r.json() : Promise.reject())
         .then(data => {
           const locs = (data.localidades || []).map(loc => ({
             ciudad: loc.nombre || '',
             provincia: normProvDisplay(loc.provincia?.nombre || ''),
+            lat: loc.centroide?.lat ?? null,
+            lon: loc.centroide?.lon ?? null,
           }));
           const res = procesarResultados(locs);
           if (res.length > 0) { setSug(res); setOpen(true); setBusy(false); }
@@ -257,7 +272,7 @@ function CiudadAutocomplete({ value = "", onChange, label, placeholder, mostrarG
 
   function sel(item) {
     setInputVal(item.label);
-    onChange(item.ciudad, item.provincia);
+    onChange(item.ciudad, item.provincia, item.lat ?? null, item.lon ?? null);
     setSug([]); setOpen(false);
   }
 
@@ -272,7 +287,7 @@ function CiudadAutocomplete({ value = "", onChange, label, placeholder, mostrarG
             const ciudad = limpiarCiudad(a.city || a.town || a.village || a.suburb || '');
             const prov = normProvGPS(a.state || '');
             gpsProvincia.current = prov;
-            if (ciudad) { setInputVal(`${ciudad}, ${prov}`); onChange(ciudad, prov); }
+            if (ciudad) { setInputVal(`${ciudad}, ${prov}`); onChange(ciudad, prov, pos.coords.latitude, pos.coords.longitude); }
             setGpsLoad(false);
           })
           .catch(() => setGpsLoad(false));
@@ -354,7 +369,7 @@ function FletarLogo({ size = "sm" }) {
 
 // ─── REGISTRO SIMPLE (sin contraseña) ─────────────────────────────────────────
 function RegistroFletero({ onListo }) {
-  const [form, setForm] = useState({ nombre: "", email: "", telefono: "", ciudad: "", provincia: "", vehiculo: VEHICULOS_FLETERO[0] });
+  const [form, setForm] = useState({ nombre: "", email: "", telefono: "", ciudad: "", provincia: "", lat: null, lon: null, vehiculo: VEHICULOS_FLETERO[0] });
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   function enviar() {
@@ -397,11 +412,11 @@ function RegistroFletero({ onListo }) {
             <CiudadAutocomplete
               label="Tu ciudad" required
               value={form.ciudad ? `${form.ciudad}${form.provincia ? ", " + form.provincia : ""}` : ""}
-              onChange={(ciudad, prov) => { setF('ciudad', ciudad); setF('provincia', prov); }}
+              onChange={(ciudad, prov, lat, lon) => { setF('ciudad', ciudad); setF('provincia', prov); setF('lat', lat ?? null); setF('lon', lon ?? null); }}
               mostrarGPS={true}
               placeholder="Ej: Posadas, Misiones"
             />
-            <p style={{ fontSize: 11, color: "#888", marginTop: 4 }}>Vas a ver los pedidos de tu misma ciudad.</p>
+            <p style={{ fontSize: 11, color: "#888", marginTop: 4 }}>Vas a ver los pedidos a menos de 30 km de tu ciudad.</p>
           </div>
           <div className="form-group" style={{ marginBottom: 22 }}>
             <label>Tu vehículo</label>
@@ -475,17 +490,35 @@ function PedidosDisponibles({ onNav, onCotizar }) {
   const miCiudad = normCiudad(USUARIO_FLETERO?.ciudad);
   const misOfertasIds = new Set(ofertas.filter(o => o.fleteroId === USUARIO_FLETERO?.id).map(o => o.cargaId));
 
+  // Un pedido es "de fletero particular" si el origen está a menos de 30 km
+  // de la ciudad del fletero Y el viaje completo (origen → destino) no supera
+  // esos 30 km — así no compite con transportista en larga distancia, pero
+  // sí puede cubrir localidades pegadas a su ciudad (ej. Posadas-Garupá).
+  // Los pedidos viejos, publicados antes de guardar coordenadas, siguen
+  // usando el match por nombre de ciudad como respaldo.
+  const RADIO_FLETERO_KM = 30;
+  function esElegible(c) {
+    const tieneCoords = c.origenLat != null && c.origenLon != null && c.destinoLat != null && c.destinoLon != null
+      && USUARIO_FLETERO?.lat != null && USUARIO_FLETERO?.lon != null;
+    if (tieneCoords) {
+      const distFleteroOrigen = distKm(USUARIO_FLETERO.lat, USUARIO_FLETERO.lon, c.origenLat, c.origenLon);
+      const distViaje = distKm(c.origenLat, c.origenLon, c.destinoLat, c.destinoLon);
+      return distFleteroOrigen <= RADIO_FLETERO_KM && distViaje <= RADIO_FLETERO_KM;
+    }
+    return normCiudad(c.ciudad) === miCiudad;
+  }
+
   const disponibles = cargas
     .filter(c => c.tipoEnvio === "expres-local")
     .filter(c => ["nueva", "activo"].includes(c.estado))
-    .filter(c => normCiudad(c.ciudad) === miCiudad)
+    .filter(esElegible)
     .filter(c => !misOfertasIds.has(c.id))
     .sort((a, b) => b.id - a.id);
 
   return (
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 16px" }}>
       <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 4 }}>Pedidos disponibles</h1>
-      <p style={{ fontSize: 13, color: "#888", marginBottom: 20 }}>En {USUARIO_FLETERO?.ciudad || "tu ciudad"}</p>
+      <p style={{ fontSize: 13, color: "#888", marginBottom: 20 }}>A menos de 30 km de {USUARIO_FLETERO?.ciudad || "tu ciudad"}</p>
 
       {disponibles.length === 0 && (
         <div className="card" style={{ textAlign: "center", padding: 40, color: "#aaa" }}>

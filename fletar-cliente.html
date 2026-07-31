@@ -521,21 +521,32 @@ const GEOREF = 'https://apis.datos.gob.ar/georef/api';
 
 // Lista estática de ciudades argentinas frecuentes — respuesta inmediata sin API
 const CIUDADES_AR = [
-  {ciudad:'Posadas',provincia:'Misiones'},{ciudad:'Puerto Iguazú',provincia:'Misiones'},
-  {ciudad:'Oberá',provincia:'Misiones'},{ciudad:'Eldorado',provincia:'Misiones'},
-  {ciudad:'Apóstoles',provincia:'Misiones'},{ciudad:'Bernardo de Irigoyen',provincia:'Misiones'},
-  {ciudad:'San Vicente',provincia:'Misiones'},{ciudad:'Leandro N. Alem',provincia:'Misiones'},
-  {ciudad:'Corrientes',provincia:'Corrientes'},{ciudad:'Goya',provincia:'Corrientes'},
-  {ciudad:'Resistencia',provincia:'Chaco'},{ciudad:'Formosa',provincia:'Formosa'},
-  {ciudad:'Buenos Aires',provincia:'CABA'},{ciudad:'Rosario',provincia:'Santa Fe'},
-  {ciudad:'Córdoba',provincia:'Córdoba'},{ciudad:'Mendoza',provincia:'Mendoza'},
-  {ciudad:'La Plata',provincia:'Buenos Aires'},{ciudad:'Mar del Plata',provincia:'Buenos Aires'},
-  {ciudad:'San Miguel de Tucumán',provincia:'Tucumán'},{ciudad:'Salta',provincia:'Salta'},
-  {ciudad:'Santa Fe',provincia:'Santa Fe'},{ciudad:'San Juan',provincia:'San Juan'},
-  {ciudad:'Neuquén',provincia:'Neuquén'},{ciudad:'Bahía Blanca',provincia:'Buenos Aires'},
-  {ciudad:'Paraná',provincia:'Entre Ríos'},{ciudad:'Concepción del Uruguay',provincia:'Entre Ríos'},
-  {ciudad:'Concordia',provincia:'Entre Ríos'},{ciudad:'Paso de los Libres',provincia:'Corrientes'},
+  {ciudad:'Posadas',provincia:'Misiones',lat:-27.3671,lon:-55.8961},{ciudad:'Puerto Iguazú',provincia:'Misiones',lat:-25.5952,lon:-54.5734},
+  {ciudad:'Oberá',provincia:'Misiones',lat:-27.4881,lon:-55.1200},{ciudad:'Eldorado',provincia:'Misiones',lat:-26.4008,lon:-54.6420},
+  {ciudad:'Apóstoles',provincia:'Misiones',lat:-27.9074,lon:-55.7565},{ciudad:'Bernardo de Irigoyen',provincia:'Misiones',lat:-26.2540,lon:-53.6427},
+  {ciudad:'San Vicente',provincia:'Misiones',lat:-26.9576,lon:-54.9930},{ciudad:'Leandro N. Alem',provincia:'Misiones',lat:-27.5997,lon:-55.3320},
+  {ciudad:'Corrientes',provincia:'Corrientes',lat:-27.4692,lon:-58.8306},{ciudad:'Goya',provincia:'Corrientes',lat:-29.1391,lon:-59.2666},
+  {ciudad:'Resistencia',provincia:'Chaco',lat:-27.4512,lon:-58.9867},{ciudad:'Formosa',provincia:'Formosa',lat:-26.1849,lon:-58.1731},
+  {ciudad:'Buenos Aires',provincia:'CABA',lat:-34.6037,lon:-58.3816},{ciudad:'Rosario',provincia:'Santa Fe',lat:-32.9468,lon:-60.6393},
+  {ciudad:'Córdoba',provincia:'Córdoba',lat:-31.4201,lon:-64.1888},{ciudad:'Mendoza',provincia:'Mendoza',lat:-32.8895,lon:-68.8458},
+  {ciudad:'La Plata',provincia:'Buenos Aires',lat:-34.9214,lon:-57.9544},{ciudad:'Mar del Plata',provincia:'Buenos Aires',lat:-38.0055,lon:-57.5426},
+  {ciudad:'San Miguel de Tucumán',provincia:'Tucumán',lat:-26.8241,lon:-65.2226},{ciudad:'Salta',provincia:'Salta',lat:-24.7859,lon:-65.4117},
+  {ciudad:'Santa Fe',provincia:'Santa Fe',lat:-31.6333,lon:-60.7000},{ciudad:'San Juan',provincia:'San Juan',lat:-31.5375,lon:-68.5364},
+  {ciudad:'Neuquén',provincia:'Neuquén',lat:-38.9516,lon:-68.0591},{ciudad:'Bahía Blanca',provincia:'Buenos Aires',lat:-38.7183,lon:-62.2663},
+  {ciudad:'Paraná',provincia:'Entre Ríos',lat:-31.7333,lon:-60.5238},{ciudad:'Concepción del Uruguay',provincia:'Entre Ríos',lat:-32.4825,lon:-58.2372},
+  {ciudad:'Concordia',provincia:'Entre Ríos',lat:-31.3928,lon:-58.0209},{ciudad:'Paso de los Libres',provincia:'Corrientes',lat:-29.7000,lon:-57.0900},
 ].map(c => ({ ...c, label: `${c.ciudad}, ${c.provincia}` }));
+
+// Distancia real entre dos puntos (fórmula de Haversine), usada para el radio
+// de 30 km que separa envíos de fletero particular de cargas de larga distancia.
+function distKm(lat1, lon1, lat2, lon2) {
+  if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return null;
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
 
 function normStr(s) {
   return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -589,7 +600,7 @@ function CiudadAutocomplete({ value = "", onChange, label, placeholder, mostrarG
             const p = loc.provincia || normProvDisplay(loc.provincia?.nombre || '');
             if (!c || !p) return null;
             const label = `${c}, ${p}`;
-            return { label, ciudad: c, provincia: p };
+            return { label, ciudad: c, provincia: p, lat: loc.lat, lon: loc.lon };
           })
           .filter(r => {
             if (!r || !normStr(r.ciudad).includes(qn)) return false;
@@ -613,6 +624,8 @@ function CiudadAutocomplete({ value = "", onChange, label, placeholder, mostrarG
             const items = (data || []).map(d => ({
               ciudad: limpiarCiudad(d.address?.city || d.address?.town || d.address?.village || d.name || ''),
               provincia: normProvGPS(d.address?.state || ''),
+              lat: d.lat != null ? parseFloat(d.lat) : null,
+              lon: d.lon != null ? parseFloat(d.lon) : null,
             }));
             const res = procesarResultados(items);
             setSug(res.length > 0 ? res : inmediatas);
@@ -621,13 +634,16 @@ function CiudadAutocomplete({ value = "", onChange, label, placeholder, mostrarG
           })
           .catch(() => { setSug(inmediatas); setOpen(inmediatas.length > 0); setBusy(false); });
 
-      // GeoRef primero, Nominatim como fallback
-      fetch(`${GEOREF}/localidades?nombre=${encodeURIComponent(q)}&max=15&campos=nombre,provincia`)
+      // GeoRef primero, Nominatim como fallback. Pedimos "centroide" para
+      // tener latitud/longitud de la localidad (radio de 30 km fletero).
+      fetch(`${GEOREF}/localidades?nombre=${encodeURIComponent(q)}&max=15&campos=nombre,provincia,centroide`)
         .then(r => r.ok ? r.json() : Promise.reject())
         .then(data => {
           const locs = (data.localidades || []).map(loc => ({
             ciudad: loc.nombre || '',
             provincia: normProvDisplay(loc.provincia?.nombre || ''),
+            lat: loc.centroide?.lat ?? null,
+            lon: loc.centroide?.lon ?? null,
           }));
           const res = procesarResultados(locs);
           if (res.length > 0) { setSug(res); setOpen(true); setBusy(false); }
@@ -639,7 +655,7 @@ function CiudadAutocomplete({ value = "", onChange, label, placeholder, mostrarG
 
   function sel(item) {
     setInputVal(item.label);
-    onChange(item.ciudad, item.provincia);
+    onChange(item.ciudad, item.provincia, item.lat ?? null, item.lon ?? null);
     setSug([]); setOpen(false);
   }
 
@@ -657,7 +673,9 @@ function CiudadAutocomplete({ value = "", onChange, label, placeholder, mostrarG
             // Guardar provincia detectada para priorizar en búsquedas futuras
             gpsProvincia.current = prov;
             setGpsProv(prov);
-            if (ciudad) { setInputVal(`${ciudad}, ${prov}`); onChange(ciudad, prov); }
+            // Usamos las coordenadas reales del GPS (más precisas que el
+            // centroide de la ciudad) para el radio de 30 km de fletero.
+            if (ciudad) { setInputVal(`${ciudad}, ${prov}`); onChange(ciudad, prov, pos.coords.latitude, pos.coords.longitude); }
             setGpsLoad(false);
           })
           .catch(() => setGpsLoad(false));
@@ -1108,6 +1126,12 @@ function PublicarEnvioExpres({ onNav, onVolverSelector }) {
     descripcion: "",
     ciudad: "",
     provincia: "",
+    lat: null,
+    lon: null,
+    ciudadEntrega: "",
+    provinciaEntrega: "",
+    latEntrega: null,
+    lonEntrega: null,
     direccionRetiro: USUARIO_CLIENTE?.direccion || "",
     mapsRetiro: "",
     direccionEntrega: "",
@@ -1116,12 +1140,34 @@ function PublicarEnvioExpres({ onNav, onVolverSelector }) {
     hora: "",
   });
   const [enviado, setEnviado] = useState(false);
+  // Si el cliente todavía no tocó "Ciudad de entrega" a mano, la mantenemos
+  // igual a "Tu ciudad" (caso más común: retiro y entrega en la misma ciudad).
+  const [entregaEditadaAMano, setEntregaEditadaAMano] = useState(false);
 
   function upd(k, v) { setForm(f => ({ ...f, [k]: v })); }
+
+  function cambiarCiudadOrigen(ciudad, prov, lat, lon) {
+    setForm(f => {
+      const next = { ...f, ciudad, provincia: prov, lat: lat ?? null, lon: lon ?? null };
+      if (!entregaEditadaAMano) {
+        next.ciudadEntrega = ciudad;
+        next.provinciaEntrega = prov;
+        next.latEntrega = lat ?? null;
+        next.lonEntrega = lon ?? null;
+      }
+      return next;
+    });
+  }
+
+  function cambiarCiudadEntrega(ciudad, prov, lat, lon) {
+    setEntregaEditadaAMano(true);
+    setForm(f => ({ ...f, ciudadEntrega: ciudad, provinciaEntrega: prov, latEntrega: lat ?? null, lonEntrega: lon ?? null }));
+  }
 
   function siguientePaso() {
     if (paso === 1 && !form.descripcion) { alert("Contanos brevemente qué mandás."); return; }
     if (paso === 2 && !form.ciudad) { alert("Seleccioná tu ciudad desde el listado de sugerencias."); return; }
+    if (paso === 2 && !form.ciudadEntrega) { alert("Seleccioná la ciudad de entrega desde el listado de sugerencias."); return; }
     if (paso === 2 && (!form.direccionRetiro || !form.direccionEntrega)) { alert("Completá la dirección de retiro y de entrega."); return; }
     if (paso === 3) { handlePublicar(); return; }
     setPaso(p => p + 1);
@@ -1153,13 +1199,17 @@ function PublicarEnvioExpres({ onNav, onVolverSelector }) {
       especial: "normal",
       ciudad: form.ciudad,
       provincia: form.provincia,
+      origenLat: form.lat,
+      origenLon: form.lon,
+      destinoLat: form.latEntrega,
+      destinoLon: form.lonEntrega,
       direccionRetiro: form.direccionRetiro,
       mapsRetiro: form.mapsRetiro,
       destinatario: {
         nombre: "",
         telefono: "",
         domicilio: form.direccionEntrega,
-        ciudad: form.ciudad,
+        ciudad: form.ciudadEntrega,
         referencia: "",
         maps: form.mapsEntrega,
       },
@@ -1257,7 +1307,7 @@ function PublicarEnvioExpres({ onNav, onVolverSelector }) {
             <CiudadAutocomplete
               label="Tu ciudad" required
               value={form.ciudad ? `${form.ciudad}${form.provincia ? ", " + form.provincia : ""}` : ""}
-              onChange={(ciudad, prov) => { upd('ciudad', ciudad); upd('provincia', prov); }}
+              onChange={cambiarCiudadOrigen}
               mostrarGPS={true}
               placeholder="Ej: Posadas, Misiones"
             />
@@ -1270,6 +1320,15 @@ function PublicarEnvioExpres({ onNav, onVolverSelector }) {
           <div className="form-group">
             <label>Link de Google Maps del retiro (opcional)</label>
             <input value={form.mapsRetiro} onChange={e => upd('mapsRetiro', e.target.value)} placeholder="Pegá el link de tu ubicación" />
+          </div>
+          <div className="form-group" style={{ border: "1.5px solid #378ADD", borderRadius: 10, padding: "10px 10px 12px", background: "#E6F1FB" }}>
+            <CiudadAutocomplete
+              label="Ciudad de entrega" required
+              value={form.ciudadEntrega ? `${form.ciudadEntrega}${form.provinciaEntrega ? ", " + form.provinciaEntrega : ""}` : ""}
+              onChange={cambiarCiudadEntrega}
+              placeholder="Ej: Posadas, Misiones"
+            />
+            <p style={{ fontSize: 11, color: "#0C447C", marginTop: 4 }}>Precargada igual que tu ciudad. Cambiala si la entrega es en otra localidad cercana.</p>
           </div>
           <div className="form-group">
             <label>Dirección de entrega</label>
