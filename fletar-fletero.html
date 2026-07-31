@@ -377,6 +377,10 @@ function RegistroFletero({ onListo }) {
       alert("Completá tu nombre, teléfono y ciudad para continuar.");
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((form.email || "").trim())) {
+      alert("Ingresá un email válido — lo vas a necesitar para recuperar tu cuenta.");
+      return;
+    }
     const id = 'flt-' + form.telefono.replace(/\D/g, '') + '-' + Date.now().toString(36);
     const perfil = { ...form, id, creadoEn: Date.now() };
     USUARIO_FLETERO = perfil;
@@ -401,7 +405,7 @@ function RegistroFletero({ onListo }) {
             <input value={form.nombre} onChange={e => setF('nombre', e.target.value)} placeholder="Ej: Juan Pérez" />
           </div>
           <div className="form-group">
-            <label>Email (para recuperar tu cuenta más adelante)</label>
+            <label>Email * (para recuperar tu cuenta más adelante)</label>
             <input type="email" value={form.email} onChange={e => setF('email', e.target.value)} placeholder="juan@email.com" />
           </div>
           <div className="form-group">

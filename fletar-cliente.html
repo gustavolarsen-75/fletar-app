@@ -1124,14 +1124,14 @@ function PublicarEnvioExpres({ onNav, onVolverSelector }) {
   const [form, setForm] = useState({
     tipo: "Muebles",
     descripcion: "",
-    ciudad: "",
-    provincia: "",
-    lat: null,
-    lon: null,
-    ciudadEntrega: "",
-    provinciaEntrega: "",
-    latEntrega: null,
-    lonEntrega: null,
+    ciudad: USUARIO_CLIENTE?.ciudad || "",
+    provincia: USUARIO_CLIENTE?.provincia || "",
+    lat: USUARIO_CLIENTE?.lat ?? null,
+    lon: USUARIO_CLIENTE?.lon ?? null,
+    ciudadEntrega: USUARIO_CLIENTE?.ciudad || "",
+    provinciaEntrega: USUARIO_CLIENTE?.provincia || "",
+    latEntrega: USUARIO_CLIENTE?.lat ?? null,
+    lonEntrega: USUARIO_CLIENTE?.lon ?? null,
     direccionRetiro: USUARIO_CLIENTE?.direccion || "",
     mapsRetiro: "",
     direccionEntrega: "",
@@ -2554,6 +2554,7 @@ const btnPrimary = { background: "#E85D20", color: "#fff", border: "none", borde
 const btnSecondary = { background: "transparent", border: "none", color: "#aaa", fontSize: 13, cursor: "pointer", marginTop: 10, display: "block", textAlign: "center", width: "100%" };
 // Capitaliza la primera letra de cada palabra (desktop + mobile)
 const capWords = v => v.replace(/(^|\s)(\S)/g, (_, sp, c) => sp + c.toUpperCase());
+const emailValido = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v || "").trim());
 
 function RegistroBienvenida({ onTipo }) {
   return (
@@ -2589,7 +2590,7 @@ function RegistroBienvenida({ onTipo }) {
 }
 
 function RegistroEmpresa({ onBack, onNext }) {
-  const [form, setForm] = useState({ razonSocial: "", cuit: "", contactoNombre: "", contactoApellido: "", telefono: "", email: "" });
+  const [form, setForm] = useState({ razonSocial: "", cuit: "", contactoNombre: "", contactoApellido: "", telefono: "", email: "", ciudad: "", provincia: "", lat: null, lon: null });
   const [error, setError] = useState("");
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -2597,10 +2598,11 @@ function RegistroEmpresa({ onBack, onNext }) {
     if (!form.razonSocial.trim()) { setError("La razón social es requerida."); return; }
     if (!form.cuit.trim() || form.cuit.replace(/\D/g,'').length < 10) { setError("Ingresá un CUIT válido (11 dígitos)."); return; }
     if (!form.telefono.trim()) { setError("El teléfono es requerido."); return; }
-    if (!form.email.trim() || !form.email.includes("@")) { setError("Ingresá un email válido."); return; }
+    if (!form.ciudad.trim()) { setError("Seleccioná la ciudad de la empresa desde el listado de sugerencias."); return; }
+    if (!emailValido(form.email)) { setError("Ingresá un email válido (lo vas a necesitar para recuperar tu cuenta)."); return; }
     setError("");
     const contacto = [form.contactoNombre.trim(), form.contactoApellido.trim()].filter(Boolean).join(" ");
-    onNext({ tipo: "empresa", nombre: form.razonSocial.trim(), razonSocial: form.razonSocial.trim(), cuit: form.cuit.trim(), contacto, telefono: form.telefono.trim(), email: form.email.trim() });
+    onNext({ tipo: "empresa", nombre: form.razonSocial.trim(), razonSocial: form.razonSocial.trim(), cuit: form.cuit.trim(), contacto, telefono: form.telefono.trim(), email: form.email.trim(), ciudad: form.ciudad, provincia: form.provincia, lat: form.lat, lon: form.lon });
   }
 
   return (
@@ -2631,8 +2633,18 @@ function RegistroEmpresa({ onBack, onNext }) {
         <input style={inputStyle} value={form.telefono} onChange={e => set("telefono", e.target.value)} placeholder="Ej: 3764 123456" inputMode="tel" />
         <div style={{ marginBottom: 12 }} />
 
+        <label style={labelStyle}>Ciudad de la empresa *</label>
+        <CiudadAutocomplete
+          value={form.ciudad ? `${form.ciudad}${form.provincia ? ", " + form.provincia : ""}` : ""}
+          onChange={(ciudad, prov, lat, lon) => { set("ciudad", ciudad); set("provincia", prov); set("lat", lat ?? null); set("lon", lon ?? null); }}
+          mostrarGPS={true}
+          placeholder="Ej: Posadas, Misiones"
+        />
+        <div style={{ marginBottom: 12 }} />
+
         <label style={labelStyle}>Email *</label>
         <input style={inputStyle} value={form.email} onChange={e => set("email", e.target.value)} placeholder="empresa@mail.com" inputMode="email" type="email" />
+        <p style={helperStyle}>💡 La vas a necesitar para recuperar tu cuenta si cambiás de celular.</p>
         <div style={{ marginBottom: 20 }} />
 
         {error && <div style={{ background: "#fff3f0", border: "1px solid #fcc", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "#c0392b", marginBottom: 16 }}>{error}</div>}
@@ -2643,7 +2655,7 @@ function RegistroEmpresa({ onBack, onNext }) {
 }
 
 function RegistroPersona({ onBack, onNext }) {
-  const [form, setForm] = useState({ nombre: "", apellido: "", telefono: "", email: "", cuit: "" });
+  const [form, setForm] = useState({ nombre: "", apellido: "", telefono: "", email: "", cuit: "", ciudad: "", provincia: "", lat: null, lon: null });
   const [error, setError] = useState("");
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -2651,10 +2663,11 @@ function RegistroPersona({ onBack, onNext }) {
     if (!form.nombre.trim()) { setError("El nombre es requerido."); return; }
     if (!form.apellido.trim()) { setError("El apellido es requerido."); return; }
     if (!form.telefono.trim()) { setError("El teléfono es requerido."); return; }
-    if (form.email.trim() && !form.email.includes("@")) { setError("Si ingresás email, tiene que ser válido."); return; }
+    if (!form.ciudad.trim()) { setError("Seleccioná tu ciudad desde el listado de sugerencias."); return; }
+    if (!emailValido(form.email)) { setError("Ingresá un email válido (lo vas a necesitar para recuperar tu cuenta)."); return; }
     setError("");
     const nombreCompleto = form.nombre.trim() + " " + form.apellido.trim();
-    onNext({ tipo: "persona", nombre: nombreCompleto, apellido: form.apellido.trim(), telefono: form.telefono.trim(), email: form.email.trim(), cuit: form.cuit.trim() });
+    onNext({ tipo: "persona", nombre: nombreCompleto, apellido: form.apellido.trim(), telefono: form.telefono.trim(), email: form.email.trim(), cuit: form.cuit.trim(), ciudad: form.ciudad, provincia: form.provincia, lat: form.lat, lon: form.lon });
   }
 
   return (
@@ -2677,9 +2690,18 @@ function RegistroPersona({ onBack, onNext }) {
         <input style={inputStyle} value={form.telefono} onChange={e => set("telefono", e.target.value)} placeholder="Ej: 3764 123456" inputMode="tel" />
         <div style={{ marginBottom: 12 }} />
 
-        <label style={labelStyle}>Email <span style={{ color: "#aaa", fontWeight: 400 }}>(opcional)</span></label>
+        <label style={labelStyle}>Tu ciudad *</label>
+        <CiudadAutocomplete
+          value={form.ciudad ? `${form.ciudad}${form.provincia ? ", " + form.provincia : ""}` : ""}
+          onChange={(ciudad, prov, lat, lon) => { set("ciudad", ciudad); set("provincia", prov); set("lat", lat ?? null); set("lon", lon ?? null); }}
+          mostrarGPS={true}
+          placeholder="Ej: Posadas, Misiones"
+        />
+        <div style={{ marginBottom: 12 }} />
+
+        <label style={labelStyle}>Email *</label>
         <input style={inputStyle} value={form.email} onChange={e => set("email", e.target.value)} placeholder="tu@mail.com" inputMode="email" type="email" />
-        <p style={helperStyle}>💡 Opcional — te sirve para recuperar tu cuenta si algún día cambiás de número de teléfono.</p>
+        <p style={helperStyle}>💡 La vas a necesitar para recuperar tu cuenta si algún día cambiás de número de teléfono.</p>
 
         <label style={labelStyle}>CUIT <span style={{ color: "#aaa", fontWeight: 400 }}>(opcional)</span></label>
         <input style={inputStyle} value={form.cuit} onChange={e => set("cuit", e.target.value)} placeholder="XX-XXXXXXXX-X" inputMode="numeric" />
