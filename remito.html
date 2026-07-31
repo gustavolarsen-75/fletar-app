@@ -294,8 +294,7 @@
     }
 
     function render(remito) {
-      const base = window.location.href.split('/').slice(0, -1).join('/');
-      const linkChofer = `${base}/fletar-chofer.html?remito=${remito.id}`;
+      const linkChofer = `https://chofer.fletar.app/fletar-chofer.html?remito=${remito.id}`;
       const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(linkChofer)}&color=2C2C2A&bgcolor=ffffff&margin=4`;
       const est = remito.estado || 'pendiente-retiro';
       const estLabel = ESTADOS_LABEL[est] || est;

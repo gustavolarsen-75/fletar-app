@@ -4,8 +4,9 @@
   "description": "Recibí pedidos de fletes en tu ciudad y ganá un ingreso extra",
   "display": "standalone",
   "orientation": "portrait",
-  "start_url": "/fletar-fletero.html",
-  "scope": "/fletar-fletero.html",
+  "id": "https://fletero.fletar.app/",
+  "start_url": "https://fletero.fletar.app/fletar-fletero.html",
+  "scope": "https://fletero.fletar.app/",
   "background_color": "#2563EB",
   "theme_color": "#2563EB",
   "icons": [

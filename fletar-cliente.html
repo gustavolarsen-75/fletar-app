@@ -2166,7 +2166,7 @@ function RemitoScreen({ onNav, remito }) {
   const estadoClienteActualRemito = estadoCliente(estado);
   const estadoIdx = ESTADOS_CLIENTE.findIndex(e => e.id === estadoClienteActualRemito);
   // Link para el CHOFER (QR que escanea al entregar)
-  const linkChofer = remito ? `${window.location.href.split('/').slice(0, -1).join('/')}/fletar-chofer.html?remito=${remito.id}` : window.location.href;
+  const linkChofer = remito ? `https://chofer.fletar.app/fletar-chofer.html?remito=${remito.id}` : window.location.href;
   // Link para el DESTINATARIO (lo que se comparte por WhatsApp — abre remito.html sin login)
   const linkDestinatario = remito ? `${window.location.href.split('/').slice(0, -1).join('/')}/remito.html?id=${remito.id}` : window.location.href;
 
