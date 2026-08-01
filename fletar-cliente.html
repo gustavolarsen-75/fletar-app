@@ -20,6 +20,19 @@
       });
     }
   </script>
+  <!-- OneSignal: notificaciones push reales (funcionan con la app cerrada) -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "b6a9071f-72f5-4fec-b7b4-ccc1bb4ea010",
+        safari_web_id: "web.onesignal.auto.3b9e77c1-5852-4edd-a278-c29c156a72b0",
+        serviceWorkerPath: "sw-cliente.js",
+        serviceWorkerParam: { scope: "/" },
+      });
+    });
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -149,6 +162,17 @@ const KEY_CLIENTE_PERFIL = 'fletar_cliente_perfil';
 let _perfilGuardado = null;
 try { const _v = localStorage.getItem(KEY_CLIENTE_PERFIL); if (_v) _perfilGuardado = JSON.parse(_v); } catch {}
 let USUARIO_CLIENTE = _perfilGuardado; // null si nunca se registró
+
+// Identifica al cliente en OneSignal (External ID) para poder mandarle
+// notificaciones push dirigidas a él específicamente desde el servidor.
+function identificarClienteEnOneSignal(id) {
+  if (!id) return;
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(async function(OneSignal) {
+    try { await OneSignal.login(id); } catch (e) {}
+  });
+}
+if (USUARIO_CLIENTE?.id) identificarClienteEnOneSignal(USUARIO_CLIENTE.id);
 
 // Sync automático: si hay perfil en localStorage, también busca en Firebase
 // para capturar actualizaciones hechas desde otro dispositivo o corregidas
@@ -2123,6 +2147,8 @@ function VerOfertas({ onNav, cargaSeleccionada, onAceptar }) {
       esFletero: !!oferta.esFletero,
       fleteroId: oferta.fleteroId || null,
       fleteroNombre: oferta.fleteroNombre || null,
+      fechaDeseada: carga.fechaDeseada || null,
+      horaDeseada: carga.horaDeseada || null,
       fotoUrl: (carga.fotosBase64 && carga.fotosBase64[0]) || carga.fotoBase64 || null,
       fotosUrl: carga.fotosBase64 || null,
       quienPaga: carga.quienPaga || 'remitente',
@@ -2980,6 +3006,7 @@ function App() {
     const perfilCompleto = { ...perfil, id };
     USUARIO_CLIENTE = perfilCompleto;
     storageSave(KEY_CLIENTE_PERFIL, perfilCompleto);
+    identificarClienteEnOneSignal(id);
     const tel = perfil.telefono.replace(/\D/g, '');
     db.ref(`clientes/${tel}`).set({ ...perfilCompleto, creadoEn: Date.now() });
     setRegistrado(true);

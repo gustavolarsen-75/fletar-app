@@ -1,5 +1,11 @@
 // Service Worker — Fletar Cliente
 // El HTML se sirve siempre desde la red → los usuarios reciben actualizaciones automáticamente
+
+// OneSignal: notificaciones push reales (funcionan con la app cerrada).
+// Combinado en este mismo archivo para no tener 2 service workers
+// compitiendo por el mismo scope (ver documentación de OneSignal).
+importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
+
 const VERSION = 'fletar-cliente-v3';
 
 // NO incluir HTML — se actualiza en tiempo real desde el servidor

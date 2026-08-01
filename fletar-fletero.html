@@ -21,6 +21,19 @@
       });
     }
   </script>
+  <!-- OneSignal: notificaciones push reales (funcionan con la app cerrada) -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "596700dd-6b42-4dc2-ad49-7d0ec945d405",
+        safari_web_id: "web.onesignal.auto.658c891f-37aa-4fe0-8793-296148135342",
+        serviceWorkerPath: "sw-fletero.js",
+        serviceWorkerParam: { scope: "/" },
+      });
+    });
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -134,6 +147,55 @@ let _perfilFletero = null;
 try { const _v = localStorage.getItem(KEY_FLETERO_PERFIL); if (_v) _perfilFletero = JSON.parse(_v); } catch {}
 let USUARIO_FLETERO = _perfilFletero; // null si nunca se registró
 
+// Identifica al fletero en OneSignal (External ID) para poder mandarle
+// notificaciones push dirigidas a él específicamente desde el servidor.
+function identificarFleteroEnOneSignal(id) {
+  if (!id) return;
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(async function(OneSignal) {
+    try { await OneSignal.login(id); } catch (e) {}
+  });
+}
+if (USUARIO_FLETERO?.id) identificarFleteroEnOneSignal(USUARIO_FLETERO.id);
+
+// ─── NOTIFICACIONES (sonido + aviso en primer plano) ─────────────────────────
+const _sonido = new Howl({ src: ['/notif-cliente.wav'], volume: 1.0, preload: true });
+let _badgeCount = 0;
+
+function pedirPermisoNotificaciones() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      _badgeCount = 0;
+      if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
+      document.dispatchEvent(new CustomEvent('fletar-notif', { detail: { count: 0 } }));
+    }
+  });
+}
+
+function tocarSonido() {
+  _sonido.play();
+}
+
+function mostrarNotificacion(titulo, cuerpo) {
+  tocarSonido();
+  _badgeCount++;
+  if ('setAppBadge' in navigator) navigator.setAppBadge(_badgeCount).catch(() => {});
+  document.dispatchEvent(new CustomEvent('fletar-notif', { detail: { count: _badgeCount, titulo, cuerpo } }));
+  if ('serviceWorker' in navigator && Notification.permission === 'granted') {
+    navigator.serviceWorker.ready.then(reg => {
+      reg.showNotification(titulo, {
+        body: cuerpo,
+        icon: '/icon-fletero-192.png',
+        badge: '/icon-fletero-192.png',
+        silent: true,
+      });
+    }).catch(() => {});
+  }
+}
+
 const VEHICULOS_FLETERO = [
   "Auto con baúl grande", "Camioneta chica", "Utilitario (Kangoo / Partner)",
   "Furgón (Trafic / Master)", "Camioneta con caja abierta", "Otro",
@@ -167,6 +229,22 @@ function distKm(lat1, lon1, lat2, lon2) {
   const dLon = (lon2 - lon1) * Math.PI / 180;
   const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// Un pedido es "de fletero particular" si el origen está a menos de 30 km de
+// la ciudad del fletero Y el viaje completo (origen → destino) no supera esos
+// 30 km — mismo criterio usado en PedidosDisponibles, compartido acá para que
+// el aviso de sonido use exactamente la misma regla.
+const RADIO_FLETERO_KM = 30;
+function pedidoEsElegibleParaFletero(c, fletero) {
+  const tieneCoords = c.origenLat != null && c.origenLon != null && c.destinoLat != null && c.destinoLon != null
+    && fletero?.lat != null && fletero?.lon != null;
+  if (tieneCoords) {
+    const distFleteroOrigen = distKm(fletero.lat, fletero.lon, c.origenLat, c.origenLon);
+    const distViaje = distKm(c.origenLat, c.origenLon, c.destinoLat, c.destinoLon);
+    return distFleteroOrigen <= RADIO_FLETERO_KM && distViaje <= RADIO_FLETERO_KM;
+  }
+  return normCiudad(c.ciudad) === normCiudad(fletero?.ciudad);
 }
 
 function normStr(s) {
@@ -386,6 +464,7 @@ function RegistroFletero({ onListo }) {
     USUARIO_FLETERO = perfil;
     storageSave(KEY_FLETERO_PERFIL, perfil);
     db.ref(`fleteros/${id}`).set(perfil);
+    identificarFleteroEnOneSignal(id);
     onListo(perfil);
   }
 
@@ -491,31 +570,14 @@ function PedidosDisponibles({ onNav, onCotizar }) {
     return () => { unsubC(); unsubO(); };
   }, []);
 
-  const miCiudad = normCiudad(USUARIO_FLETERO?.ciudad);
   const misOfertasIds = new Set(ofertas.filter(o => o.fleteroId === USUARIO_FLETERO?.id).map(o => o.cargaId));
 
-  // Un pedido es "de fletero particular" si el origen está a menos de 30 km
-  // de la ciudad del fletero Y el viaje completo (origen → destino) no supera
-  // esos 30 km — así no compite con transportista en larga distancia, pero
-  // sí puede cubrir localidades pegadas a su ciudad (ej. Posadas-Garupá).
   // Los pedidos viejos, publicados antes de guardar coordenadas, siguen
-  // usando el match por nombre de ciudad como respaldo.
-  const RADIO_FLETERO_KM = 30;
-  function esElegible(c) {
-    const tieneCoords = c.origenLat != null && c.origenLon != null && c.destinoLat != null && c.destinoLon != null
-      && USUARIO_FLETERO?.lat != null && USUARIO_FLETERO?.lon != null;
-    if (tieneCoords) {
-      const distFleteroOrigen = distKm(USUARIO_FLETERO.lat, USUARIO_FLETERO.lon, c.origenLat, c.origenLon);
-      const distViaje = distKm(c.origenLat, c.origenLon, c.destinoLat, c.destinoLon);
-      return distFleteroOrigen <= RADIO_FLETERO_KM && distViaje <= RADIO_FLETERO_KM;
-    }
-    return normCiudad(c.ciudad) === miCiudad;
-  }
-
+  // usando el match por nombre de ciudad como respaldo (ver pedidoEsElegibleParaFletero).
   const disponibles = cargas
     .filter(c => c.tipoEnvio === "expres-local")
     .filter(c => ["nueva", "activo"].includes(c.estado))
-    .filter(esElegible)
+    .filter(c => pedidoEsElegibleParaFletero(c, USUARIO_FLETERO))
     .filter(c => !misOfertasIds.has(c.id))
     .sort((a, b) => b.id - a.id);
 
@@ -609,7 +671,16 @@ function CotizarPedido({ carga, onNav }) {
         <div className="divider"></div>
         <div className="form-group" style={{ marginTop: 14 }}>
           <label>Tu precio</label>
-          <input type="number" inputMode="numeric" value={form.precio} onChange={e => setForm(f => ({ ...f, precio: e.target.value }))} placeholder="Ej: 8000" />
+          <div style={{ position: "relative" }}>
+            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#666", fontWeight: 500 }}>$</span>
+            <input type="number" inputMode="numeric" value={form.precio} onChange={e => setForm(f => ({ ...f, precio: e.target.value }))} placeholder="8000" style={{ paddingLeft: 28, fontSize: 18, fontWeight: 600 }} />
+          </div>
+          {form.precio && parseInt(form.precio) > 0 && (
+            <div style={{ marginTop: 8, background: "#E8F5E9", borderRadius: 8, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 13, color: "#2E7D32" }}>Tu precio</span>
+              <span style={{ fontSize: 18, fontWeight: 700, color: "#1B5E20" }}>${parseInt(form.precio).toLocaleString('es-AR')}</span>
+            </div>
+          )}
         </div>
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label>Nota (opcional)</label>
@@ -632,12 +703,15 @@ function MisTrabajos() {
   const entregados = mios.filter(r => r.estado === "entregado");
 
   function irARetirar(r) {
+    if (!confirm("¿Confirmás que estás yendo a buscar el paquete?")) return;
     fbUpdate('remitos', r.id, { estado: "retirado" });
   }
   function salirAEntregar(r) {
+    if (!confirm("¿Confirmás que ya retiraste el paquete y salís a entregarlo?")) return;
     fbUpdate('remitos', r.id, { estado: "en-camino" });
   }
   function marcarEntregado(r) {
+    if (!confirm("¿Confirmás que ya entregaste el paquete?")) return;
     fbUpdate('remitos', r.id, { estado: "entregado" });
   }
 
@@ -733,6 +807,8 @@ function App() {
   const [cargaCotizando, setCargaCotizando] = useState(null);
   const [remitoACalificar, setRemitoACalificar] = useState(null);
   const shownRating = useRef(new Set());
+  const pedidosVistos = useRef(null);
+  const remitosVistos = useRef(null);
 
   useEffect(() => {
     if (!registrado) return;
@@ -747,6 +823,50 @@ function App() {
         shownRating.current.add(pendiente.id);
         setRemitoACalificar(pendiente);
       }
+    });
+  }, [registrado]);
+
+  // Pedir permiso de notificaciones al abrir la app
+  useEffect(() => { pedirPermisoNotificaciones(); }, []);
+
+  // Sonido cuando aparece un pedido nuevo elegible (dentro del radio de 30km)
+  useEffect(() => {
+    if (!registrado) return;
+    return fbListen('cargas', arr => {
+      const elegibles = arr.filter(c =>
+        c.tipoEnvio === "expres-local" &&
+        ["nueva", "activo"].includes(c.estado) &&
+        pedidoEsElegibleParaFletero(c, USUARIO_FLETERO)
+      );
+      if (pedidosVistos.current === null) {
+        // Primera carga: solo registrar lo que ya existe, sin sonar.
+        pedidosVistos.current = new Set(elegibles.map(c => c.id));
+        return;
+      }
+      elegibles.forEach(c => {
+        if (!pedidosVistos.current.has(c.id)) {
+          pedidosVistos.current.add(c.id);
+          mostrarNotificacion('📦 Nuevo pedido disponible', `Hay un flete nuevo cerca de ${USUARIO_FLETERO?.ciudad || "tu ciudad"}`);
+        }
+      });
+    });
+  }, [registrado]);
+
+  // Sonido cuando el cliente acepta una cotización (se crea el remito)
+  useEffect(() => {
+    if (!registrado) return;
+    return fbListen('remitos', arr => {
+      const mios = arr.filter(r => r.esFletero && r.fleteroId === USUARIO_FLETERO?.id);
+      if (remitosVistos.current === null) {
+        remitosVistos.current = new Set(mios.map(r => r.id));
+        return;
+      }
+      mios.forEach(r => {
+        if (!remitosVistos.current.has(r.id)) {
+          remitosVistos.current.add(r.id);
+          mostrarNotificacion('🎉 ¡Te aceptaron una cotización!', `Tenés un flete confirmado en ${r.remitente?.ciudad || "tu ciudad"}`);
+        }
+      });
     });
   }, [registrado]);
 
