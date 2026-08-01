@@ -1378,10 +1378,10 @@ function PublicarEnvioExpres({ onNav, onVolverSelector, onLlevarALargaDistancia 
           </div>
           {fueraDeRango && (
             <div style={{ background: "#FEF3EC", border: "1.5px solid #E85D20", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: "#C44A0F", marginBottom: 4 }}>⚠️ Este pedido está fuera de rango</p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "#D32F2F", marginBottom: 4 }}>⚠️ Este pedido está fuera de rango</p>
               <p style={{ fontSize: 12.5, color: "#7A4A2A", lineHeight: 1.5, marginBottom: 10 }}>
                 {form.ciudadEntrega} queda a {Math.round(distanciaViaje)} km de {form.ciudad} — más de lo que cubre un fletero particular.
-                Para esta distancia te conviene publicarlo como "Entre ciudades", para que lo vean transportistas profesionales.
+                Para esta distancia te conviene publicarlo como "Entre ciudades", para que lo vean empresas de logística.
               </p>
               <button type="button" onClick={() => onLlevarALargaDistancia ? onLlevarALargaDistancia({ ciudad: form.ciudad, provincia: form.provincia, direccionRetiro: form.direccionRetiro }) : (onVolverSelector ? onVolverSelector() : onNav("empresa-dashboard"))}
                 style={{ background: "#0F6E56", color: "#fff", border: "none", borderRadius: 7, padding: "9px 14px", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>
