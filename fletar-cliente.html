@@ -1392,6 +1392,7 @@ function PublicarEnvioExpres({ onNav, onVolverSelector, onLlevarALargaDistancia 
           <div className="form-group">
             <label>Dirección de entrega (calle y número)</label>
             <input value={form.direccionEntrega} onChange={e => upd('direccionEntrega', e.target.value)} placeholder="Ej: San Martín 456" />
+          </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Link de Google Maps de la entrega (opcional)</label>
             <input value={form.mapsEntrega} onChange={e => upd('mapsEntrega', e.target.value)} placeholder="Pegá el link de la ubicación" />
