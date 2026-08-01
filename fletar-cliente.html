@@ -1077,9 +1077,15 @@ function comprimirImagen(file, maxPx = 900, quality = 0.70) {
 // ─── NUEVO ENVÍO: SELECTOR DE TIPO ────────────────────────────────────────────
 function NuevoEnvio({ onNav }) {
   const [tipoElegido, setTipoElegido] = useState(null);
+  const [prefillLargaDistancia, setPrefillLargaDistancia] = useState(null);
 
-  if (tipoElegido === "larga-distancia") return <PublicarCarga onNav={onNav} />;
-  if (tipoElegido === "expres-local") return <PublicarEnvioExpres onNav={onNav} onVolverSelector={() => setTipoElegido(null)} />;
+  function irALargaDistanciaConDatos(datos) {
+    setPrefillLargaDistancia(datos);
+    setTipoElegido("larga-distancia");
+  }
+
+  if (tipoElegido === "larga-distancia") return <PublicarCarga onNav={onNav} datosIniciales={prefillLargaDistancia} />;
+  if (tipoElegido === "expres-local") return <PublicarEnvioExpres onNav={onNav} onVolverSelector={() => setTipoElegido(null)} onLlevarALargaDistancia={irALargaDistanciaConDatos} />;
 
   return (
     <PageWrapper titulo="Nuevo envío" subtitulo="Elegí una opción para empezar">
@@ -1116,7 +1122,7 @@ const TIPOS_EXPRES = [
   { val: "Otro", icon: "💬" },
 ];
 
-function PublicarEnvioExpres({ onNav, onVolverSelector }) {
+function PublicarEnvioExpres({ onNav, onVolverSelector, onLlevarALargaDistancia }) {
   const [paso, setPaso] = useState(1);
   const TOTAL_PASOS = 4;
   const LABELS_PASO = ["Qué mandás", "Retiro", "Entrega", "Fecha y hora"];
@@ -1173,12 +1179,22 @@ function PublicarEnvioExpres({ onNav, onVolverSelector }) {
     }
   }
 
+  // Si el retiro y la entrega quedan a más de 30 km, ya no es un envío para
+  // fletero particular (no le va a llegar a ningún fletero de la zona) —
+  // avisamos y sugerimos "Entre ciudades" en vez de dejar publicar igual.
+  const RADIO_FLETERO_KM = 30;
+  const distanciaViaje = (form.lat != null && form.lon != null && form.latEntrega != null && form.lonEntrega != null)
+    ? distKm(form.lat, form.lon, form.latEntrega, form.lonEntrega)
+    : null;
+  const fueraDeRango = distanciaViaje != null && distanciaViaje > RADIO_FLETERO_KM;
+
   function siguientePaso() {
     if (paso === 1 && !form.descripcion) { alert("Contanos brevemente qué mandás."); return; }
     if (paso === 2 && !form.ciudad) { alert("Seleccioná tu ciudad desde el listado de sugerencias."); return; }
     if (paso === 2 && !form.direccionRetiro) { alert("Completá la dirección de retiro."); return; }
     if (paso === 3 && !form.ciudadEntrega) { alert("Seleccioná la ciudad de entrega desde el listado de sugerencias."); return; }
     if (paso === 3 && !form.direccionEntrega) { alert("Completá la dirección de entrega."); return; }
+    if (paso === 3 && fueraDeRango) { alert("Este envío está fuera del rango de fletero particular. Publicalo como \"Entre ciudades\" para que lo vean transportistas."); return; }
     if (paso === 4) { handlePublicar(); return; }
     setPaso(p => p + 1);
     window.scrollTo(0, 0);
@@ -1278,7 +1294,8 @@ function PublicarEnvioExpres({ onNav, onVolverSelector }) {
       <button className="btn-secondary" onClick={pasoAnterior} style={{ flex: 1 }}>
         {paso === 1 ? "Cancelar" : "← Atrás"}
       </button>
-      <button className="btn-primary" onClick={siguientePaso} style={{ flex: 2, background: "#0F6E56" }}>
+      <button className="btn-primary" onClick={siguientePaso} disabled={paso === 3 && fueraDeRango}
+        style={{ flex: 2, background: (paso === 3 && fueraDeRango) ? "#ccc" : "#0F6E56", cursor: (paso === 3 && fueraDeRango) ? "not-allowed" : "pointer" }}>
         {labelContinuar || "Continuar →"}
       </button>
     </div>
@@ -1359,10 +1376,22 @@ function PublicarEnvioExpres({ onNav, onVolverSelector }) {
               />
             )}
           </div>
+          {fueraDeRango && (
+            <div style={{ background: "#FEF3EC", border: "1.5px solid #E85D20", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "#C44A0F", marginBottom: 4 }}>⚠️ Este pedido está fuera de rango</p>
+              <p style={{ fontSize: 12.5, color: "#7A4A2A", lineHeight: 1.5, marginBottom: 10 }}>
+                {form.ciudadEntrega} queda a {Math.round(distanciaViaje)} km de {form.ciudad} — más de lo que cubre un fletero particular.
+                Para esta distancia te conviene publicarlo como "Entre ciudades", para que lo vean transportistas profesionales.
+              </p>
+              <button type="button" onClick={() => onLlevarALargaDistancia ? onLlevarALargaDistancia({ ciudad: form.ciudad, provincia: form.provincia, direccionRetiro: form.direccionRetiro }) : (onVolverSelector ? onVolverSelector() : onNav("empresa-dashboard"))}
+                style={{ background: "#0F6E56", color: "#fff", border: "none", borderRadius: 7, padding: "9px 14px", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>
+                Llevar mis datos a "Entre ciudades" →
+              </button>
+            </div>
+          )}
           <div className="form-group">
             <label>Dirección de entrega (calle y número)</label>
             <input value={form.direccionEntrega} onChange={e => upd('direccionEntrega', e.target.value)} placeholder="Ej: San Martín 456" />
-          </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Link de Google Maps de la entrega (opcional)</label>
             <input value={form.mapsEntrega} onChange={e => upd('mapsEntrega', e.target.value)} placeholder="Pegá el link de la ubicación" />
@@ -1390,16 +1419,18 @@ function PublicarEnvioExpres({ onNav, onVolverSelector }) {
   );
 }
 
-function PublicarCarga({ onNav }) {
+function PublicarCarga({ onNav, datosIniciales }) {
   const [paso, setPaso] = useState(1);
   const TOTAL_PASOS = 5;
   const LABELS_PASO = ["Ruta", "Qué mandás", "Medidas", "Destinatario", "Foto"];
 
-  const [origenProv, setOrigenProv] = useState("");
-  const [origenLoc, setOrigenLoc] = useState("");
+  // Si venimos de "Exprés" porque quedó fuera del radio de fletero, ya
+  // traemos precargada la ciudad de origen y la dirección de retiro.
+  const [origenProv, setOrigenProv] = useState(datosIniciales?.provincia || "");
+  const [origenLoc, setOrigenLoc] = useState(datosIniciales?.ciudad || "");
   const [destinoProv, setDestinoProv] = useState("");
   const [destinoLoc, setDestinoLoc] = useState("");
-  const [direccionRetiro, setDireccionRetiro] = useState(USUARIO_CLIENTE.direccion);
+  const [direccionRetiro, setDireccionRetiro] = useState(datosIniciales?.direccionRetiro || USUARIO_CLIENTE.direccion);
   const [form, setForm] = useState({ tipo: "General", especial: "normal", retiro: "", entrega: "", descripcion: "" });
   const [paquetes, setPaquetes] = useState([{ id: 1, largo: "", ancho: "", alto: "", peso: "", cantidad: "1" }]);
   const [destinatario, setDestinatario] = useState({ nombre: "", telefono: "", calle: "", numero: "", localidad: "", referencia: "", maps: "" });
