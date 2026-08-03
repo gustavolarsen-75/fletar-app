@@ -613,6 +613,29 @@ function armarDireccion({ calle, numero, piso, depto, portero }) {
   ].filter(Boolean).join(', ');
 }
 
+// Descompone el string de una línea que arma armarDireccion() (o el viejo
+// buildDireccion() del registro) de vuelta en sus campos separados, para
+// poder precargar cada campo del wizard en vez de tirar todo dentro de
+// "Calle". Formato esperado: "calle, numero, Piso X, Dpto Y, Portero: Z, ciudad".
+function parseDireccionGuardada(str) {
+  if (!str) return { calle: "", numero: "", piso: "", depto: "", portero: "" };
+  const partes = str.split(',').map(p => p.trim()).filter(Boolean);
+  let piso = "", depto = "", portero = "";
+  const resto = [];
+  for (const p of partes) {
+    let m;
+    if ((m = p.match(/^Piso (.+)$/i))) piso = m[1];
+    else if ((m = p.match(/^Dpto (.+)$/i))) depto = m[1];
+    else if ((m = p.match(/^Portero:\s*(.+)$/i))) portero = m[1];
+    else resto.push(p);
+  }
+  // Lo que queda en "resto" viene en orden [calle, numero, ciudad] — el
+  // número suele ser el único token que arranca con un dígito.
+  const calle = resto[0] || "";
+  const numero = (resto[1] && /^\d/.test(resto[1])) ? resto[1] : "";
+  return { calle, numero, piso, depto, portero };
+}
+
 // Botón para copiar "calle y número" al portapapeles, así el usuario lo
 // puede pegar directo en la app de Google Maps y traer el link de vuelta.
 function BotonCopiarDireccion({ calle, numero }) {
@@ -1203,11 +1226,11 @@ function PublicarEnvioExpres({ onNav, onVolverSelector, onLlevarALargaDistancia 
     provinciaEntrega: USUARIO_CLIENTE?.provincia || "",
     latEntrega: USUARIO_CLIENTE?.lat ?? null,
     lonEntrega: USUARIO_CLIENTE?.lon ?? null,
-    calleRetiro: USUARIO_CLIENTE?.direccion || "",
-    numeroRetiro: "",
-    pisoRetiro: "",
-    deptoRetiro: "",
-    porteroRetiro: "",
+    calleRetiro: parseDireccionGuardada(USUARIO_CLIENTE?.direccion).calle,
+    numeroRetiro: parseDireccionGuardada(USUARIO_CLIENTE?.direccion).numero,
+    pisoRetiro: parseDireccionGuardada(USUARIO_CLIENTE?.direccion).piso,
+    deptoRetiro: parseDireccionGuardada(USUARIO_CLIENTE?.direccion).depto,
+    porteroRetiro: parseDireccionGuardada(USUARIO_CLIENTE?.direccion).portero,
     mapsRetiro: "",
     calleEntrega: "",
     numeroEntrega: "",
@@ -1544,12 +1567,16 @@ function PublicarCarga({ onNav, datosIniciales }) {
   const [origenLoc, setOrigenLoc] = useState(datosIniciales?.ciudad || "");
   const [destinoProv, setDestinoProv] = useState("");
   const [destinoLoc, setDestinoLoc] = useState("");
-  const [calleRetiro, setCalleRetiro] = useState(datosIniciales?.direccionRetiro || USUARIO_CLIENTE.direccion || "");
-  const [numeroRetiro, setNumeroRetiro] = useState("");
-  const [pisoRetiro, setPisoRetiro] = useState("");
-  const [deptoRetiro, setDeptoRetiro] = useState("");
-  const [porteroRetiro, setPorteroRetiro] = useState("");
+  const _dirRetiroGuardada = parseDireccionGuardada(datosIniciales?.direccionRetiro || USUARIO_CLIENTE.direccion);
+  const [calleRetiro, setCalleRetiro] = useState(_dirRetiroGuardada.calle);
+  const [numeroRetiro, setNumeroRetiro] = useState(_dirRetiroGuardada.numero);
+  const [pisoRetiro, setPisoRetiro] = useState(_dirRetiroGuardada.piso);
+  const [deptoRetiro, setDeptoRetiro] = useState(_dirRetiroGuardada.depto);
+  const [porteroRetiro, setPorteroRetiro] = useState(_dirRetiroGuardada.portero);
   const direccionRetiro = armarDireccion({ calle: calleRetiro, numero: numeroRetiro, piso: pisoRetiro, depto: deptoRetiro, portero: porteroRetiro });
+  const esDireccionGuardada = calleRetiro === _dirRetiroGuardada.calle && numeroRetiro === _dirRetiroGuardada.numero
+    && pisoRetiro === _dirRetiroGuardada.piso && deptoRetiro === _dirRetiroGuardada.depto && porteroRetiro === _dirRetiroGuardada.portero
+    && !!(calleRetiro || numeroRetiro);
   const [form, setForm] = useState({ tipo: "General", especial: "normal", retiro: "", entrega: "", descripcion: "" });
   const [paquetes, setPaquetes] = useState([{ id: 1, largo: "", ancho: "", alto: "", peso: "", cantidad: "1" }]);
   const [destinatario, setDestinatario] = useState({ nombre: "", telefono: "", calle: "", numero: "", piso: "", depto: "", portero: "", localidad: "", referencia: "", maps: "" });
@@ -1771,7 +1798,7 @@ function PublicarCarga({ onNav, datosIniciales }) {
           <div className="form-group">
             <label>Calle</label>
             <input value={calleRetiro} onChange={e => setCalleRetiro(e.target.value)} placeholder="Ej: Hipólito Yrigoyen" />
-            {direccionRetiro === USUARIO_CLIENTE.direccion && (
+            {esDireccionGuardada && (
               <p style={{ fontSize: 11, color: "#0F6E56", marginTop: 4 }}>✓ Usando tu dirección registrada</p>
             )}
           </div>
