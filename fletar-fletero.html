@@ -700,10 +700,38 @@ function CotizarPedido({ carga, onNav }) {
   );
 }
 
+// Arma un link de Google Maps que busca una dirección + ciudad — mismo
+// patrón que ya usa fletar-chofer.html, para que el fletero pueda abrir la
+// navegación con un toque en vez de tener que copiar/pegar nada.
+function mapsUrl(domicilio, ciudad) {
+  if (!domicilio) return null;
+  return `https://maps.google.com/?q=${encodeURIComponent((domicilio || '') + ' ' + (ciudad || ''))}`;
+}
+
+// ─── CARTEL DE CONFIRMACIÓN (amigable, con logo Fletar) ──────────────────────
+function ConfirmModal({ titulo, subtitulo, textoBoton, onConfirmar, onCancelar }) {
+  return (
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: "#fff", borderRadius: 16, padding: "22px 20px", width: "100%", maxWidth: 320, textAlign: "center" }}>
+        <svg width={48} height={48} viewBox="0 0 38 38" style={{ margin: "0 auto 14px", display: "block" }}>
+          <rect width="38" height="38" rx="9" fill="#E85D20"/>
+          <text fontFamily="Montserrat, sans-serif" fontSize="26" fontWeight="900" x="7" y="28" fill="white">F</text>
+          <polygon points="28,24 34,19 28,14 28,18 22,18 22,20 28,20" fill="white" opacity="0.9"/>
+        </svg>
+        <div style={{ fontSize: 15, fontWeight: 500, color: "#1A1A1A", marginBottom: 6 }}>{titulo}</div>
+        {subtitulo && <div style={{ fontSize: 12, color: "#5A6A78", marginBottom: 18 }}>{subtitulo}</div>}
+        <button onClick={onConfirmar} style={{ width: "100%", background: "#639922", color: "#fff", border: "none", borderRadius: 8, padding: "11px 0", fontSize: 13.5, fontWeight: 500, cursor: "pointer", marginBottom: 8 }}>{textoBoton}</button>
+        <button onClick={onCancelar} style={{ width: "100%", background: "transparent", border: "none", color: "#9aa5b1", fontSize: 12.5, padding: "4px 0", cursor: "pointer" }}>Cancelar</button>
+      </div>
+    </div>
+  );
+}
+
 // ─── MIS TRABAJOS ──────────────────────────────────────────────────────────────
 function MisTrabajos() {
   const [remitos, setRemitos] = useState([]);
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
+  const [confirmAccion, setConfirmAccion] = useState(null);
 
   useEffect(() => fbListen('remitos', arr => setRemitos(arr)), []);
 
@@ -712,19 +740,32 @@ function MisTrabajos() {
   const entregados = mios.filter(r => r.estado === "entregado");
 
   function irARetirar(r) {
-    if (!confirm("¿Confirmás que estás yendo a buscar el paquete?")) return;
-    fbUpdate('remitos', r.id, { estado: "retirado" });
+    setConfirmAccion({
+      titulo: "¿Salís a retirar el paquete?",
+      subtitulo: r.remitente?.domicilio,
+      textoBoton: "Sí, salgo a retirar",
+      onConfirmar: () => { fbUpdate('remitos', r.id, { estado: "retirado" }); setConfirmAccion(null); },
+    });
   }
   function salirAEntregar(r) {
-    if (!confirm("¿Confirmás que ya retiraste el paquete y salís a entregarlo?")) return;
-    fbUpdate('remitos', r.id, { estado: "en-camino" });
+    setConfirmAccion({
+      titulo: "¿Salís a entregar?",
+      subtitulo: r.destinatario?.domicilio,
+      textoBoton: "Sí, salgo a entregar",
+      onConfirmar: () => { fbUpdate('remitos', r.id, { estado: "en-camino" }); setConfirmAccion(null); },
+    });
   }
   function marcarEntregado(r) {
-    if (!confirm("¿Confirmás que ya entregaste el paquete?")) return;
-    fbUpdate('remitos', r.id, { estado: "entregado" });
+    setConfirmAccion({
+      titulo: "¿Confirmás que ya entregaste?",
+      subtitulo: r.destinatario?.domicilio,
+      textoBoton: "Sí, confirmar entrega",
+      onConfirmar: () => { fbUpdate('remitos', r.id, { estado: "entregado" }); setConfirmAccion(null); },
+    });
   }
 
   return (
+    <>
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 16px" }}>
       <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 20 }}>Mis trabajos</h1>
 
@@ -785,6 +826,16 @@ function MisTrabajos() {
         </div>
       )}
     </div>
+    {confirmAccion && (
+      <ConfirmModal
+        titulo={confirmAccion.titulo}
+        subtitulo={confirmAccion.subtitulo}
+        textoBoton={confirmAccion.textoBoton}
+        onConfirmar={confirmAccion.onConfirmar}
+        onCancelar={() => setConfirmAccion(null)}
+      />
+    )}
+    </>
   );
 }
 
