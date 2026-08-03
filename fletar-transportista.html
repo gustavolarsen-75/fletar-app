@@ -4416,6 +4416,9 @@ function RecepcionMostrador({ onNav, rutas, ciudadesRuta = {}, setRemitoActivo, 
   const [destDni, setDestDni]         = React.useState('');
   const [destCalle, setDestCalle]     = React.useState('');
   const [destNumero, setDestNumero]   = React.useState('');
+  const [destPiso, setDestPiso]       = React.useState('');
+  const [destDepto, setDestDepto]     = React.useState('');
+  const [destPortero, setDestPortero] = React.useState('');
   const [destCiudad, setDestCiudad]   = React.useState('');
   const [rutaDetectada, setRutaDetectada] = React.useState(null);
   const [mostrarPickerRuta, setMostrarPickerRuta] = React.useState(false);
@@ -4497,7 +4500,7 @@ function RecepcionMostrador({ onNav, rutas, ciudadesRuta = {}, setRemitoActivo, 
       transportista: { nombre: USUARIO_TRANS.nombre, id: USUARIO_TRANS.id },
       remitente:    { nombre: remNombre, telefono: remTel, dni: remDni||null, ciudad: origen.ciudad, provincia: origen.provincia },
       destinatario: { nombre: destNombre, telefono: destTel, dni: destDni||null,
-        domicilio: [destCalle, destNumero].filter(Boolean).join(' '),
+        domicilio: [destCalle, destNumero, destPiso ? `Piso ${destPiso}` : '', destDepto ? `Dpto ${destDepto}` : '', destPortero ? `Portero: ${destPortero}` : ''].filter(Boolean).join(' '),
         ciudad: destino.ciudad, provincia: destino.provincia },
       envio: {
         tipo, descripcion, bultos: parseInt(bultos)||1,
@@ -4530,7 +4533,7 @@ function RecepcionMostrador({ onNav, rutas, ciudadesRuta = {}, setRemitoActivo, 
   function resetForm() {
     setPaso(1); setRemitoCreado(null);
     setRemNombre(''); setRemTel(''); setRemDni(''); setRemCiudad(ciudadOrigenDefault);
-    setDestNombre(''); setDestTel(''); setDestDni(''); setDestCalle(''); setDestNumero(''); setDestCiudad('');
+    setDestNombre(''); setDestTel(''); setDestDni(''); setDestCalle(''); setDestNumero(''); setDestPiso(''); setDestDepto(''); setDestPortero(''); setDestCiudad('');
     setTipo('Paquete'); setBultos('1'); setDescripcion('');
     setModoPrec('manual'); setPeso(''); setAlto(''); setAncho(''); setLargo('');
     setTarifa(''); setPrecioManual(''); setValorDeclarado('');
@@ -4645,10 +4648,20 @@ function RecepcionMostrador({ onNav, rutas, ciudadesRuta = {}, setRemitoActivo, 
         </div>
         <div style={{ marginBottom:14 }}>
           <label style={lbl}>Domicilio de entrega</label>
-          <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:8 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:8, marginBottom:8 }}>
             <input style={inp} value={destCalle} onChange={e=>setDestCalle(capWords(e.target.value))} autoCapitalize="words" placeholder="Calle / Av." />
             <input style={inp} value={destNumero} onChange={e=>setDestNumero(e.target.value)} placeholder="Número" inputMode="numeric" />
           </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:8 }}>
+            <input style={inp} value={destPiso} onChange={e=>setDestPiso(e.target.value)} placeholder="Piso" inputMode="numeric" />
+            <input style={inp} value={destDepto} onChange={e=>setDestDepto(e.target.value.toUpperCase())} placeholder="Depto" />
+            <input style={inp} value={destPortero} onChange={e=>setDestPortero(e.target.value)} placeholder="Portero" />
+          </div>
+          {destCalle && (
+            <a href={`https://maps.google.com/?q=${encodeURIComponent([destCalle, destNumero].filter(Boolean).join(' ') + ' ' + (destCiudad || ''))}`}
+              target="_blank" rel="noreferrer"
+              style={{ color:'#185FA5', fontSize:12, fontWeight:600, textDecoration:'none' }}>📍 Ver en Maps</a>
+          )}
         </div>
         <label style={lbl}>Ciudad de destino *</label>
         {/* ── Destinos disponibles desde las rutas de esta sucursal ── */}
