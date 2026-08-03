@@ -788,8 +788,18 @@ function MisTrabajos() {
                     {r.estado === "en-camino" ? "En camino" : r.estado === "retirado" ? "Retirado" : "Pendiente de retiro"}
                   </span>
                 </div>
-                <div style={{ fontSize: 12.5, color: "#5A6A78", marginBottom: 4 }}>📍 Retiro: {r.remitente?.domicilio}</div>
-                <div style={{ fontSize: 12.5, color: "#5A6A78", marginBottom: 12 }}>🏁 Entrega: {r.destinatario?.domicilio}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, fontSize: 12.5, color: "#5A6A78", marginBottom: 4 }}>
+                  <span>📍 Retiro: {r.remitente?.domicilio}</span>
+                  {mapsUrl(r.remitente?.domicilio, r.remitente?.ciudad) && (
+                    <a href={mapsUrl(r.remitente?.domicilio, r.remitente?.ciudad)} target="_blank" rel="noreferrer" style={{ color: "#2563EB", fontSize: 11, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}>Ver en Maps</a>
+                  )}
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, fontSize: 12.5, color: "#5A6A78", marginBottom: 12 }}>
+                  <span>🏁 Entrega: {r.destinatario?.domicilio}</span>
+                  {mapsUrl(r.destinatario?.domicilio, r.destinatario?.ciudad) && (
+                    <a href={mapsUrl(r.destinatario?.domicilio, r.destinatario?.ciudad)} target="_blank" rel="noreferrer" style={{ color: "#2563EB", fontSize: 11, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}>Ver en Maps</a>
+                  )}
+                </div>
                 {r.estado === "pendiente-retiro" && (
                   <button className="btn-primary" style={{ width: "100%" }} onClick={() => irARetirar(r)}>Ir a retirar</button>
                 )}
