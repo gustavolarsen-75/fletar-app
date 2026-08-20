@@ -5033,8 +5033,44 @@ function RatingModal({ remito, pregunta, nombre, onCalificar, onOmitir, accentCo
 }
 
 // ─── APP ROOT ────────────────────────────────────────────────────────────────
+// ─── GUÍA INICIAL (aparece una sola vez, primera vez que se entra) ───────────
+const KEY_TUTORIAL_TRANS = 'fletar_trans_tutorial_visto';
+const PASOS_TUTORIAL_TRANS = [
+  { icono: "📦", titulo: "Cargas publicadas", texto: "Vas a ver las cargas que publican empresas y personas para transportar." },
+  { icono: "💬", titulo: "Cotizá y tomá el trabajo", texto: "Ofrecés tu precio. Si te lo aceptan, el trabajo pasa a tus viajes." },
+  { icono: "🚛", titulo: "Tu flota y choferes", texto: "En \"Mi flota\" cargás tus vehículos y les mandás el acceso a tus choferes." },
+  { icono: "📄", titulo: "Remitos", texto: "Cada viaje genera su remito, con el estado en vivo hasta la entrega." },
+];
+function TutorialInicial({ pasos, onCerrar }) {
+  const [paso, setPaso] = useState(0);
+  const actual = pasos[paso];
+  const ultimo = paso === pasos.length - 1;
+  return (
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 9500, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: "#fff", borderRadius: 16, padding: "22px 20px", width: "100%", maxWidth: 320 }}>
+        <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+          {pasos.map((_, i) => (
+            <div key={i} style={{ height: 3, flex: 1, borderRadius: 2, background: i <= paso ? "#0F6E56" : "#EEE" }} />
+          ))}
+        </div>
+        <div style={{ textAlign: "center", marginBottom: 22 }}>
+          <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#E1F5EE", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px", fontSize: 26 }}>{actual.icono}</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A1A", marginBottom: 6 }}>{actual.titulo}</div>
+          <div style={{ fontSize: 12.5, color: "#666", lineHeight: 1.5 }}>{actual.texto}</div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <button onClick={onCerrar} style={{ background: "transparent", border: "none", color: "#9aa5b1", fontSize: 12.5, cursor: "pointer" }}>Omitir</button>
+          <button onClick={() => ultimo ? onCerrar() : setPaso(p => p + 1)} style={{ background: "#0F6E56", color: "#fff", border: "none", borderRadius: 8, padding: "10px 22px", fontSize: 13.5, fontWeight: 500, cursor: "pointer" }}>{ultimo ? "Empezar" : "Siguiente"}</button>
+        </div>
+        <div style={{ textAlign: "center", fontSize: 11, color: "#bbb", marginTop: 12 }}>Paso {paso + 1} de {pasos.length}</div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [screen, setScreen] = useState("trans-dashboard");
+  const [mostrarTutorial, setMostrarTutorial] = useState(() => !storageGet(KEY_TUTORIAL_TRANS, false));
   const [cargaSeleccionada, setCargaSeleccionada] = useState(null);
   const [remitoActivo, setRemitoActivo] = useState(null);
   const [sucursales, setSucursales] = useState([]);
@@ -5206,6 +5242,13 @@ function App() {
           onCalificar={handleCalificar}
           onOmitir={handleOmitir}
           accentColor="#0F6E56"
+        />
+      )}
+
+      {mostrarTutorial && (
+        <TutorialInicial
+          pasos={PASOS_TUTORIAL_TRANS}
+          onCerrar={() => { storageSave(KEY_TUTORIAL_TRANS, true); setMostrarTutorial(false); }}
         />
       )}
     </div>

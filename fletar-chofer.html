@@ -2756,11 +2756,64 @@ function instalarPWA() {
 // Cuando el prompt llega, re-renderizar para mostrar el botón
 window._pwaInstallReadyCallback = function() { render(); };
 
+// ─── GUÍA INICIAL (aparece una sola vez, primera vez que se entra) ────────────
+// Overlay aparte, fuera de #app, para no tener que tocar cada rama de render().
+const KEY_TUTORIAL_CHOFER = 'fletar_chofer_tutorial_visto';
+const PASOS_TUTORIAL_CHOFER = [
+  { icono: '📋', titulo: 'Tus entregas y retiros', texto: 'Acá ves todos los paquetes que te asignó el transportista para hoy.' },
+  { icono: '🚛', titulo: 'Salís a ruta', texto: 'Marcás "Salir a ruta" cuando arrancás, así el remitente y el cliente ven que vas en camino.' },
+  { icono: '✅', titulo: 'Confirmás la entrega', texto: 'Al llegar, tocás "Entregado" o "Retirado" en cada paquete. Así queda todo actualizado en el momento.' },
+];
+let tutorialChoferPaso = 0;
+function mostrarTutorialInicialChofer() {
+  let visto = false;
+  try { visto = localStorage.getItem(KEY_TUTORIAL_CHOFER) === '1'; } catch(e) {}
+  if (visto) return;
+  tutorialChoferPaso = 0;
+  renderTutorialChofer();
+}
+function renderTutorialChofer() {
+  let overlay = document.getElementById('tutorial-chofer-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'tutorial-chofer-overlay';
+    document.body.appendChild(overlay);
+  }
+  const paso = PASOS_TUTORIAL_CHOFER[tutorialChoferPaso];
+  const ultimo = tutorialChoferPaso === PASOS_TUTORIAL_CHOFER.length - 1;
+  const puntos = PASOS_TUTORIAL_CHOFER.map((_, i) => `<div style="height:3px;flex:1;border-radius:2px;background:${i <= tutorialChoferPaso ? '#0F6E56' : '#E2E8F0'};"></div>`).join('');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9500;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:22px 20px;width:100%;max-width:320px;">
+      <div style="display:flex;gap:6px;margin-bottom:20px;">${puntos}</div>
+      <div style="text-align:center;margin-bottom:22px;">
+        <div style="width:60px;height:60px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:26px;">${paso.icono}</div>
+        <div style="font-size:15px;font-weight:600;color:#1A1A1A;margin-bottom:6px;">${paso.titulo}</div>
+        <div style="font-size:12.5px;color:#666;line-height:1.5;">${paso.texto}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <button onclick="cerrarTutorialChofer()" style="background:transparent;border:none;color:#9aa5b1;font-size:12.5px;cursor:pointer;">Omitir</button>
+        <button onclick="${ultimo ? 'cerrarTutorialChofer()' : 'avanzarTutorialChofer()'}" style="background:#0F6E56;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:13.5px;font-weight:500;cursor:pointer;">${ultimo ? 'Empezar' : 'Siguiente'}</button>
+      </div>
+      <div style="text-align:center;font-size:11px;color:#bbb;margin-top:12px;">Paso ${tutorialChoferPaso + 1} de ${PASOS_TUTORIAL_CHOFER.length}</div>
+    </div>`;
+}
+function avanzarTutorialChofer() {
+  tutorialChoferPaso++;
+  renderTutorialChofer();
+}
+function cerrarTutorialChofer() {
+  try { localStorage.setItem(KEY_TUTORIAL_CHOFER, '1'); } catch(e) {}
+  const overlay = document.getElementById('tutorial-chofer-overlay');
+  if (overlay) overlay.remove();
+}
+
 // ─── INICIO ───────────────────────────────────────────────────────────────────
 pedirPermisoNotificacionesChofer();
 actualizarBannerNotif(); // Mostrar banner si el permiso no está otorgado
 render(); // muestra loading
 cargarRemitos();
+mostrarTutorialInicialChofer();
 </script>
 </body>
 </html>

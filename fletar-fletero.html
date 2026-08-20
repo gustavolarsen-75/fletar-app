@@ -727,6 +727,41 @@ function ConfirmModal({ titulo, subtitulo, textoBoton, onConfirmar, onCancelar }
   );
 }
 
+// ─── GUÍA INICIAL (aparece una sola vez, primera vez que se entra) ───────────
+const KEY_TUTORIAL_FLETERO = 'fletar_fletero_tutorial_visto';
+const PASOS_TUTORIAL_FLETERO = [
+  { icono: "📍", titulo: "Pedidos cerca tuyo", texto: "Vas a ver los pedidos exprés disponibles en tu ciudad, a menos de 30km." },
+  { icono: "💬", titulo: "Cotizá un pedido", texto: "Elegís uno y proponés tu precio. El cliente decide si te lo acepta." },
+  { icono: "🚚", titulo: "Retirá y entregá", texto: "Cuando te acepten, marcás cuando salís a retirar y cuando entregás." },
+  { icono: "🗂️", titulo: "Tu historial", texto: "En \"Mis trabajos\" ves todo lo que tenés en curso y lo ya entregado." },
+];
+function TutorialInicial({ pasos, onCerrar }) {
+  const [paso, setPaso] = useState(0);
+  const actual = pasos[paso];
+  const ultimo = paso === pasos.length - 1;
+  return (
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: "#fff", borderRadius: 16, padding: "22px 20px", width: "100%", maxWidth: 320 }}>
+        <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+          {pasos.map((_, i) => (
+            <div key={i} style={{ height: 3, flex: 1, borderRadius: 2, background: i <= paso ? "#E85D20" : "#EEE" }} />
+          ))}
+        </div>
+        <div style={{ textAlign: "center", marginBottom: 22 }}>
+          <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#FEF3EC", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px", fontSize: 26 }}>{actual.icono}</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A1A", marginBottom: 6 }}>{actual.titulo}</div>
+          <div style={{ fontSize: 12.5, color: "#5A6A78", lineHeight: 1.5 }}>{actual.texto}</div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <button onClick={onCerrar} style={{ background: "transparent", border: "none", color: "#9aa5b1", fontSize: 12.5, cursor: "pointer" }}>Omitir</button>
+          <button onClick={() => ultimo ? onCerrar() : setPaso(p => p + 1)} style={{ background: "#E85D20", color: "#fff", border: "none", borderRadius: 8, padding: "10px 22px", fontSize: 13.5, fontWeight: 500, cursor: "pointer" }}>{ultimo ? "Empezar" : "Siguiente"}</button>
+        </div>
+        <div style={{ textAlign: "center", fontSize: 11, color: "#bbb", marginTop: 12 }}>Paso {paso + 1} de {pasos.length}</div>
+      </div>
+    </div>
+  );
+}
+
 // ─── MIS TRABAJOS ──────────────────────────────────────────────────────────────
 function MisTrabajos() {
   const [remitos, setRemitos] = useState([]);
@@ -883,6 +918,7 @@ function App() {
   const [screen, setScreen] = useState("inicio");
   const [cargaCotizando, setCargaCotizando] = useState(null);
   const [remitoACalificar, setRemitoACalificar] = useState(null);
+  const [mostrarTutorial, setMostrarTutorial] = useState(() => !storageGet(KEY_TUTORIAL_FLETERO, false));
   const shownRating = useRef(new Set());
   const pedidosVistos = useRef(null);
   const remitosVistos = useRef(null);
@@ -984,6 +1020,13 @@ function App() {
           accentColor="#2563EB"
           onCalificar={calificar}
           onOmitir={omitirCalificacion}
+        />
+      )}
+
+      {mostrarTutorial && (
+        <TutorialInicial
+          pasos={PASOS_TUTORIAL_FLETERO}
+          onCerrar={() => { storageSave(KEY_TUTORIAL_FLETERO, true); setMostrarTutorial(false); }}
         />
       )}
     </div>
