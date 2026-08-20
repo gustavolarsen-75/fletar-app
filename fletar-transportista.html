@@ -5080,6 +5080,19 @@ function TutorialInicial({ pasos, onCerrar }) {
 }
 
 // ─── LOGIN / REGISTRO REAL (email + contraseña) ──────────────────────────────
+// Campo de contraseña con "ojito" para mostrar/ocultar lo que se escribió
+function PasswordInput({ value, onChange, placeholder }) {
+  const [ver, setVer] = useState(false);
+  return (
+    <div style={{ position: "relative" }}>
+      <input type={ver ? "text" : "password"} value={value} onChange={onChange} placeholder={placeholder} style={{ paddingRight: 40 }} />
+      <button type="button" onClick={() => setVer(v => !v)} aria-label={ver ? "Ocultar contraseña" : "Mostrar contraseña"} style={{ position: "absolute", right: 6, top: 6, background: "none", border: "none", cursor: "pointer", fontSize: 16, padding: 4, lineHeight: 1 }}>
+        {ver ? "🙈" : "👁️"}
+      </button>
+    </div>
+  );
+}
+
 function LoginTransportista({ onBack, onLogueado }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -5126,7 +5139,7 @@ function LoginTransportista({ onBack, onLogueado }) {
         </div>
         <div className="form-group">
           <label>Contraseña</label>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Tu contraseña" />
+          <PasswordInput value={password} onChange={e => setPassword(e.target.value)} placeholder="Tu contraseña" />
         </div>
         <button onClick={recuperar} style={{ background: "none", border: "none", color: "var(--teal)", fontSize: 12.5, cursor: "pointer", padding: 0, marginBottom: 16 }}>¿Olvidaste tu contraseña?</button>
         {recuperoEnviado && <p style={{ fontSize: 12.5, color: "var(--teal)", marginBottom: 14 }}>✅ Te mandamos un email para elegir una nueva contraseña.</p>}
@@ -5206,11 +5219,11 @@ function RegistroTransportista({ onListo, onLogueado }) {
         </div>
         <div className="form-group">
           <label>Contraseña</label>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Al menos 6 caracteres" />
+          <PasswordInput value={password} onChange={e => setPassword(e.target.value)} placeholder="Al menos 6 caracteres" />
         </div>
         <div className="form-group">
           <label>Repetir contraseña</label>
-          <input type="password" value={password2} onChange={e => setPassword2(e.target.value)} placeholder="Repetí tu contraseña" />
+          <PasswordInput value={password2} onChange={e => setPassword2(e.target.value)} placeholder="Repetí tu contraseña" />
         </div>
         {error && <p style={{ fontSize: 12.5, color: "#c0392b", marginBottom: 14 }}>{error}</p>}
         <button className="btn-primary" style={{ width: "100%", padding: "12px 0" }} onClick={crear} disabled={cargando}>

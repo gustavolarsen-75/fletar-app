@@ -2802,6 +2802,19 @@ const btnSecondary = { background: "transparent", border: "none", color: "#aaa",
 const capWords = v => v.replace(/(^|\s)(\S)/g, (_, sp, c) => sp + c.toUpperCase());
 const emailValido = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v || "").trim());
 
+// Campo de contraseña con "ojito" para mostrar/ocultar lo que se escribió
+function PasswordInput({ value, onChange, placeholder }) {
+  const [ver, setVer] = useState(false);
+  return (
+    <div style={{ position: "relative" }}>
+      <input style={{ ...inputStyle, paddingRight: 40 }} type={ver ? "text" : "password"} value={value} onChange={onChange} placeholder={placeholder} />
+      <button type="button" onClick={() => setVer(v => !v)} aria-label={ver ? "Ocultar contraseña" : "Mostrar contraseña"} style={{ position: "absolute", right: 6, top: 11, background: "none", border: "none", cursor: "pointer", fontSize: 16, padding: 4, lineHeight: 1 }}>
+        {ver ? "🙈" : "👁️"}
+      </button>
+    </div>
+  );
+}
+
 function RegistroBienvenida({ onTipo }) {
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -2894,7 +2907,7 @@ function LoginCliente({ onBack, onLogueado }) {
         <div style={{ marginBottom: 12 }} />
 
         <label style={labelStyle}>Contraseña</label>
-        <input style={inputStyle} value={password} onChange={e => setPassword(e.target.value)} placeholder="Tu contraseña" type="password" />
+        <PasswordInput value={password} onChange={e => setPassword(e.target.value)} placeholder="Tu contraseña" />
         <div style={{ marginBottom: 8 }} />
 
         <button onClick={recuperarContrasena} style={{ background: "none", border: "none", color: "#E85D20", fontSize: 12.5, cursor: "pointer", padding: 0, marginBottom: 20 }}>¿Olvidaste tu contraseña?</button>
@@ -2968,11 +2981,11 @@ function RegistroEmpresa({ onBack, onNext }) {
         <div style={{ marginBottom: 12 }} />
 
         <label style={labelStyle}>Contraseña *</label>
-        <input style={inputStyle} value={form.password} onChange={e => set("password", e.target.value)} placeholder="Al menos 6 caracteres" type="password" />
+        <PasswordInput value={form.password} onChange={e => set("password", e.target.value)} placeholder="Al menos 6 caracteres" />
         <div style={{ marginBottom: 12 }} />
 
         <label style={labelStyle}>Repetir contraseña *</label>
-        <input style={inputStyle} value={form.password2} onChange={e => set("password2", e.target.value)} placeholder="Repetí tu contraseña" type="password" />
+        <PasswordInput value={form.password2} onChange={e => set("password2", e.target.value)} placeholder="Repetí tu contraseña" />
         <div style={{ marginBottom: 20 }} />
 
         {error && <div style={{ background: "#fff3f0", border: "1px solid #fcc", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "#c0392b", marginBottom: 16 }}>{error}</div>}
@@ -3032,6 +3045,15 @@ function RegistroPersona({ onBack, onNext }) {
         <label style={labelStyle}>Email *</label>
         <input style={inputStyle} value={form.email} onChange={e => set("email", e.target.value)} placeholder="tu@mail.com" inputMode="email" type="email" />
         <p style={helperStyle}>💡 La vas a necesitar para recuperar tu cuenta si algún día cambiás de número de teléfono.</p>
+        <div style={{ marginBottom: 8 }} />
+
+        <label style={labelStyle}>Contraseña *</label>
+        <PasswordInput value={form.password} onChange={e => set("password", e.target.value)} placeholder="Al menos 6 caracteres" />
+        <div style={{ marginBottom: 12 }} />
+
+        <label style={labelStyle}>Repetir contraseña *</label>
+        <PasswordInput value={form.password2} onChange={e => set("password2", e.target.value)} placeholder="Repetí tu contraseña" />
+        <div style={{ marginBottom: 12 }} />
 
         <label style={labelStyle}>CUIT <span style={{ color: "#aaa", fontWeight: 400 }}>(opcional)</span></label>
         <input style={inputStyle} value={form.cuit} onChange={e => set("cuit", e.target.value)} placeholder="XX-XXXXXXXX-X" inputMode="numeric" />

@@ -455,6 +455,19 @@ function FletarLogo({ size = "sm" }) {
 }
 
 // ─── REGISTRO SIMPLE (sin contraseña) ─────────────────────────────────────────
+// Campo de contraseña con "ojito" para mostrar/ocultar lo que se escribió
+function PasswordInput({ value, onChange, placeholder }) {
+  const [ver, setVer] = useState(false);
+  return (
+    <div style={{ position: "relative" }}>
+      <input type={ver ? "text" : "password"} value={value} onChange={onChange} placeholder={placeholder} style={{ paddingRight: 40 }} />
+      <button type="button" onClick={() => setVer(v => !v)} aria-label={ver ? "Ocultar contraseña" : "Mostrar contraseña"} style={{ position: "absolute", right: 6, top: 6, background: "none", border: "none", cursor: "pointer", fontSize: 16, padding: 4, lineHeight: 1 }}>
+        {ver ? "🙈" : "👁️"}
+      </button>
+    </div>
+  );
+}
+
 function LoginFletero({ onBack, onLogueado }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -502,7 +515,7 @@ function LoginFletero({ onBack, onLogueado }) {
           </div>
           <div className="form-group">
             <label>Contraseña</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Tu contraseña" />
+            <PasswordInput value={password} onChange={e => setPassword(e.target.value)} placeholder="Tu contraseña" />
           </div>
           <button onClick={recuperar} style={{ background: "none", border: "none", color: "var(--azul)", fontSize: 12.5, cursor: "pointer", padding: 0, marginBottom: 16 }}>¿Olvidaste tu contraseña?</button>
           {recuperoEnviado && <p style={{ fontSize: 12.5, color: "#0F6E56", marginBottom: 14 }}>✅ Te mandamos un email para elegir una nueva contraseña.</p>}
@@ -572,11 +585,11 @@ function RegistroFletero({ onListo, onLogueado }) {
           </div>
           <div className="form-group">
             <label>Contraseña *</label>
-            <input type="password" value={form.password} onChange={e => setF('password', e.target.value)} placeholder="Al menos 6 caracteres" />
+            <PasswordInput value={form.password} onChange={e => setF('password', e.target.value)} placeholder="Al menos 6 caracteres" />
           </div>
           <div className="form-group">
             <label>Repetir contraseña *</label>
-            <input type="password" value={form.password2} onChange={e => setF('password2', e.target.value)} placeholder="Repetí tu contraseña" />
+            <PasswordInput value={form.password2} onChange={e => setF('password2', e.target.value)} placeholder="Repetí tu contraseña" />
           </div>
           <div className="form-group">
             <label>Teléfono / WhatsApp</label>
