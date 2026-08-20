@@ -9,6 +9,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
   <script>
     firebase.initializeApp({
@@ -141,8 +142,18 @@ const LOCALIDADES_MISIONES = [
   "Corrientes Capital","Buenos Aires, CABA","Rosario, Santa Fe","Santa Fe Capital",
 ];
 
-// ─── USUARIO FIJO (auto-login como transportista) ─────────────────────────────
-const USUARIO_TRANS = { id: "trans-001", nombre: "Carlos Ramírez", email: "trans@test.com", tipo: "transportista", calificacion: 4.9, viajes: 210, vehiculo: "Camión 3/4", foto: "CR" };
+// ─── PERFIL DEL TRANSPORTISTA (login real, persiste en localStorage + Firebase) ─
+// Datos originales de la cuenta de prueba — la primera cuenta real que se cree
+// (mientras "transportistas/trans-001" no exista en Firebase) hereda esta
+// identidad para no perder las rutas/remitos/flota ya cargados a su nombre.
+// USUARIO_TRANS nunca queda en null (evita romper referencias en todo el
+// archivo): hasta que haya un login real guardado, sigue usando este perfil
+// fijo de siempre — el acceso a la app lo controla aparte el login-gate.
+const PERFIL_TRANS001_ORIGINAL = { id: "trans-001", nombre: "Carlos Ramírez", tipo: "transportista", calificacion: 4.9, viajes: 210, vehiculo: "Camión 3/4", foto: "CR" };
+const KEY_TRANS_PERFIL = 'fletar_trans_perfil';
+let _perfilTransGuardado = null;
+try { const _v = localStorage.getItem(KEY_TRANS_PERFIL); if (_v) _perfilTransGuardado = JSON.parse(_v); } catch {}
+let USUARIO_TRANS = _perfilTransGuardado || PERFIL_TRANS001_ORIGINAL;
 
 // ─── STORAGE (localStorage compartido entre las dos apps) ─────────────────────
 // ─── FIREBASE HELPERS ─────────────────────────────────────────────────────────
@@ -5068,6 +5079,173 @@ function TutorialInicial({ pasos, onCerrar }) {
   );
 }
 
+// ─── LOGIN / REGISTRO REAL (email + contraseña) ──────────────────────────────
+function LoginTransportista({ onBack, onLogueado }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [cargando, setCargando] = useState(false);
+  const [recuperoEnviado, setRecuperoEnviado] = useState(false);
+
+  async function ingresar() {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError("Ingresá un email válido."); return; }
+    if (!password) { setError("Ingresá tu contraseña."); return; }
+    setError(""); setCargando(true);
+    try {
+      const cred = await firebase.auth().signInWithEmailAndPassword(email.trim(), password);
+      const uid = cred.user.uid;
+      const idSnap = await db.ref(`transportistasPorUid/${uid}`).get();
+      if (!idSnap.exists()) { setError("No encontramos tu perfil. Escribinos a soporte@fletar.app."); setCargando(false); return; }
+      const perfilSnap = await db.ref(`transportistas/${idSnap.val()}`).get();
+      if (!perfilSnap.exists()) { setError("No encontramos tu perfil. Escribinos a soporte@fletar.app."); setCargando(false); return; }
+      const perfil = perfilSnap.val();
+      USUARIO_TRANS = perfil;
+      storageSave(KEY_TRANS_PERFIL, perfil);
+      onLogueado(perfil);
+    } catch (e) {
+      setCargando(false);
+      setError(e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found' ? "Email o contraseña incorrectos." : "No pudimos iniciar sesión. Probá de nuevo.");
+    }
+  }
+
+  async function recuperar() {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError("Escribí tu email arriba para mandarte el link."); return; }
+    try { await firebase.auth().sendPasswordResetEmail(email.trim()); setRecuperoEnviado(true); setError(""); }
+    catch (e) { setError("No pudimos enviar el email. Revisá que esté bien escrito."); }
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--gris-bg)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div className="card" style={{ maxWidth: 400, width: "100%" }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "#888", fontSize: 13, cursor: "pointer", padding: 0, marginBottom: 14 }}>← Volver</button>
+        <h1 style={{ fontSize: 19, fontWeight: 700, marginBottom: 4 }}>Iniciar sesión</h1>
+        <p style={{ fontSize: 13, color: "var(--gris-text)", marginBottom: 20 }}>Entrá con el email y la contraseña de tu cuenta de transportista.</p>
+        <div className="form-group">
+          <label>Email</label>
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" />
+        </div>
+        <div className="form-group">
+          <label>Contraseña</label>
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Tu contraseña" />
+        </div>
+        <button onClick={recuperar} style={{ background: "none", border: "none", color: "var(--teal)", fontSize: 12.5, cursor: "pointer", padding: 0, marginBottom: 16 }}>¿Olvidaste tu contraseña?</button>
+        {recuperoEnviado && <p style={{ fontSize: 12.5, color: "var(--teal)", marginBottom: 14 }}>✅ Te mandamos un email para elegir una nueva contraseña.</p>}
+        {error && <p style={{ fontSize: 12.5, color: "#c0392b", marginBottom: 14 }}>{error}</p>}
+        <button className="btn-primary" style={{ width: "100%", padding: "12px 0" }} onClick={ingresar} disabled={cargando}>{cargando ? "Ingresando…" : "Ingresar"}</button>
+      </div>
+    </div>
+  );
+}
+
+function RegistroTransportista({ onListo, onLogueado }) {
+  const [modo, setModo] = useState("check"); // 'check' | 'bootstrap' | 'nuevo' | 'login'
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [error, setError] = useState("");
+  const [cargando, setCargando] = useState(false);
+
+  useEffect(() => {
+    db.ref('transportistas/trans-001').get()
+      .then(snap => setModo(snap.exists() ? "nuevo" : "bootstrap"))
+      .catch(() => setModo("nuevo"));
+  }, []);
+
+  if (modo === "check") {
+    return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gris-text)", fontSize: 14 }}>Cargando…</div>;
+  }
+  if (modo === "login") {
+    return <LoginTransportista onBack={() => setModo("nuevo")} onLogueado={onLogueado} />;
+  }
+
+  const esBootstrap = modo === "bootstrap";
+
+  async function crear() {
+    if (!esBootstrap && !nombre.trim()) { setError("Ingresá tu nombre o el de tu empresa de transporte."); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError("Ingresá un email válido."); return; }
+    if (!password || password.length < 6) { setError("La contraseña tiene que tener al menos 6 caracteres."); return; }
+    if (password !== password2) { setError("Las contraseñas no coinciden."); return; }
+    setError(""); setCargando(true);
+    try {
+      const cred = await firebase.auth().createUserWithEmailAndPassword(email.trim(), password);
+      const uid = cred.user.uid;
+      const perfil = esBootstrap
+        ? { ...PERFIL_TRANS001_ORIGINAL, email: email.trim(), authUid: uid }
+        : { id: 'trans-' + Date.now().toString(36), nombre: nombre.trim(), email: email.trim(), authUid: uid, tipo: "transportista", calificacion: 0, viajes: 0, vehiculo: "", foto: nombre.trim()[0]?.toUpperCase() || "T" };
+      await db.ref(`transportistas/${perfil.id}`).set(perfil);
+      await db.ref(`transportistasPorUid/${uid}`).set(perfil.id);
+      USUARIO_TRANS = perfil;
+      storageSave(KEY_TRANS_PERFIL, perfil);
+      setCargando(false);
+      onListo(perfil);
+    } catch (e) {
+      setCargando(false);
+      setError(e.code === 'auth/email-already-in-use' ? 'Ese email ya tiene una cuenta. Tocá "Ya tengo cuenta" abajo.' : "No pudimos crear tu cuenta. Probá de nuevo en un momento.");
+    }
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--gris-bg)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div className="card" style={{ maxWidth: 420, width: "100%" }}>
+        <h1 style={{ fontSize: 19, fontWeight: 700, marginBottom: 4 }}>{esBootstrap ? "Activá tu cuenta de transportista" : "Registrate como transportista"}</h1>
+        <p style={{ fontSize: 13, color: "var(--gris-text)", marginBottom: 20 }}>
+          {esBootstrap
+            ? "Vas a heredar tu cuenta de prueba (Carlos Ramírez) con las rutas, sucursales y flota que ya cargaste — solo falta ponerle email y contraseña."
+            : "Creá tu cuenta para publicar y gestionar tus viajes."}
+        </p>
+        {!esBootstrap && (
+          <div className="form-group">
+            <label>Nombre / Empresa</label>
+            <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Ej: Transportes del Norte" />
+          </div>
+        )}
+        <div className="form-group">
+          <label>Email</label>
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" />
+        </div>
+        <div className="form-group">
+          <label>Contraseña</label>
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Al menos 6 caracteres" />
+        </div>
+        <div className="form-group">
+          <label>Repetir contraseña</label>
+          <input type="password" value={password2} onChange={e => setPassword2(e.target.value)} placeholder="Repetí tu contraseña" />
+        </div>
+        {error && <p style={{ fontSize: 12.5, color: "#c0392b", marginBottom: 14 }}>{error}</p>}
+        <button className="btn-primary" style={{ width: "100%", padding: "12px 0" }} onClick={crear} disabled={cargando}>
+          {cargando ? "Creando…" : (esBootstrap ? "Activar mi cuenta" : "Crear cuenta")}
+        </button>
+        <button onClick={() => setModo("login")} style={{ background: "none", border: "none", color: "#888", fontSize: 13, marginTop: 14, cursor: "pointer", width: "100%", textAlign: "center" }}>
+          Ya tengo cuenta — <span style={{ color: "var(--teal)", fontWeight: 600 }}>iniciar sesión</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── LOGIN-GATE: exige sesión real de Firebase Auth antes de mostrar la app ──
+const KEY_TRANS_SESION_ACTIVA = 'fletar_trans_sesion_activa';
+function AppGate() {
+  const [estado, setEstado] = useState(() => storageGet(KEY_TRANS_SESION_ACTIVA, false) ? "logueado" : "cargando");
+
+  useEffect(() => {
+    const unsub = firebase.auth().onAuthStateChanged(user => {
+      setEstado(user ? "logueado" : "anonimo");
+      storageSave(KEY_TRANS_SESION_ACTIVA, !!user);
+    });
+    return unsub;
+  }, []);
+
+  if (estado === "cargando") {
+    return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gris-text)", fontSize: 14 }}>Cargando…</div>;
+  }
+  if (estado === "anonimo") {
+    return <RegistroTransportista onListo={() => setEstado("logueado")} onLogueado={() => setEstado("logueado")} />;
+  }
+  return <App />;
+}
+
 function App() {
   const [screen, setScreen] = useState("trans-dashboard");
   const [mostrarTutorial, setMostrarTutorial] = useState(() => !storageGet(KEY_TUTORIAL_TRANS, false));
@@ -5255,7 +5433,7 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+ReactDOM.createRoot(document.getElementById("root")).render(<AppGate />);
 </script>
 </body>
 </html>

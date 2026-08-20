@@ -39,6 +39,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
   <script>
     firebase.initializeApp({
@@ -454,26 +455,100 @@ function FletarLogo({ size = "sm" }) {
 }
 
 // ─── REGISTRO SIMPLE (sin contraseña) ─────────────────────────────────────────
-function RegistroFletero({ onListo }) {
-  const [form, setForm] = useState({ nombre: "", email: "", telefono: "", ciudad: "", provincia: "", lat: null, lon: null, vehiculo: VEHICULOS_FLETERO[0] });
+function LoginFletero({ onBack, onLogueado }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [cargando, setCargando] = useState(false);
+  const [recuperoEnviado, setRecuperoEnviado] = useState(false);
+
+  async function ingresar() {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError("Ingresá un email válido."); return; }
+    if (!password) { setError("Ingresá tu contraseña."); return; }
+    setError(""); setCargando(true);
+    try {
+      const cred = await firebase.auth().signInWithEmailAndPassword(email.trim(), password);
+      const uid = cred.user.uid;
+      const idSnap = await db.ref(`fleterosPorUid/${uid}`).get();
+      if (!idSnap.exists()) { setError("No encontramos tu perfil. Escribinos a soporte@fletar.app."); setCargando(false); return; }
+      const perfilSnap = await db.ref(`fleteros/${idSnap.val()}`).get();
+      if (!perfilSnap.exists()) { setError("No encontramos tu perfil. Escribinos a soporte@fletar.app."); setCargando(false); return; }
+      onLogueado(perfilSnap.val());
+    } catch (e) {
+      setCargando(false);
+      setError(e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found' ? "Email o contraseña incorrectos." : "No pudimos iniciar sesión. Probá de nuevo.");
+    }
+  }
+
+  async function recuperar() {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError("Escribí tu email arriba para mandarte el link."); return; }
+    try { await firebase.auth().sendPasswordResetEmail(email.trim()); setRecuperoEnviado(true); setError(""); }
+    catch (e) { setError("No pudimos enviar el email. Revisá que esté bien escrito."); }
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <div style={{ background: "#2C2C2A", flex: "0 0 26%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px" }}>
+        <FletarLogo size="lg" />
+      </div>
+      <div style={{ background: "#fff", flex: 1, borderRadius: "24px 24px 0 0", marginTop: -20, padding: "32px 24px 40px" }}>
+        <div style={{ maxWidth: 420, margin: "0 auto" }}>
+          <button onClick={onBack} style={{ background: "none", border: "none", color: "#888", fontSize: 13, cursor: "pointer", padding: 0, marginBottom: 14 }}>← Volver</button>
+          <h1 style={{ fontSize: 19, fontWeight: 700, marginBottom: 4 }}>Iniciar sesión</h1>
+          <p style={{ fontSize: 13, color: "#888", marginBottom: 22 }}>Entrá con el email y la contraseña con la que te registraste.</p>
+          <div className="form-group">
+            <label>Email</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" />
+          </div>
+          <div className="form-group">
+            <label>Contraseña</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Tu contraseña" />
+          </div>
+          <button onClick={recuperar} style={{ background: "none", border: "none", color: "var(--azul)", fontSize: 12.5, cursor: "pointer", padding: 0, marginBottom: 16 }}>¿Olvidaste tu contraseña?</button>
+          {recuperoEnviado && <p style={{ fontSize: 12.5, color: "#0F6E56", marginBottom: 14 }}>✅ Te mandamos un email para elegir una nueva contraseña.</p>}
+          {error && <p style={{ fontSize: 12.5, color: "#c0392b", marginBottom: 14 }}>{error}</p>}
+          <button className="btn-primary" style={{ width: "100%", padding: "13px 0", fontSize: 15 }} onClick={ingresar} disabled={cargando}>{cargando ? "Ingresando…" : "Ingresar"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RegistroFletero({ onListo, onLogueado }) {
+  const [modo, setModo] = useState("registro"); // 'registro' | 'login'
+  const [form, setForm] = useState({ nombre: "", email: "", password: "", password2: "", telefono: "", ciudad: "", provincia: "", lat: null, lon: null, vehiculo: VEHICULOS_FLETERO[0] });
+  const [error, setError] = useState("");
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  function enviar() {
+  if (modo === "login") {
+    return <LoginFletero onBack={() => setModo("registro")} onLogueado={onLogueado} />;
+  }
+
+  async function enviar() {
     if (!form.nombre || !form.telefono || !form.ciudad) {
-      alert("Completá tu nombre, teléfono y ciudad para continuar.");
-      return;
+      setError("Completá tu nombre, teléfono y ciudad para continuar."); return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((form.email || "").trim())) {
-      alert("Ingresá un email válido — lo vas a necesitar para recuperar tu cuenta.");
-      return;
+      setError("Ingresá un email válido — lo vas a necesitar para recuperar tu cuenta."); return;
     }
-    const id = 'flt-' + form.telefono.replace(/\D/g, '') + '-' + Date.now().toString(36);
-    const perfil = { ...form, id, creadoEn: Date.now() };
-    USUARIO_FLETERO = perfil;
-    storageSave(KEY_FLETERO_PERFIL, perfil);
-    db.ref(`fleteros/${id}`).set(perfil);
-    identificarFleteroEnOneSignal(id);
-    onListo(perfil);
+    if (!form.password || form.password.length < 6) { setError("La contraseña tiene que tener al menos 6 caracteres."); return; }
+    if (form.password !== form.password2) { setError("Las contraseñas no coinciden."); return; }
+    setError("");
+    try {
+      const cred = await firebase.auth().createUserWithEmailAndPassword(form.email.trim(), form.password);
+      const uid = cred.user.uid;
+      const id = 'flt-' + form.telefono.replace(/\D/g, '') + '-' + Date.now().toString(36);
+      const { password, password2, ...formSinPassword } = form;
+      const perfil = { ...formSinPassword, id, authUid: uid, creadoEn: Date.now() };
+      USUARIO_FLETERO = perfil;
+      storageSave(KEY_FLETERO_PERFIL, perfil);
+      await db.ref(`fleteros/${id}`).set(perfil);
+      await db.ref(`fleterosPorUid/${uid}`).set(id);
+      identificarFleteroEnOneSignal(id);
+      onListo(perfil);
+    } catch (e) {
+      setError(e.code === 'auth/email-already-in-use' ? 'Ese email ya tiene una cuenta. Tocá "Ya tengo cuenta" abajo.' : "No pudimos crear tu cuenta. Probá de nuevo en un momento.");
+    }
   }
 
   return (
@@ -485,7 +560,7 @@ function RegistroFletero({ onListo }) {
       <div style={{ background: "#fff", flex: 1, borderRadius: "24px 24px 0 0", marginTop: -20, padding: "32px 24px 40px" }}>
         <div style={{ maxWidth: 420, margin: "0 auto" }}>
           <h1 style={{ fontSize: 19, fontWeight: 700, marginBottom: 4 }}>Registrate como fletero</h1>
-          <p style={{ fontSize: 13, color: "#888", marginBottom: 22 }}>Sin contraseña, sin trámites. Es gratis.</p>
+          <p style={{ fontSize: 13, color: "#888", marginBottom: 22 }}>Es gratis, te lleva un minuto.</p>
 
           <div className="form-group">
             <label>Nombre y apellido</label>
@@ -494,6 +569,14 @@ function RegistroFletero({ onListo }) {
           <div className="form-group">
             <label>Email * (para recuperar tu cuenta más adelante)</label>
             <input type="email" value={form.email} onChange={e => setF('email', e.target.value)} placeholder="juan@email.com" />
+          </div>
+          <div className="form-group">
+            <label>Contraseña *</label>
+            <input type="password" value={form.password} onChange={e => setF('password', e.target.value)} placeholder="Al menos 6 caracteres" />
+          </div>
+          <div className="form-group">
+            <label>Repetir contraseña *</label>
+            <input type="password" value={form.password2} onChange={e => setF('password2', e.target.value)} placeholder="Repetí tu contraseña" />
           </div>
           <div className="form-group">
             <label>Teléfono / WhatsApp</label>
@@ -509,13 +592,17 @@ function RegistroFletero({ onListo }) {
             />
             <p style={{ fontSize: 11, color: "#888", marginTop: 4 }}>Vas a ver los pedidos a menos de 30 km de tu ciudad.</p>
           </div>
-          <div className="form-group" style={{ marginBottom: 22 }}>
+          <div className="form-group" style={{ marginBottom: 14 }}>
             <label>Tu vehículo</label>
             <select value={form.vehiculo} onChange={e => setF('vehiculo', e.target.value)}>
               {VEHICULOS_FLETERO.map(v => <option key={v}>{v}</option>)}
             </select>
           </div>
+          {error && <p style={{ fontSize: 12.5, color: "#c0392b", marginBottom: 14 }}>{error}</p>}
           <button className="btn-primary" style={{ width: "100%", padding: "13px 0", fontSize: 15 }} onClick={enviar}>Empezar</button>
+          <button onClick={() => setModo("login")} style={{ background: "none", border: "none", color: "#888", fontSize: 13, marginTop: 16, cursor: "pointer", width: "100%", textAlign: "center" }}>
+            Ya tengo cuenta — <span style={{ color: "var(--azul)", fontWeight: 600 }}>iniciar sesión</span>
+          </button>
         </div>
       </div>
     </div>
@@ -1000,8 +1087,15 @@ function App() {
     setRemitoACalificar(null);
   }
 
+  function handleLoginDone(perfilFirebase) {
+    USUARIO_FLETERO = perfilFirebase;
+    storageSave(KEY_FLETERO_PERFIL, perfilFirebase);
+    identificarFleteroEnOneSignal(perfilFirebase.id);
+    setRegistrado(true);
+  }
+
   if (!registrado) {
-    return <RegistroFletero onListo={() => setRegistrado(true)} />;
+    return <RegistroFletero onListo={() => setRegistrado(true)} onLogueado={handleLoginDone} />;
   }
 
   return (

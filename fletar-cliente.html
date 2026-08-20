@@ -38,6 +38,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
   <script>
@@ -2829,13 +2830,85 @@ function RegistroBienvenida({ onTipo }) {
             </div>
           </button>
         </div>
+        <button onClick={() => onTipo("login")} style={{ background: "none", border: "none", color: "#888", fontSize: 13, marginTop: 22, cursor: "pointer", textAlign: "center" }}>
+          Ya tengo cuenta — <span style={{ color: "#E85D20", fontWeight: 600 }}>iniciar sesión</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function LoginCliente({ onBack, onLogueado }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [cargando, setCargando] = useState(false);
+  const [recuperoEnviado, setRecuperoEnviado] = useState(false);
+
+  async function ingresar() {
+    if (!emailValido(email)) { setError("Ingresá un email válido."); return; }
+    if (!password) { setError("Ingresá tu contraseña."); return; }
+    setError(""); setCargando(true);
+    try {
+      const cred = await firebase.auth().signInWithEmailAndPassword(email.trim(), password);
+      const uid = cred.user.uid;
+      const telSnap = await firebase.database().ref(`clientesPorUid/${uid}`).get();
+      const tel = telSnap.exists() ? telSnap.val() : null;
+      if (!tel) { setError("No encontramos tu perfil. Escribinos a soporte@fletar.app para ayudarte."); setCargando(false); return; }
+      const perfilSnap = await firebase.database().ref(`clientes/${tel}`).get();
+      if (!perfilSnap.exists()) { setError("No encontramos tu perfil. Escribinos a soporte@fletar.app para ayudarte."); setCargando(false); return; }
+      onLogueado(perfilSnap.val());
+    } catch (e) {
+      setCargando(false);
+      if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
+        setError("Email o contraseña incorrectos.");
+      } else {
+        setError("No pudimos iniciar sesión. Probá de nuevo en un momento.");
+      }
+    }
+  }
+
+  async function recuperarContrasena() {
+    if (!emailValido(email)) { setError("Escribí tu email arriba para poder mandarte el link de recuperación."); return; }
+    try {
+      await firebase.auth().sendPasswordResetEmail(email.trim());
+      setRecuperoEnviado(true);
+      setError("");
+    } catch (e) {
+      setError("No pudimos enviar el email. Revisá que esté bien escrito.");
+    }
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#f7f7f5", display: "flex", flexDirection: "column" }}>
+      <div style={{ background: "#2C2C2A", padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "#fff", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: 0 }}>←</button>
+        <FletarLogo size="sm" />
+      </div>
+      <div style={{ padding: "24px 20px", maxWidth: 480, width: "100%", boxSizing: "border-box" }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>Iniciar sesión</h2>
+        <p style={{ fontSize: 13, color: "#888", marginBottom: 24 }}>Entrá con el email y la contraseña con la que te registraste.</p>
+
+        <label style={labelStyle}>Email</label>
+        <input style={inputStyle} value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@mail.com" inputMode="email" type="email" />
+        <div style={{ marginBottom: 12 }} />
+
+        <label style={labelStyle}>Contraseña</label>
+        <input style={inputStyle} value={password} onChange={e => setPassword(e.target.value)} placeholder="Tu contraseña" type="password" />
+        <div style={{ marginBottom: 8 }} />
+
+        <button onClick={recuperarContrasena} style={{ background: "none", border: "none", color: "#E85D20", fontSize: 12.5, cursor: "pointer", padding: 0, marginBottom: 20 }}>¿Olvidaste tu contraseña?</button>
+        {recuperoEnviado && <p style={{ fontSize: 12.5, color: "#2E7D32", marginBottom: 16 }}>✅ Te mandamos un email para elegir una nueva contraseña.</p>}
+
+        {error && <div style={{ background: "#fff3f0", border: "1px solid #fcc", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "#c0392b", marginBottom: 16 }}>{error}</div>}
+        <button style={btnPrimary} onClick={ingresar} disabled={cargando}>{cargando ? "Ingresando…" : "Ingresar"}</button>
       </div>
     </div>
   );
 }
 
 function RegistroEmpresa({ onBack, onNext }) {
-  const [form, setForm] = useState({ razonSocial: "", cuit: "", contactoNombre: "", contactoApellido: "", telefono: "", email: "", ciudad: "", provincia: "", lat: null, lon: null });
+  const [form, setForm] = useState({ razonSocial: "", cuit: "", contactoNombre: "", contactoApellido: "", telefono: "", email: "", password: "", password2: "", ciudad: "", provincia: "", lat: null, lon: null });
   const [error, setError] = useState("");
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -2845,9 +2918,11 @@ function RegistroEmpresa({ onBack, onNext }) {
     if (!form.telefono.trim()) { setError("El teléfono es requerido."); return; }
     if (!form.ciudad.trim()) { setError("Seleccioná la ciudad de la empresa desde el listado de sugerencias."); return; }
     if (!emailValido(form.email)) { setError("Ingresá un email válido (lo vas a necesitar para recuperar tu cuenta)."); return; }
+    if (!form.password || form.password.length < 6) { setError("La contraseña tiene que tener al menos 6 caracteres."); return; }
+    if (form.password !== form.password2) { setError("Las contraseñas no coinciden."); return; }
     setError("");
     const contacto = [form.contactoNombre.trim(), form.contactoApellido.trim()].filter(Boolean).join(" ");
-    onNext({ tipo: "empresa", nombre: form.razonSocial.trim(), razonSocial: form.razonSocial.trim(), cuit: form.cuit.trim(), contacto, telefono: form.telefono.trim(), email: form.email.trim(), ciudad: form.ciudad, provincia: form.provincia, lat: form.lat, lon: form.lon });
+    onNext({ tipo: "empresa", nombre: form.razonSocial.trim(), razonSocial: form.razonSocial.trim(), cuit: form.cuit.trim(), contacto, telefono: form.telefono.trim(), email: form.email.trim(), password: form.password, ciudad: form.ciudad, provincia: form.provincia, lat: form.lat, lon: form.lon });
   }
 
   return (
@@ -2890,6 +2965,14 @@ function RegistroEmpresa({ onBack, onNext }) {
         <label style={labelStyle}>Email *</label>
         <input style={inputStyle} value={form.email} onChange={e => set("email", e.target.value)} placeholder="empresa@mail.com" inputMode="email" type="email" />
         <p style={helperStyle}>💡 La vas a necesitar para recuperar tu cuenta si cambiás de celular.</p>
+        <div style={{ marginBottom: 12 }} />
+
+        <label style={labelStyle}>Contraseña *</label>
+        <input style={inputStyle} value={form.password} onChange={e => set("password", e.target.value)} placeholder="Al menos 6 caracteres" type="password" />
+        <div style={{ marginBottom: 12 }} />
+
+        <label style={labelStyle}>Repetir contraseña *</label>
+        <input style={inputStyle} value={form.password2} onChange={e => set("password2", e.target.value)} placeholder="Repetí tu contraseña" type="password" />
         <div style={{ marginBottom: 20 }} />
 
         {error && <div style={{ background: "#fff3f0", border: "1px solid #fcc", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "#c0392b", marginBottom: 16 }}>{error}</div>}
@@ -2900,7 +2983,7 @@ function RegistroEmpresa({ onBack, onNext }) {
 }
 
 function RegistroPersona({ onBack, onNext }) {
-  const [form, setForm] = useState({ nombre: "", apellido: "", telefono: "", email: "", cuit: "", ciudad: "", provincia: "", lat: null, lon: null });
+  const [form, setForm] = useState({ nombre: "", apellido: "", telefono: "", email: "", password: "", password2: "", cuit: "", ciudad: "", provincia: "", lat: null, lon: null });
   const [error, setError] = useState("");
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -2910,9 +2993,11 @@ function RegistroPersona({ onBack, onNext }) {
     if (!form.telefono.trim()) { setError("El teléfono es requerido."); return; }
     if (!form.ciudad.trim()) { setError("Seleccioná tu ciudad desde el listado de sugerencias."); return; }
     if (!emailValido(form.email)) { setError("Ingresá un email válido (lo vas a necesitar para recuperar tu cuenta)."); return; }
+    if (!form.password || form.password.length < 6) { setError("La contraseña tiene que tener al menos 6 caracteres."); return; }
+    if (form.password !== form.password2) { setError("Las contraseñas no coinciden."); return; }
     setError("");
     const nombreCompleto = form.nombre.trim() + " " + form.apellido.trim();
-    onNext({ tipo: "persona", nombre: nombreCompleto, apellido: form.apellido.trim(), telefono: form.telefono.trim(), email: form.email.trim(), cuit: form.cuit.trim(), ciudad: form.ciudad, provincia: form.provincia, lat: form.lat, lon: form.lon });
+    onNext({ tipo: "persona", nombre: nombreCompleto, apellido: form.apellido.trim(), telefono: form.telefono.trim(), email: form.email.trim(), password: form.password, cuit: form.cuit.trim(), ciudad: form.ciudad, provincia: form.provincia, lat: form.lat, lon: form.lon });
   }
 
   return (
@@ -3060,13 +3145,16 @@ function RegistroDireccion({ datosPrevios, onDone }) {
   );
 }
 
-function RegistroFlow({ onDone }) {
+function RegistroFlow({ onDone, onLogueado }) {
   const [paso, setPaso] = useState("bienvenida");
   const [tipo, setTipo] = useState(null);
   const [datos, setDatos] = useState(null);
 
   if (paso === "bienvenida") {
-    return <RegistroBienvenida onTipo={(t) => { setTipo(t); setPaso("datos"); }} />;
+    return <RegistroBienvenida onTipo={(t) => { setTipo(t); setPaso(t === "login" ? "login" : "datos"); }} />;
+  }
+  if (paso === "login") {
+    return <LoginCliente onBack={() => setPaso("bienvenida")} onLogueado={onLogueado} />;
   }
   if (paso === "datos" && tipo === "empresa") {
     return <RegistroEmpresa onBack={() => setPaso("bienvenida")} onNext={(d) => { setDatos(d); setPaso("direccion"); }} />;
@@ -3203,19 +3291,38 @@ function App() {
     });
   }, [registrado]);
 
-  function handleRegistroDone(perfil) {
-    const id = 'cli-' + perfil.telefono.replace(/\D/g, '') + '-' + Date.now().toString(36);
-    const perfilCompleto = { ...perfil, id };
-    USUARIO_CLIENTE = perfilCompleto;
-    storageSave(KEY_CLIENTE_PERFIL, perfilCompleto);
-    identificarClienteEnOneSignal(id);
+  async function handleRegistroDone(perfil) {
     const tel = perfil.telefono.replace(/\D/g, '');
-    db.ref(`clientes/${tel}`).set({ ...perfilCompleto, creadoEn: Date.now() });
+    try {
+      const cred = await firebase.auth().createUserWithEmailAndPassword(perfil.email.trim(), perfil.password);
+      const uid = cred.user.uid;
+      const { password, ...perfilSinPassword } = perfil;
+      const id = 'cli-' + tel + '-' + Date.now().toString(36);
+      const perfilCompleto = { ...perfilSinPassword, id, authUid: uid };
+      USUARIO_CLIENTE = perfilCompleto;
+      storageSave(KEY_CLIENTE_PERFIL, perfilCompleto);
+      identificarClienteEnOneSignal(id);
+      await db.ref(`clientes/${tel}`).set({ ...perfilCompleto, creadoEn: Date.now() });
+      await db.ref(`clientesPorUid/${uid}`).set(tel);
+      setRegistrado(true);
+    } catch (e) {
+      if (e.code === 'auth/email-already-in-use') {
+        window.alert('Ese email ya tiene una cuenta creada. Volvé atrás y tocá "Ya tengo cuenta — iniciar sesión".');
+      } else {
+        window.alert('No pudimos crear tu cuenta. Probá de nuevo en un momento.');
+      }
+    }
+  }
+
+  function handleLoginDone(perfilFirebase) {
+    USUARIO_CLIENTE = perfilFirebase;
+    storageSave(KEY_CLIENTE_PERFIL, perfilFirebase);
+    identificarClienteEnOneSignal(perfilFirebase.id);
     setRegistrado(true);
   }
 
   if (!registrado) {
-    return <RegistroFlow onDone={handleRegistroDone} />;
+    return <RegistroFlow onDone={handleRegistroDone} onLogueado={handleLoginDone} />;
   }
 
   function handleCalificar(estrellas) {
