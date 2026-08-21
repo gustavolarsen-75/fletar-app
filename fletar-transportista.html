@@ -4335,9 +4335,22 @@ function SucursalesManager({ onNav }) {
     try {
       let authVersion = 1, authUid = null;
       if (!editandoId) {
-        // Nueva sucursal: crear su cuenta de acceso (el PIN es su contraseña).
-        // Se usa una app secundaria de Firebase para no desloguear al dueño.
-        const cred = await authSucursal.createUserWithEmailAndPassword(sucursalAuthEmail(id, 1), pin);
+        // Nueva sucursal: primero se guarda el registro de la sucursal (con su
+        // transportistaId) para que la regla de "sucursalesPorUid" pueda
+        // verificar el dueño. Recién después se crea la cuenta de acceso.
+        await db.ref('sucursales/' + id).set({ id, nombre: nombre.trim(), ciudades: ciudadesSelec, transportistaId: USUARIO_TRANS.id, authVersion: 1, authUid: null });
+        // Si un intento anterior fallido dejó una cuenta a medio crear con esta
+        // versión, se prueba con la próxima versión libre en vez de trabarse.
+        let cred = null;
+        for (let intento = 1; intento <= 5 && !cred; intento++) {
+          try {
+            cred = await authSucursal.createUserWithEmailAndPassword(sucursalAuthEmail(id, intento), pin);
+            authVersion = intento;
+          } catch (e) {
+            if (e.code !== 'auth/email-already-in-use') throw e;
+          }
+        }
+        if (!cred) throw new Error('no-pudo-crear-cuenta');
         authUid = cred.user.uid;
         await db.ref('sucursalesPorUid/' + authUid).set(id);
         await authSucursal.signOut();
@@ -4352,7 +4365,7 @@ function SucursalesManager({ onNav }) {
       if (!editandoId) setPinCreado({ nombre: nombre.trim(), pin });
       setCreando(false); setEditandoId(null); setNombre(""); setCiudadesSelec([]); setPin("");
     } catch (e) {
-      alert(e.code === 'auth/email-already-in-use' ? "Ya existe una sucursal con ese nombre. Probá con otro." : "No pudimos guardar la sucursal. Probá de nuevo.");
+      alert("No pudimos guardar la sucursal. Probá de nuevo en un momento.");
     }
     setGuardando(false);
   }
