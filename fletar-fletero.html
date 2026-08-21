@@ -468,7 +468,25 @@ function PasswordInput({ value, onChange, placeholder }) {
   );
 }
 
-function LoginFletero({ onBack, onLogueado }) {
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48">
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/>
+      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6 29.6 4 24 4c-7.5 0-14 4.2-17.4 10.4z"/>
+      <path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.3-5.1l-6.6-5.4C29.6 35.4 26.9 36 24 36c-5.2 0-9.7-3.3-11.3-8l-6.5 5C9.9 39.7 16.4 44 24 44z"/>
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.5l6.6 5.4C40.5 36.3 44 30.7 44 24c0-1.2-.1-2.4-.4-3.5z"/>
+    </svg>
+  );
+}
+function BotonGoogle({ onClick, cargando }) {
+  return (
+    <button type="button" onClick={onClick} disabled={cargando} style={{ background: "#fff", border: "1.5px solid #ddd", borderRadius: 10, padding: "13px 16px", cursor: cargando ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontSize: 14, fontWeight: 600, color: "#3c4043", width: "100%", boxSizing: "border-box", opacity: cargando ? 0.6 : 1 }}>
+      <GoogleIcon />
+      {cargando ? "Conectando…" : "Continuar con Google"}
+    </button>
+  );
+}
+function LoginFletero({ onBack, onLogueado, onGoogle, cargandoGoogle, errorGoogle }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -508,7 +526,14 @@ function LoginFletero({ onBack, onLogueado }) {
         <div style={{ maxWidth: 420, margin: "0 auto" }}>
           <button onClick={onBack} style={{ background: "none", border: "none", color: "#888", fontSize: 13, cursor: "pointer", padding: 0, marginBottom: 14 }}>← Volver</button>
           <h1 style={{ fontSize: 19, fontWeight: 700, marginBottom: 4 }}>Iniciar sesión</h1>
-          <p style={{ fontSize: 13, color: "#888", marginBottom: 22 }}>Entrá con el email y la contraseña con la que te registraste.</p>
+          <p style={{ fontSize: 13, color: "#888", marginBottom: 18 }}>Entrá con el email y la contraseña con la que te registraste.</p>
+          <BotonGoogle onClick={onGoogle} cargando={cargandoGoogle} />
+          {errorGoogle && <p style={{ fontSize: 12.5, color: "#c0392b", textAlign: "center", marginTop: 8 }}>{errorGoogle}</p>}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "18px 0" }}>
+            <div style={{ flex: 1, height: 1, background: "#eee" }} />
+            <span style={{ fontSize: 12, color: "#aaa" }}>o con email</span>
+            <div style={{ flex: 1, height: 1, background: "#eee" }} />
+          </div>
           <div className="form-group">
             <label>Email</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" />
@@ -531,25 +556,62 @@ function RegistroFletero({ onListo, onLogueado }) {
   const [modo, setModo] = useState("registro"); // 'registro' | 'login'
   const [form, setForm] = useState({ nombre: "", email: "", password: "", password2: "", telefono: "", ciudad: "", provincia: "", lat: null, lon: null, vehiculo: VEHICULOS_FLETERO[0] });
   const [error, setError] = useState("");
+  const [google, setGoogle] = useState(null); // { uid, email }
+  const [cargandoGoogle, setCargandoGoogle] = useState(false);
+  const [errorGoogle, setErrorGoogle] = useState("");
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  async function handleGoogle() {
+    setErrorGoogle(""); setCargandoGoogle(true);
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      const cred = await firebase.auth().signInWithPopup(provider);
+      const uid = cred.user.uid;
+      const idSnap = await db.ref(`fleterosPorUid/${uid}`).get();
+      if (idSnap.exists()) {
+        const perfilSnap = await db.ref(`fleteros/${idSnap.val()}`).get();
+        if (perfilSnap.exists()) {
+          setCargandoGoogle(false);
+          onLogueado(perfilSnap.val());
+          return;
+        }
+      }
+      // Cuenta nueva: prellenamos nombre/email y saltamos la contraseña
+      setGoogle({ uid, email: cred.user.email || "" });
+      setForm(f => ({ ...f, nombre: cred.user.displayName || f.nombre, email: cred.user.email || f.email }));
+      setModo("registro");
+      setCargandoGoogle(false);
+    } catch (e) {
+      setCargandoGoogle(false);
+      if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
+      setErrorGoogle("No pudimos continuar con Google. Probá de nuevo.");
+    }
+  }
+
   if (modo === "login") {
-    return <LoginFletero onBack={() => setModo("registro")} onLogueado={onLogueado} />;
+    return <LoginFletero onBack={() => setModo("registro")} onLogueado={onLogueado} onGoogle={handleGoogle} cargandoGoogle={cargandoGoogle} errorGoogle={errorGoogle} />;
   }
 
   async function enviar() {
     if (!form.nombre || !form.telefono || !form.ciudad) {
       setError("Completá tu nombre, teléfono y ciudad para continuar."); return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((form.email || "").trim())) {
-      setError("Ingresá un email válido — lo vas a necesitar para recuperar tu cuenta."); return;
+    if (!google) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((form.email || "").trim())) {
+        setError("Ingresá un email válido — lo vas a necesitar para recuperar tu cuenta."); return;
+      }
+      if (!form.password || form.password.length < 6) { setError("La contraseña tiene que tener al menos 6 caracteres."); return; }
+      if (form.password !== form.password2) { setError("Las contraseñas no coinciden."); return; }
     }
-    if (!form.password || form.password.length < 6) { setError("La contraseña tiene que tener al menos 6 caracteres."); return; }
-    if (form.password !== form.password2) { setError("Las contraseñas no coinciden."); return; }
     setError("");
     try {
-      const cred = await firebase.auth().createUserWithEmailAndPassword(form.email.trim(), form.password);
-      const uid = cred.user.uid;
+      let uid;
+      if (google) {
+        uid = google.uid;
+      } else {
+        const cred = await firebase.auth().createUserWithEmailAndPassword(form.email.trim(), form.password);
+        uid = cred.user.uid;
+      }
       const id = 'flt-' + form.telefono.replace(/\D/g, '') + '-' + Date.now().toString(36);
       const { password, password2, ...formSinPassword } = form;
       const perfil = { ...formSinPassword, id, authUid: uid, creadoEn: Date.now() };
@@ -573,24 +635,41 @@ function RegistroFletero({ onListo, onLogueado }) {
       <div style={{ background: "#fff", flex: 1, borderRadius: "24px 24px 0 0", marginTop: -20, padding: "32px 24px 40px" }}>
         <div style={{ maxWidth: 420, margin: "0 auto" }}>
           <h1 style={{ fontSize: 19, fontWeight: 700, marginBottom: 4 }}>Registrate como fletero</h1>
-          <p style={{ fontSize: 13, color: "#888", marginBottom: 22 }}>Es gratis, te lleva un minuto.</p>
+          <p style={{ fontSize: 13, color: "#888", marginBottom: 18 }}>Es gratis, te lleva un minuto.</p>
+
+          {!google && (
+            <>
+              <BotonGoogle onClick={handleGoogle} cargando={cargandoGoogle} />
+              {errorGoogle && <p style={{ fontSize: 12.5, color: "#c0392b", textAlign: "center", marginTop: 8 }}>{errorGoogle}</p>}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "18px 0" }}>
+                <div style={{ flex: 1, height: 1, background: "#eee" }} />
+                <span style={{ fontSize: 12, color: "#aaa" }}>o con email</span>
+                <div style={{ flex: 1, height: 1, background: "#eee" }} />
+              </div>
+            </>
+          )}
 
           <div className="form-group">
             <label>Nombre y apellido</label>
             <input value={form.nombre} onChange={e => setF('nombre', e.target.value)} placeholder="Ej: Juan Pérez" />
           </div>
           <div className="form-group">
-            <label>Email * (para recuperar tu cuenta más adelante)</label>
-            <input type="email" value={form.email} onChange={e => setF('email', e.target.value)} placeholder="juan@email.com" />
+            <label>Email {google ? "" : "* (para recuperar tu cuenta más adelante)"}</label>
+            <input type="email" value={form.email} onChange={e => setF('email', e.target.value)} placeholder="juan@email.com" disabled={!!google} style={google ? { background: "#f0f0f0", color: "#888" } : undefined} />
+            {google && <p style={{ fontSize: 11, color: "#0F6E56", marginTop: 4 }}>✅ Usando el email de tu cuenta de Google.</p>}
           </div>
-          <div className="form-group">
-            <label>Contraseña *</label>
-            <PasswordInput value={form.password} onChange={e => setF('password', e.target.value)} placeholder="Al menos 6 caracteres" />
-          </div>
-          <div className="form-group">
-            <label>Repetir contraseña *</label>
-            <PasswordInput value={form.password2} onChange={e => setF('password2', e.target.value)} placeholder="Repetí tu contraseña" />
-          </div>
+          {!google && (
+            <>
+              <div className="form-group">
+                <label>Contraseña *</label>
+                <PasswordInput value={form.password} onChange={e => setF('password', e.target.value)} placeholder="Al menos 6 caracteres" />
+              </div>
+              <div className="form-group">
+                <label>Repetir contraseña *</label>
+                <PasswordInput value={form.password2} onChange={e => setF('password2', e.target.value)} placeholder="Repetí tu contraseña" />
+              </div>
+            </>
+          )}
           <div className="form-group">
             <label>Teléfono / WhatsApp</label>
             <input type="tel" value={form.telefono} onChange={e => setF('telefono', e.target.value)} placeholder="Ej: 3764 123456" />

@@ -2815,7 +2815,25 @@ function PasswordInput({ value, onChange, placeholder }) {
   );
 }
 
-function RegistroBienvenida({ onTipo }) {
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48">
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/>
+      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6 29.6 4 24 4c-7.5 0-14 4.2-17.4 10.4z"/>
+      <path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.3-5.1l-6.6-5.4C29.6 35.4 26.9 36 24 36c-5.2 0-9.7-3.3-11.3-8l-6.5 5C9.9 39.7 16.4 44 24 44z"/>
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.5l6.6 5.4C40.5 36.3 44 30.7 44 24c0-1.2-.1-2.4-.4-3.5z"/>
+    </svg>
+  );
+}
+function BotonGoogle({ onClick, cargando }) {
+  return (
+    <button onClick={onClick} disabled={cargando} style={{ background: "#fff", border: "1.5px solid #ddd", borderRadius: 12, padding: "13px 16px", cursor: cargando ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontSize: 14, fontWeight: 600, color: "#3c4043", width: "100%", boxSizing: "border-box", opacity: cargando ? 0.6 : 1 }}>
+      <GoogleIcon />
+      {cargando ? "Conectando…" : "Continuar con Google"}
+    </button>
+  );
+}
+function RegistroBienvenida({ onTipo, onGoogle, cargandoGoogle, errorGoogle }) {
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Mitad superior — naranja */}
@@ -2826,7 +2844,14 @@ function RegistroBienvenida({ onTipo }) {
       {/* Mitad inferior — blanca */}
       <div style={{ background: "#fff", flex: 1, borderRadius: "24px 24px 0 0", marginTop: -20, padding: "32px 24px 40px", display: "flex", flexDirection: "column" }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, color: "#1A1A1A", marginBottom: 6, textAlign: "center" }}>¿Cómo querés registrarte?</h1>
-        <p style={{ fontSize: 13, color: "#888", marginBottom: 28, textAlign: "center" }}>Elegí tu tipo de cuenta para empezar</p>
+        <p style={{ fontSize: 13, color: "#888", marginBottom: 20, textAlign: "center" }}>Elegí tu tipo de cuenta para empezar</p>
+        <BotonGoogle onClick={onGoogle} cargando={cargandoGoogle} />
+        {errorGoogle && <p style={{ fontSize: 12.5, color: "#c0392b", textAlign: "center", marginTop: 8 }}>{errorGoogle}</p>}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "20px 0" }}>
+          <div style={{ flex: 1, height: 1, background: "#eee" }} />
+          <span style={{ fontSize: 12, color: "#aaa" }}>o con email</span>
+          <div style={{ flex: 1, height: 1, background: "#eee" }} />
+        </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <button onClick={() => onTipo("empresa")} style={{ background: "#fff", border: "2px solid #E85D20", borderRadius: 14, padding: "18px 16px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
             <span style={{ fontSize: 30 }}>🏢</span>
@@ -2850,8 +2875,38 @@ function RegistroBienvenida({ onTipo }) {
     </div>
   );
 }
+function ElegirTipoGoogle({ onTipo, onCancelar }) {
+  return (
+    <div style={{ minHeight: "100vh", background: "#f7f7f5", display: "flex", flexDirection: "column" }}>
+      <div style={{ background: "#2C2C2A", padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+        <button onClick={onCancelar} style={{ background: "none", border: "none", color: "#fff", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: 0 }}>←</button>
+        <FletarLogo size="sm" />
+      </div>
+      <div style={{ padding: "24px 20px", maxWidth: 480, width: "100%", boxSizing: "border-box" }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>Ya casi — ¿cómo vas a usar Fletar?</h2>
+        <p style={{ fontSize: 13, color: "#888", marginBottom: 24 }}>Elegí tu tipo de cuenta para terminar de registrarte.</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <button onClick={() => onTipo("empresa")} style={{ background: "#fff", border: "2px solid #E85D20", borderRadius: 14, padding: "18px 16px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
+            <span style={{ fontSize: 30 }}>🏢</span>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 15, color: "#1A1A1A", marginBottom: 3 }}>Empresa</div>
+              <div style={{ fontSize: 12, color: "#888" }}>Razón social, CUIT y datos de contacto</div>
+            </div>
+          </button>
+          <button onClick={() => onTipo("persona")} style={{ background: "#fff", border: "2px solid #e8e8e8", borderRadius: 14, padding: "18px 16px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
+            <span style={{ fontSize: 30 }}>👤</span>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 15, color: "#1A1A1A", marginBottom: 3 }}>Persona Física</div>
+              <div style={{ fontSize: 12, color: "#888" }}>Nombre y número de teléfono</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-function LoginCliente({ onBack, onLogueado }) {
+function LoginCliente({ onBack, onLogueado, onGoogle, cargandoGoogle, errorGoogle }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -2900,7 +2955,15 @@ function LoginCliente({ onBack, onLogueado }) {
       </div>
       <div style={{ padding: "24px 20px", maxWidth: 480, width: "100%", boxSizing: "border-box" }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>Iniciar sesión</h2>
-        <p style={{ fontSize: 13, color: "#888", marginBottom: 24 }}>Entrá con el email y la contraseña con la que te registraste.</p>
+        <p style={{ fontSize: 13, color: "#888", marginBottom: 20 }}>Entrá con el email y la contraseña con la que te registraste.</p>
+
+        <BotonGoogle onClick={onGoogle} cargando={cargandoGoogle} />
+        {errorGoogle && <p style={{ fontSize: 12.5, color: "#c0392b", textAlign: "center", marginTop: 8 }}>{errorGoogle}</p>}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "20px 0" }}>
+          <div style={{ flex: 1, height: 1, background: "#eee" }} />
+          <span style={{ fontSize: 12, color: "#aaa" }}>o con email</span>
+          <div style={{ flex: 1, height: 1, background: "#eee" }} />
+        </div>
 
         <label style={labelStyle}>Email</label>
         <input style={inputStyle} value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@mail.com" inputMode="email" type="email" />
@@ -2920,8 +2983,8 @@ function LoginCliente({ onBack, onLogueado }) {
   );
 }
 
-function RegistroEmpresa({ onBack, onNext }) {
-  const [form, setForm] = useState({ razonSocial: "", cuit: "", contactoNombre: "", contactoApellido: "", telefono: "", email: "", password: "", password2: "", ciudad: "", provincia: "", lat: null, lon: null });
+function RegistroEmpresa({ onBack, onNext, google }) {
+  const [form, setForm] = useState({ razonSocial: "", cuit: "", contactoNombre: google?.nombre || "", contactoApellido: google?.apellido || "", telefono: "", email: google?.email || "", password: "", password2: "", ciudad: "", provincia: "", lat: null, lon: null });
   const [error, setError] = useState("");
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -2930,12 +2993,14 @@ function RegistroEmpresa({ onBack, onNext }) {
     if (!form.cuit.trim() || form.cuit.replace(/\D/g,'').length < 10) { setError("Ingresá un CUIT válido (11 dígitos)."); return; }
     if (!form.telefono.trim()) { setError("El teléfono es requerido."); return; }
     if (!form.ciudad.trim()) { setError("Seleccioná la ciudad de la empresa desde el listado de sugerencias."); return; }
-    if (!emailValido(form.email)) { setError("Ingresá un email válido (lo vas a necesitar para recuperar tu cuenta)."); return; }
-    if (!form.password || form.password.length < 6) { setError("La contraseña tiene que tener al menos 6 caracteres."); return; }
-    if (form.password !== form.password2) { setError("Las contraseñas no coinciden."); return; }
+    if (!google) {
+      if (!emailValido(form.email)) { setError("Ingresá un email válido (lo vas a necesitar para recuperar tu cuenta)."); return; }
+      if (!form.password || form.password.length < 6) { setError("La contraseña tiene que tener al menos 6 caracteres."); return; }
+      if (form.password !== form.password2) { setError("Las contraseñas no coinciden."); return; }
+    }
     setError("");
     const contacto = [form.contactoNombre.trim(), form.contactoApellido.trim()].filter(Boolean).join(" ");
-    onNext({ tipo: "empresa", nombre: form.razonSocial.trim(), razonSocial: form.razonSocial.trim(), cuit: form.cuit.trim(), contacto, telefono: form.telefono.trim(), email: form.email.trim(), password: form.password, ciudad: form.ciudad, provincia: form.provincia, lat: form.lat, lon: form.lon });
+    onNext({ tipo: "empresa", nombre: form.razonSocial.trim(), razonSocial: form.razonSocial.trim(), cuit: form.cuit.trim(), contacto, telefono: form.telefono.trim(), email: google ? google.email : form.email.trim(), password: google ? null : form.password, ciudad: form.ciudad, provincia: form.provincia, lat: form.lat, lon: form.lon, uid: google ? google.uid : null });
   }
 
   return (
@@ -2976,17 +3041,21 @@ function RegistroEmpresa({ onBack, onNext }) {
         <div style={{ marginBottom: 12 }} />
 
         <label style={labelStyle}>Email *</label>
-        <input style={inputStyle} value={form.email} onChange={e => set("email", e.target.value)} placeholder="empresa@mail.com" inputMode="email" type="email" />
-        <p style={helperStyle}>💡 La vas a necesitar para recuperar tu cuenta si cambiás de celular.</p>
+        <input style={{ ...inputStyle, ...(google ? { background: "#f0f0f0", color: "#888" } : {}) }} value={form.email} onChange={e => set("email", e.target.value)} placeholder="empresa@mail.com" inputMode="email" type="email" disabled={!!google} />
+        <p style={helperStyle}>{google ? "✅ Usando el email de tu cuenta de Google." : "💡 La vas a necesitar para recuperar tu cuenta si cambiás de celular."}</p>
         <div style={{ marginBottom: 12 }} />
 
-        <label style={labelStyle}>Contraseña *</label>
-        <PasswordInput value={form.password} onChange={e => set("password", e.target.value)} placeholder="Al menos 6 caracteres" />
-        <div style={{ marginBottom: 12 }} />
+        {!google && (
+          <>
+            <label style={labelStyle}>Contraseña *</label>
+            <PasswordInput value={form.password} onChange={e => set("password", e.target.value)} placeholder="Al menos 6 caracteres" />
+            <div style={{ marginBottom: 12 }} />
 
-        <label style={labelStyle}>Repetir contraseña *</label>
-        <PasswordInput value={form.password2} onChange={e => set("password2", e.target.value)} placeholder="Repetí tu contraseña" />
-        <div style={{ marginBottom: 20 }} />
+            <label style={labelStyle}>Repetir contraseña *</label>
+            <PasswordInput value={form.password2} onChange={e => set("password2", e.target.value)} placeholder="Repetí tu contraseña" />
+            <div style={{ marginBottom: 20 }} />
+          </>
+        )}
 
         {error && <div style={{ background: "#fff3f0", border: "1px solid #fcc", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "#c0392b", marginBottom: 16 }}>{error}</div>}
         <button style={btnPrimary} onClick={continuar}>Continuar</button>
@@ -2995,8 +3064,8 @@ function RegistroEmpresa({ onBack, onNext }) {
   );
 }
 
-function RegistroPersona({ onBack, onNext }) {
-  const [form, setForm] = useState({ nombre: "", apellido: "", telefono: "", email: "", password: "", password2: "", cuit: "", ciudad: "", provincia: "", lat: null, lon: null });
+function RegistroPersona({ onBack, onNext, google }) {
+  const [form, setForm] = useState({ nombre: google?.nombre || "", apellido: google?.apellido || "", telefono: "", email: google?.email || "", password: "", password2: "", cuit: "", ciudad: "", provincia: "", lat: null, lon: null });
   const [error, setError] = useState("");
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -3005,12 +3074,14 @@ function RegistroPersona({ onBack, onNext }) {
     if (!form.apellido.trim()) { setError("El apellido es requerido."); return; }
     if (!form.telefono.trim()) { setError("El teléfono es requerido."); return; }
     if (!form.ciudad.trim()) { setError("Seleccioná tu ciudad desde el listado de sugerencias."); return; }
-    if (!emailValido(form.email)) { setError("Ingresá un email válido (lo vas a necesitar para recuperar tu cuenta)."); return; }
-    if (!form.password || form.password.length < 6) { setError("La contraseña tiene que tener al menos 6 caracteres."); return; }
-    if (form.password !== form.password2) { setError("Las contraseñas no coinciden."); return; }
+    if (!google) {
+      if (!emailValido(form.email)) { setError("Ingresá un email válido (lo vas a necesitar para recuperar tu cuenta)."); return; }
+      if (!form.password || form.password.length < 6) { setError("La contraseña tiene que tener al menos 6 caracteres."); return; }
+      if (form.password !== form.password2) { setError("Las contraseñas no coinciden."); return; }
+    }
     setError("");
     const nombreCompleto = form.nombre.trim() + " " + form.apellido.trim();
-    onNext({ tipo: "persona", nombre: nombreCompleto, apellido: form.apellido.trim(), telefono: form.telefono.trim(), email: form.email.trim(), password: form.password, cuit: form.cuit.trim(), ciudad: form.ciudad, provincia: form.provincia, lat: form.lat, lon: form.lon });
+    onNext({ tipo: "persona", nombre: nombreCompleto, apellido: form.apellido.trim(), telefono: form.telefono.trim(), email: google ? google.email : form.email.trim(), password: google ? null : form.password, cuit: form.cuit.trim(), ciudad: form.ciudad, provincia: form.provincia, lat: form.lat, lon: form.lon, uid: google ? google.uid : null });
   }
 
   return (
@@ -3043,17 +3114,21 @@ function RegistroPersona({ onBack, onNext }) {
         <div style={{ marginBottom: 12 }} />
 
         <label style={labelStyle}>Email *</label>
-        <input style={inputStyle} value={form.email} onChange={e => set("email", e.target.value)} placeholder="tu@mail.com" inputMode="email" type="email" />
-        <p style={helperStyle}>💡 La vas a necesitar para recuperar tu cuenta si algún día cambiás de número de teléfono.</p>
+        <input style={{ ...inputStyle, ...(google ? { background: "#f0f0f0", color: "#888" } : {}) }} value={form.email} onChange={e => set("email", e.target.value)} placeholder="tu@mail.com" inputMode="email" type="email" disabled={!!google} />
+        <p style={helperStyle}>{google ? "✅ Usando el email de tu cuenta de Google." : "💡 La vas a necesitar para recuperar tu cuenta si algún día cambiás de número de teléfono."}</p>
         <div style={{ marginBottom: 8 }} />
 
-        <label style={labelStyle}>Contraseña *</label>
-        <PasswordInput value={form.password} onChange={e => set("password", e.target.value)} placeholder="Al menos 6 caracteres" />
-        <div style={{ marginBottom: 12 }} />
+        {!google && (
+          <>
+            <label style={labelStyle}>Contraseña *</label>
+            <PasswordInput value={form.password} onChange={e => set("password", e.target.value)} placeholder="Al menos 6 caracteres" />
+            <div style={{ marginBottom: 12 }} />
 
-        <label style={labelStyle}>Repetir contraseña *</label>
-        <PasswordInput value={form.password2} onChange={e => set("password2", e.target.value)} placeholder="Repetí tu contraseña" />
-        <div style={{ marginBottom: 12 }} />
+            <label style={labelStyle}>Repetir contraseña *</label>
+            <PasswordInput value={form.password2} onChange={e => set("password2", e.target.value)} placeholder="Repetí tu contraseña" />
+            <div style={{ marginBottom: 12 }} />
+          </>
+        )}
 
         <label style={labelStyle}>CUIT <span style={{ color: "#aaa", fontWeight: 400 }}>(opcional)</span></label>
         <input style={inputStyle} value={form.cuit} onChange={e => set("cuit", e.target.value)} placeholder="XX-XXXXXXXX-X" inputMode="numeric" />
@@ -3171,18 +3246,54 @@ function RegistroFlow({ onDone, onLogueado }) {
   const [paso, setPaso] = useState("bienvenida");
   const [tipo, setTipo] = useState(null);
   const [datos, setDatos] = useState(null);
+  const [google, setGoogle] = useState(null); // { uid, email, nombre, apellido }
+  const [cargandoGoogle, setCargandoGoogle] = useState(false);
+  const [errorGoogle, setErrorGoogle] = useState("");
+
+  async function handleGoogle() {
+    setErrorGoogle(""); setCargandoGoogle(true);
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      const cred = await firebase.auth().signInWithPopup(provider);
+      const uid = cred.user.uid;
+      const telSnap = await firebase.database().ref(`clientesPorUid/${uid}`).get();
+      if (telSnap.exists()) {
+        const perfilSnap = await firebase.database().ref(`clientes/${telSnap.val()}`).get();
+        if (perfilSnap.exists()) {
+          setCargandoGoogle(false);
+          onLogueado(perfilSnap.val());
+          return;
+        }
+      }
+      // Cuenta nueva: falta elegir tipo y completar datos
+      const nombreCompleto = (cred.user.displayName || "").trim();
+      const partes = nombreCompleto.split(" ");
+      const nombre = partes[0] || "";
+      const apellido = partes.slice(1).join(" ") || "";
+      setGoogle({ uid, email: cred.user.email || "", nombre, apellido });
+      setCargandoGoogle(false);
+      setPaso("elegir-tipo");
+    } catch (e) {
+      setCargandoGoogle(false);
+      if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
+      setErrorGoogle("No pudimos continuar con Google. Probá de nuevo.");
+    }
+  }
 
   if (paso === "bienvenida") {
-    return <RegistroBienvenida onTipo={(t) => { setTipo(t); setPaso(t === "login" ? "login" : "datos"); }} />;
+    return <RegistroBienvenida onTipo={(t) => { setTipo(t); setPaso(t === "login" ? "login" : "datos"); }} onGoogle={handleGoogle} cargandoGoogle={cargandoGoogle} errorGoogle={errorGoogle} />;
+  }
+  if (paso === "elegir-tipo") {
+    return <ElegirTipoGoogle onTipo={(t) => { setTipo(t); setPaso("datos"); }} onCancelar={() => { firebase.auth().signOut(); setGoogle(null); setPaso("bienvenida"); }} />;
   }
   if (paso === "login") {
-    return <LoginCliente onBack={() => setPaso("bienvenida")} onLogueado={onLogueado} />;
+    return <LoginCliente onBack={() => setPaso("bienvenida")} onLogueado={onLogueado} onGoogle={handleGoogle} cargandoGoogle={cargandoGoogle} errorGoogle={errorGoogle} />;
   }
   if (paso === "datos" && tipo === "empresa") {
-    return <RegistroEmpresa onBack={() => setPaso("bienvenida")} onNext={(d) => { setDatos(d); setPaso("direccion"); }} />;
+    return <RegistroEmpresa onBack={() => setPaso(google ? "elegir-tipo" : "bienvenida")} onNext={(d) => { setDatos(d); setPaso("direccion"); }} google={google} />;
   }
   if (paso === "datos" && tipo === "persona") {
-    return <RegistroPersona onBack={() => setPaso("bienvenida")} onNext={(d) => { setDatos(d); setPaso("direccion"); }} />;
+    return <RegistroPersona onBack={() => setPaso(google ? "elegir-tipo" : "bienvenida")} onNext={(d) => { setDatos(d); setPaso("direccion"); }} google={google} />;
   }
   if (paso === "direccion") {
     return <RegistroDireccion datosPrevios={datos} onDone={(dir) => onDone({ ...datos, direccion: dir })} />;
@@ -3316,9 +3427,15 @@ function App() {
   async function handleRegistroDone(perfil) {
     const tel = perfil.telefono.replace(/\D/g, '');
     try {
-      const cred = await firebase.auth().createUserWithEmailAndPassword(perfil.email.trim(), perfil.password);
-      const uid = cred.user.uid;
-      const { password, ...perfilSinPassword } = perfil;
+      let uid;
+      if (perfil.uid) {
+        // Ya autenticado con Google — no hace falta crear cuenta con contraseña
+        uid = perfil.uid;
+      } else {
+        const cred = await firebase.auth().createUserWithEmailAndPassword(perfil.email.trim(), perfil.password);
+        uid = cred.user.uid;
+      }
+      const { password, uid: _uid, ...perfilSinPassword } = perfil;
       const id = 'cli-' + tel + '-' + Date.now().toString(36);
       const perfilCompleto = { ...perfilSinPassword, id, authUid: uid };
       USUARIO_CLIENTE = perfilCompleto;
