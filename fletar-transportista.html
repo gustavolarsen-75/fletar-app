@@ -512,7 +512,9 @@ function Navbar({ onNav, screen, sucursalNombre, rating }) {
       {mostrarPerfil && (
         <div onClick={e => e.stopPropagation()} style={{ position: "fixed", top: 60, right: 10, background: "#fff", border: "1px solid #e0e0e0", borderRadius: 10, padding: "14px 16px", width: 240, boxShadow: "0 4px 20px rgba(0,0,0,0.15)", zIndex: 200 }}>
           <div style={{ fontWeight: 500, fontSize: 14, color: "#1A1A1A", marginBottom: 2 }}>{USUARIO_TRANS.nombre}</div>
-          <div style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>{USUARIO_TRANS.email}</div>
+          <div style={{ fontSize: 12, color: "#888", marginBottom: 2 }}>{USUARIO_TRANS.email}</div>
+          {USUARIO_TRANS.telefono && <div style={{ fontSize: 12, color: "#888", marginBottom: 2 }}>📞 {USUARIO_TRANS.telefono}</div>}
+          {USUARIO_TRANS.cuit && <div style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>CUIT/CUIL: {USUARIO_TRANS.cuit}</div>}
           <div style={{ borderTop: "1px solid #f0f0f0", paddingTop: 12 }}>
             <div style={{ fontSize: 12, color: "#555", marginBottom: 6 }}>📱 WhatsApp para notificaciones</div>
             <input
@@ -5156,6 +5158,8 @@ function RegistroTransportista({ onListo, onLogueado }) {
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [nombre, setNombre] = useState("");
+  const [cuit, setCuit] = useState("");
+  const [telefono, setTelefono] = useState("");
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
@@ -5177,6 +5181,9 @@ function RegistroTransportista({ onListo, onLogueado }) {
   async function crear() {
     if (!esBootstrap && !nombre.trim()) { setError("Ingresá tu nombre o el de tu empresa de transporte."); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError("Ingresá un email válido."); return; }
+    const cuitDigits = cuit.replace(/\D/g, '');
+    if (cuitDigits.length !== 11) { setError("Ingresá un CUIT/CUIL válido (11 números, ej: 20-12345678-9)."); return; }
+    if (!telefono.trim()) { setError("Ingresá un teléfono de contacto."); return; }
     if (!password || password.length < 6) { setError("La contraseña tiene que tener al menos 6 caracteres."); return; }
     if (password !== password2) { setError("Las contraseñas no coinciden."); return; }
     setError(""); setCargando(true);
@@ -5184,8 +5191,8 @@ function RegistroTransportista({ onListo, onLogueado }) {
       const cred = await firebase.auth().createUserWithEmailAndPassword(email.trim(), password);
       const uid = cred.user.uid;
       const perfil = esBootstrap
-        ? { ...PERFIL_TRANS001_ORIGINAL, email: email.trim(), authUid: uid }
-        : { id: 'trans-' + Date.now().toString(36), nombre: nombre.trim(), email: email.trim(), authUid: uid, tipo: "transportista", calificacion: 0, viajes: 0, vehiculo: "", foto: nombre.trim()[0]?.toUpperCase() || "T" };
+        ? { ...PERFIL_TRANS001_ORIGINAL, email: email.trim(), cuit: cuitDigits, telefono: telefono.trim(), authUid: uid }
+        : { id: 'trans-' + Date.now().toString(36), nombre: nombre.trim(), email: email.trim(), cuit: cuitDigits, telefono: telefono.trim(), authUid: uid, tipo: "transportista", calificacion: 0, viajes: 0, vehiculo: "", foto: nombre.trim()[0]?.toUpperCase() || "T" };
       await db.ref(`transportistas/${perfil.id}`).set(perfil);
       await db.ref(`transportistasPorUid/${uid}`).set(perfil.id);
       USUARIO_TRANS = perfil;
@@ -5216,6 +5223,14 @@ function RegistroTransportista({ onListo, onLogueado }) {
         <div className="form-group">
           <label>Email</label>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" />
+        </div>
+        <div className="form-group">
+          <label>Teléfono de contacto</label>
+          <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="Ej: 3764 412345" />
+        </div>
+        <div className="form-group">
+          <label>CUIT / CUIL</label>
+          <input value={cuit} onChange={e => setCuit(e.target.value)} placeholder="Ej: 20-12345678-9" />
         </div>
         <div className="form-group">
           <label>Contraseña</label>
