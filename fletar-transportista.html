@@ -12,7 +12,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
   <script>
-    firebase.initializeApp({
+    const FIREBASE_CONFIG = {
       apiKey: "AIzaSyBIhZzpTRlNEG2x9dMdNTQ3ILvcRAaSJ-o",
       authDomain: "fletar-49e36.firebaseapp.com",
       databaseURL: "https://fletar-49e36-default-rtdb.firebaseio.com",
@@ -20,8 +20,16 @@
       storageBucket: "fletar-49e36.firebasestorage.app",
       messagingSenderId: "698884616195",
       appId: "1:698884616195:web:c42078e969cdf5268e9e36"
-    });
+    };
+    firebase.initializeApp(FIREBASE_CONFIG);
     const db = firebase.database();
+    // App secundaria de Firebase, solo para crear/gestionar la cuenta interna de
+    // una sucursal (email inventado + PIN como contraseña) sin desloguear al
+    // dueño de su propia sesión mientras lo hace.
+    const authSucursal = firebase.initializeApp(FIREBASE_CONFIG, 'sucursalAuth').auth();
+    function sucursalAuthEmail(sucursalId, version) {
+      return `suc-${sucursalId}-v${version || 1}@fletar.internal`;
+    }
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
   <style>
@@ -1963,14 +1971,18 @@ function TransportistaDashboard({ onNav, setCargaSeleccionada, setRemitoActivo, 
             {/* ── Header Rendiciones + ⚙️ ── */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 4 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: '#5A6A78' }}>Rendiciones</span>
-              <button onClick={() => setGastosConfigOpen(o => !o)}
-                style={{ background: gastosConfigOpen ? '#E6F1FB' : 'transparent', border: '1px solid #DDE3EA', borderRadius: 7, padding: '4px 10px', fontSize: 12, color: gastosConfigOpen ? '#185FA5' : '#5A6A78', cursor: 'pointer' }}>
-                ⚙️ Gastos permitidos
-              </button>
+              {/* Solo la empresa (central) define qué categorías de gastos existen.
+                  Una sucursal solo carga montos de esas categorías al cerrar su turno. */}
+              {ES_CENTRAL && (
+                <button onClick={() => setGastosConfigOpen(o => !o)}
+                  style={{ background: gastosConfigOpen ? '#E6F1FB' : 'transparent', border: '1px solid #DDE3EA', borderRadius: 7, padding: '4px 10px', fontSize: 12, color: gastosConfigOpen ? '#185FA5' : '#5A6A78', cursor: 'pointer' }}>
+                  ⚙️ Gastos permitidos
+                </button>
+              )}
             </div>
 
-            {/* ── Panel config gastos ── */}
-            {gastosConfigOpen && (
+            {/* ── Panel config gastos (solo central) ── */}
+            {ES_CENTRAL && gastosConfigOpen && (
               <div style={{ background: '#F8FAFF', border: '1px solid #C8DCFA', borderRadius: 12, padding: 14 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A', marginBottom: 4 }}>Gastos que puede registrar el operador al cerrar turno</div>
                 <div style={{ fontSize: 11, color: '#5A6A78', marginBottom: 12 }}>Activá solo los que aplican a tu operación. Los desactivados no aparecen en el cierre de turno.</div>
@@ -4291,6 +4303,9 @@ function SucursalesManager({ onNav }) {
   const [editandoId, setEditandoId] = useState(null);
   const [copiado, setCopiado] = useState(null);
   const [ciudadCustomInput, setCiudadCustomInput] = useState("");
+  const [pin, setPin] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [pinCreado, setPinCreado] = useState(null); // { nombre, pin } — se muestra una sola vez
 
   useEffect(() => {
     const ref = db.ref('sucursales');
@@ -4308,16 +4323,55 @@ function SucursalesManager({ onNav }) {
     setCiudadesSelec(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
   }
 
-  function guardar() {
+  async function guardar() {
     if (!nombre.trim()) { alert("Ingresá un nombre para la sucursal."); return; }
     if (ciudadesSelec.length === 0) { alert("Seleccioná al menos una localidad."); return; }
+    if (!editandoId && !/^\d{6}$/.test(pin)) { alert("Ingresá un PIN de 6 números para que el encargado de esta sucursal pueda entrar."); return; }
     const idBase = nombre.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"");
     // Las sucursales nuevas llevan el id de la empresa adelante, para que dos
     // empresas no puedan pisarse si eligen un nombre de sucursal parecido.
     const id = editandoId || `${USUARIO_TRANS.id}_${idBase}`;
-    const data = { id, nombre: nombre.trim(), ciudades: ciudadesSelec, transportistaId: USUARIO_TRANS.id };
-    db.ref('sucursales/' + id).set(data);
-    setCreando(false); setEditandoId(null); setNombre(""); setCiudadesSelec([]);
+    setGuardando(true);
+    try {
+      let authVersion = 1, authUid = null;
+      if (!editandoId) {
+        // Nueva sucursal: crear su cuenta de acceso (el PIN es su contraseña).
+        // Se usa una app secundaria de Firebase para no desloguear al dueño.
+        const cred = await authSucursal.createUserWithEmailAndPassword(sucursalAuthEmail(id, 1), pin);
+        authUid = cred.user.uid;
+        await db.ref('sucursalesPorUid/' + authUid).set(id);
+        await authSucursal.signOut();
+      } else {
+        const prevSnap = await db.ref('sucursales/' + id).get();
+        const prev = prevSnap.val() || {};
+        authVersion = prev.authVersion || 1;
+        authUid = prev.authUid || null;
+      }
+      const data = { id, nombre: nombre.trim(), ciudades: ciudadesSelec, transportistaId: USUARIO_TRANS.id, authVersion, authUid };
+      await db.ref('sucursales/' + id).set(data);
+      if (!editandoId) setPinCreado({ nombre: nombre.trim(), pin });
+      setCreando(false); setEditandoId(null); setNombre(""); setCiudadesSelec([]); setPin("");
+    } catch (e) {
+      alert(e.code === 'auth/email-already-in-use' ? "Ya existe una sucursal con ese nombre. Probá con otro." : "No pudimos guardar la sucursal. Probá de nuevo.");
+    }
+    setGuardando(false);
+  }
+
+  async function regenerarPin(s) {
+    const nuevoPin = prompt(`Ingresá el nuevo PIN de 6 números para "${s.nombre}". El PIN anterior va a dejar de funcionar.`);
+    if (nuevoPin === null) return;
+    if (!/^\d{6}$/.test(nuevoPin)) { alert("Tiene que ser un PIN de 6 números."); return; }
+    try {
+      const nuevaVersion = (s.authVersion || 1) + 1;
+      const cred = await authSucursal.createUserWithEmailAndPassword(sucursalAuthEmail(s.id, nuevaVersion), nuevoPin);
+      await db.ref('sucursalesPorUid/' + cred.user.uid).set(s.id);
+      await authSucursal.signOut();
+      if (s.authUid) await db.ref('sucursalesPorUid/' + s.authUid).remove();
+      await db.ref('sucursales/' + s.id).update({ authVersion: nuevaVersion, authUid: cred.user.uid });
+      alert(`Nuevo PIN de "${s.nombre}": ${nuevoPin}\n\nCompartíselo al encargado — el PIN anterior ya no sirve.`);
+    } catch (e) {
+      alert("No pudimos cambiar el PIN. Probá de nuevo.");
+    }
   }
 
   function eliminar(id) {
@@ -4342,7 +4396,7 @@ function SucursalesManager({ onNav }) {
   function compartirLink(s) {
     const base = window.location.href.split('?')[0];
     const link = `${base}?sucursal=${s.id}`;
-    const texto = `App Fletar — ${s.nombre}:\n${link}`;
+    const texto = `App Fletar — ${s.nombre}:\n${link}\n\n(Te va a pedir el PIN de la sucursal para entrar)`;
     if (navigator.share) {
       navigator.share({ title: `Fletar — ${s.nombre}`, url: link, text: texto }).catch(() => {});
     } else {
@@ -4365,7 +4419,18 @@ function SucursalesManager({ onNav }) {
         )}
       </div>
 
-      <GuiaSeccion id="sucursales" icono="🏢" titulo="¿Para qué sirve esto?" texto="Creá acá una sucursal por cada punto de atención de tu empresa. Cada una recibe solo los pedidos de las localidades que le asignes, y tiene su propio link para que el encargado del mostrador la use sin ver el resto de la operación." />
+      <GuiaSeccion id="sucursales" icono="🏢" titulo="¿Para qué sirve esto?" texto="Creá acá una sucursal por cada punto de atención de tu empresa. Cada una tiene su propio PIN y link: el encargado del mostrador entra con el PIN y solo ve los pedidos de las localidades que le asignes, sin acceso al resto de la operación." />
+
+      {pinCreado && (
+        <div className="card" style={{ background: "#E1F5EE", border: "1px solid #0F6E56", marginBottom: 16, padding: "14px 16px" }}>
+          <div style={{ fontWeight: 600, fontSize: 14, color: "#0F6E56", marginBottom: 4 }}>✓ Sucursal "{pinCreado.nombre}" creada</div>
+          <div style={{ fontSize: 13, color: "#1A1A1A", marginBottom: 8 }}>
+            PIN de acceso: <strong style={{ fontFamily: "monospace", fontSize: 16 }}>{pinCreado.pin}</strong>
+          </div>
+          <div style={{ fontSize: 12, color: "#5A6A78", marginBottom: 10 }}>Compartíselo al encargado de esta sucursal junto con el link — no vas a poder ver este PIN de nuevo (pero podés generar uno nuevo cuando quieras con "Regenerar PIN").</div>
+          <button onClick={() => setPinCreado(null)} style={{ background: "none", border: "none", color: "#0F6E56", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Entendido</button>
+        </div>
+      )}
 
       {creando && (
         <div style={{ background: "#fff", border: "1px solid #DDE3EA", borderRadius: 12, padding: 20, marginBottom: 20 }}>
@@ -4418,12 +4483,20 @@ function SucursalesManager({ onNav }) {
               }} style={{ background: "#185FA5", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 18, cursor: "pointer" }}>+</button>
             </div>
           </div>
+          {!editandoId && (
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 12, fontWeight: 500, color: "#5A6A78", display: "block", marginBottom: 4 }}>PIN de acceso (6 números)</label>
+              <input value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Ej: 483920" inputMode="numeric"
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid #DDE3EA", fontSize: 14, fontFamily: "monospace" }} />
+              <p style={{ fontSize: 11, color: "#888", marginTop: 4 }}>Se lo vas a compartir al encargado de esta sucursal para que entre. Podés cambiarlo después con "Regenerar PIN".</p>
+            </div>
+          )}
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={guardar}
+            <button onClick={guardar} disabled={guardando}
               style={{ flex: 1, background: "#0F6E56", color: "#fff", border: "none", borderRadius: 9, padding: 12, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-              ✓ Guardar sucursal
+              {guardando ? "Guardando…" : "✓ Guardar sucursal"}
             </button>
-            <button onClick={() => { setCreando(false); setEditandoId(null); }}
+            <button onClick={() => { setCreando(false); setEditandoId(null); setPin(""); }}
               style={{ padding: "12px 20px", background: "#F0F4F8", color: "#5A6A78", border: "none", borderRadius: 9, fontSize: 14, cursor: "pointer" }}>
               Cancelar
             </button>
@@ -4477,6 +4550,10 @@ function SucursalesManager({ onNav }) {
             <button onClick={() => compartirLink(s)}
               style={{ flex: 1, minWidth: 100, background: "#0F6E56", color: "#fff", border: "none", borderRadius: 8, padding: "9px 14px", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
               📤 Enviar
+            </button>
+            <button onClick={() => regenerarPin(s)}
+              style={{ flex: 1, minWidth: 100, background: "#FEF3EC", color: "#C44A0F", border: "none", borderRadius: 8, padding: "9px 14px", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
+              🔑 Regenerar PIN
             </button>
           </div>
         </div>
@@ -5353,6 +5430,85 @@ function AppGate() {
   return <App />;
 }
 
+// ─── LOGIN-GATE de sucursal: pide el PIN en vez del login de la empresa ──────
+function SucursalGate() {
+  const [estado, setEstado] = useState("cargando"); // cargando | pin | listo | error
+  const [pin, setPin] = useState("");
+  const [error, setError] = useState("");
+  const [cargando, setCargando] = useState(false);
+  const [nombreSucursal, setNombreSucursal] = useState("");
+
+  useEffect(() => {
+    const unsub = firebase.auth().onAuthStateChanged(async user => {
+      if (!user) { setEstado("pin"); return; }
+      try {
+        const mapSnap = await db.ref('sucursalesPorUid/' + user.uid).get();
+        if (mapSnap.val() !== SUCURSAL_ID) {
+          // Esta sesión es de otra sucursal (o no corresponde) — pedir el PIN de esta.
+          await firebase.auth().signOut();
+          setEstado("pin");
+          return;
+        }
+        const sucSnap = await db.ref('sucursales/' + SUCURSAL_ID).get();
+        const suc = sucSnap.val();
+        if (!suc) { setError("Este link de sucursal ya no existe."); setEstado("error"); return; }
+        const ownerSnap = await db.ref('transportistas/' + suc.transportistaId).get();
+        if (ownerSnap.exists()) USUARIO_TRANS = ownerSnap.val();
+        setEstado("listo");
+      } catch {
+        setEstado("pin");
+      }
+    });
+    return unsub;
+  }, []);
+
+  async function ingresar() {
+    if (!/^\d{6}$/.test(pin)) { setError("El PIN tiene que tener 6 números."); return; }
+    setError(""); setCargando(true);
+    try {
+      const sucSnap = await db.ref('sucursales/' + SUCURSAL_ID).get();
+      const suc = sucSnap.val();
+      if (!suc) { setError("Este link de sucursal ya no existe."); setCargando(false); return; }
+      setNombreSucursal(suc.nombre || "");
+      await firebase.auth().signInWithEmailAndPassword(sucursalAuthEmail(SUCURSAL_ID, suc.authVersion || 1), pin);
+      // El onAuthStateChanged de arriba se encarga del resto.
+    } catch (e) {
+      setCargando(false);
+      setError("PIN incorrecto.");
+    }
+  }
+
+  if (estado === "cargando") {
+    return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gris-text)", fontSize: 14 }}>Cargando…</div>;
+  }
+  if (estado === "error") {
+    return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, textAlign: "center", color: "var(--gris-text)", fontSize: 14 }}>{error}</div>;
+  }
+  if (estado === "listo") {
+    return <App />;
+  }
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--gris-bg)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div className="card" style={{ maxWidth: 360, width: "100%" }}>
+        <h1 style={{ fontSize: 19, fontWeight: 700, marginBottom: 4 }}>🏢 Acceso de sucursal</h1>
+        <p style={{ fontSize: 13, color: "var(--gris-text)", marginBottom: 20 }}>Ingresá el PIN de 6 números de esta sucursal.</p>
+        <div className="form-group">
+          <label>PIN</label>
+          <input value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Ej: 483920" inputMode="numeric"
+            style={{ fontFamily: "monospace", fontSize: 18, letterSpacing: 2, textAlign: "center" }}
+            onKeyDown={e => { if (e.key === 'Enter') ingresar(); }} />
+        </div>
+        {error && <p style={{ fontSize: 12.5, color: "#c0392b", marginBottom: 14 }}>{error}</p>}
+        <button className="btn-primary" style={{ width: "100%", padding: "12px 0" }} onClick={ingresar} disabled={cargando}>{cargando ? "Ingresando…" : "Ingresar"}</button>
+      </div>
+    </div>
+  );
+}
+
+function RootGate() {
+  return SUCURSAL_ID ? <SucursalGate /> : <AppGate />;
+}
+
 function App() {
   const [screen, setScreen] = useState("trans-dashboard");
   const [cargaSeleccionada, setCargaSeleccionada] = useState(null);
@@ -5532,7 +5688,7 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<AppGate />);
+ReactDOM.createRoot(document.getElementById("root")).render(<RootGate />);
 </script>
 </body>
 </html>
