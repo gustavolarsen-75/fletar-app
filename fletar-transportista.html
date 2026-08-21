@@ -155,6 +155,37 @@ let _perfilTransGuardado = null;
 try { const _v = localStorage.getItem(KEY_TRANS_PERFIL); if (_v) _perfilTransGuardado = JSON.parse(_v); } catch {}
 let USUARIO_TRANS = _perfilTransGuardado || PERFIL_TRANS001_ORIGINAL;
 
+// Filtro único de "¿este remito/oferta es mío?" — usa transportistaId (correcto,
+// no se pisa entre cuentas). Si un registro viejo no tiene transportistaId todavía,
+// cae al nombre como respaldo para no perder datos históricos.
+function esMioPorId(item) {
+  if (!item) return false;
+  if (item.transportistaId != null) return item.transportistaId === USUARIO_TRANS.id;
+  return item.transportistaNombre === USUARIO_TRANS.nombre;
+}
+
+// ─── RUTAS: migración de "guardado por nombre" a "guardado por ID" ───────────
+// Antes las rutas se guardaban en rutas/{nombreSaneado}, lo que hacía que dos
+// cuentas con nombres parecidos pudieran pisarse. Ahora se guardan en
+// rutas/{transportistaId}. Esta función migra una sola vez (si hace falta)
+// los datos viejos a la ubicación nueva, sin borrar el nodo viejo.
+function keyRutasFB() { return `rutas/${USUARIO_TRANS.id}`; }
+// config/gastosConfig era global (todas las cuentas compartían la misma
+// configuración de gastos de mostrador); ahora queda por cuenta.
+function keyGastosConfigFB() { return `config/${USUARIO_TRANS.id}/gastosConfig`; }
+function migrarRutasLegacySiNecesario() {
+  const legacyKey = USUARIO_TRANS.nombre.replace(/[.#$[\]]/g, '_');
+  if (legacyKey === USUARIO_TRANS.id) return;
+  const nuevoRef = db.ref(keyRutasFB());
+  nuevoRef.once('value').then(snap => {
+    if (snap.exists()) return; // ya tiene datos propios, no hay nada que migrar
+    db.ref('rutas/' + legacyKey).once('value').then(legacySnap => {
+      const val = legacySnap.val();
+      if (val) nuevoRef.set(val);
+    }).catch(() => {});
+  }).catch(() => {});
+}
+
 // ─── STORAGE (localStorage compartido entre las dos apps) ─────────────────────
 // ─── FIREBASE HELPERS ─────────────────────────────────────────────────────────
 // localStorage solo para datos privados por dispositivo (flota)
@@ -461,7 +492,7 @@ function Navbar({ onNav, screen, sucursalNombre, rating }) {
   const [telefonoWA, setTelefonoWA] = useState("");
 
   useEffect(() => fbListen('remitos', arr => {
-    setNRemitos(arr.filter(r => r.transportistaNombre === USUARIO_TRANS.nombre).length);
+    setNRemitos(arr.filter(esMioPorId).length);
   }), []);
 
   useEffect(() => {
@@ -534,7 +565,26 @@ function Navbar({ onNav, screen, sucursalNombre, rating }) {
   );
 }
 
-function PageWrapper({ children, titulo, subtitulo, accion }) {
+// ─── GUÍA POR SECCIÓN ─────────────────────────────────────────────────────────
+// Reemplaza al tutorial único de bienvenida: cada sección se explica sola,
+// la primera vez que el usuario entra a ella (se recuerda por sección en localStorage).
+function GuiaSeccion({ id, icono, titulo, texto }) {
+  const key = `fletar_trans_guia_${id}_visto`;
+  const [visible, setVisible] = useState(() => !storageGet(key, false));
+  if (!visible) return null;
+  return (
+    <div className="card" style={{ background: "#E1F5EE", border: "1px solid #0F6E56", marginBottom: 18, padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: 12 }}>
+      <span style={{ fontSize: 24, flexShrink: 0 }}>{icono}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 600, fontSize: 14, color: "#0F6E56", marginBottom: 4 }}>{titulo}</div>
+        <div style={{ fontSize: 13, color: "#1A1A1A", lineHeight: 1.4 }}>{texto}</div>
+      </div>
+      <button onClick={() => { storageSave(key, true); setVisible(false); }} style={{ background: "none", border: "none", color: "#0F6E56", fontWeight: 600, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>Entendido</button>
+    </div>
+  );
+}
+
+function PageWrapper({ children, titulo, subtitulo, accion, guia }) {
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "20px 12px", width: "100%" }}>
       {(titulo || accion) && (
@@ -546,6 +596,7 @@ function PageWrapper({ children, titulo, subtitulo, accion }) {
           {accion}
         </div>
       )}
+      {guia && <GuiaSeccion {...guia} />}
       {children}
     </div>
   );
@@ -622,10 +673,11 @@ function TransportistaDashboard({ onNav, setCargaSeleccionada, setRemitoActivo, 
     const tmRef = db.ref('turnosMostrador');
     const tmCb  = tmRef.on('value', snap => {
       const val = snap.val() || {};
-      setTurnosSucursales(Object.entries(val).map(([id, t]) => ({ ...t, id })).filter(t => t.sucursalId));
+      setTurnosSucursales(Object.entries(val).map(([id, t]) => ({ ...t, id }))
+        .filter(t => t.sucursalId && (t.transportistaId ? t.transportistaId === USUARIO_TRANS.id : USUARIO_TRANS.id === 'trans-001')));
     });
     setFlota(storageGet(KEY_FLOTA, FLOTA_SEMILLA));
-    db.ref('config/gastosConfig').once('value', snap => {
+    db.ref(keyGastosConfigFB()).once('value', snap => {
       const val = snap.val();
       if (val) {
         if (val.toggles) setGastosConfig(val.toggles);
@@ -753,6 +805,7 @@ function TransportistaDashboard({ onNav, setCargaSeleccionada, setRemitoActivo, 
       fecha: fechaStr, hora: horaStr,
       efectivo: ef, digital: dg, neto,
       gastos: gastosEntries, totalGastos: totalGastosMostr,
+      transportistaId: USUARIO_TRANS.id,
       sucursalId: SUCURSAL_ID || null,
       metodoEnvio: metodoEnvio || null,
       numeroOperacion: numeroOperacion || null,
@@ -771,7 +824,7 @@ function TransportistaDashboard({ onNav, setCargaSeleccionada, setRemitoActivo, 
   function toggleGastoConfig(id) {
     const nuevo = { ...gastosConfig, [id]: !gastosConfig[id] };
     setGastosConfig(nuevo);
-    db.ref('config/gastosConfig/toggles').set(nuevo);
+    db.ref(keyGastosConfigFB() + '/toggles').set(nuevo);
   }
   function agregarGastoCustom() {
     if (!gastosCustomInput.trim()) return;
@@ -779,24 +832,24 @@ function TransportistaDashboard({ onNav, setCargaSeleccionada, setRemitoActivo, 
     const nuevo = [...gastosCustom, { id: newId, label: gastosCustomInput.trim() }];
     setGastosCustom(nuevo);
     setGastosCustomInput('');
-    db.ref('config/gastosConfig/custom').set(nuevo);
+    db.ref(keyGastosConfigFB() + '/custom').set(nuevo);
     const nuevoConfig = { ...gastosConfig, [newId]: true };
     setGastosConfig(nuevoConfig);
-    db.ref('config/gastosConfig/toggles').set(nuevoConfig);
+    db.ref(keyGastosConfigFB() + '/toggles').set(nuevoConfig);
   }
   function eliminarGastoCustom(id) {
     const nuevo = gastosCustom.filter(g => g.id !== id);
     setGastosCustom(nuevo);
-    db.ref('config/gastosConfig/custom').set(nuevo.length ? nuevo : null);
+    db.ref(keyGastosConfigFB() + '/custom').set(nuevo.length ? nuevo : null);
     const nuevoConfig = { ...gastosConfig };
     delete nuevoConfig[id];
     setGastosConfig(nuevoConfig);
-    db.ref('config/gastosConfig/toggles').set(nuevoConfig);
+    db.ref(keyGastosConfigFB() + '/toggles').set(nuevoConfig);
   }
 
-  const misOfertas       = ofertas.filter(o => o.transportistaNombre === USUARIO_TRANS.nombre);
+  const misOfertas       = ofertas.filter(o => esMioPorId(o));
   const cargasConOferta  = new Set(misOfertas.map(o => o.cargaId));
-  const misRemitos       = remitos.filter(r => r.transportistaNombre === USUARIO_TRANS.nombre && remitoEnZona(r));
+  const misRemitos       = remitos.filter(r => esMioPorId(r) && remitoEnZona(r));
   // Para en-sucursal: central ve TODOS los paquetes (de cualquier sucursal/transportista)
   // Una sucursal solo ve los suyos
   const enSucursalRemitos = ES_CENTRAL
@@ -2868,10 +2921,10 @@ function MisRutas({ onNav }) {
   const [form, setForm] = useState(null);
   const DIAS = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
   const TIPOS = ["General","Refrigerado","Congelado","Granel","Fruta/verdura","Ganado","Maquinaria"];
-  const rutaKey = USUARIO_TRANS.nombre.replace(/[.#$[\]]/g, '_');
-  const rutasRef = db.ref('rutas/' + rutaKey);
+  const rutasRef = db.ref(keyRutasFB());
 
   useEffect(() => {
+    migrarRutasLegacySiNecesario();
     rutasRef.on('value', snap => {
       const val = snap.val();
       if (!val) { setRutas([]); return; }
@@ -3032,7 +3085,8 @@ function MisRutas({ onNav }) {
 
   return (
     <React.Fragment>
-    <PageWrapper titulo="Mis rutas" subtitulo="Las empresas y clientes ven tus rutas antes de publicar una carga." accion={!form && <button className="btn-primary" onClick={() => setForm(formVacio())}>+ Agregar ruta</button>}>
+    <PageWrapper titulo="Mis rutas" subtitulo="Las empresas y clientes ven tus rutas antes de publicar una carga." accion={!form && <button className="btn-primary" onClick={() => setForm(formVacio())}>+ Agregar ruta</button>}
+      guia={{ id: "mis-rutas", icono: "🛣️", titulo: "¿Para qué sirve esto?", texto: "Cargá acá las rutas que hacés habitualmente (ej: Posadas → Buenos Aires). Las empresas y clientes las ven antes de publicar una carga, así te llegan pedidos de esos trayectos." }}>
 
       {/* ── Lista ── */}
       {!form && rutas.length === 0 && (
@@ -3484,7 +3538,7 @@ function MisViajes({ onNav, onVerRemito }) {
 
   useEffect(() => {
     const unsub = fbListen('remitos', arr => {
-      setRemitos(arr.filter(r => r.transportistaNombre === USUARIO_TRANS.nombre));
+      setRemitos(arr.filter(esMioPorId));
     });
     setFlota(storageGet(KEY_FLOTA, FLOTA_SEMILLA));
     return unsub;
@@ -3514,7 +3568,8 @@ function MisViajes({ onNav, onVerRemito }) {
   );
 
   return (
-    <PageWrapper titulo="Mis viajes" subtitulo="Actualizá el estado para que la empresa o el cliente vea los cambios en tiempo real.">
+    <PageWrapper titulo="Mis viajes" subtitulo="Actualizá el estado para que la empresa o el cliente vea los cambios en tiempo real."
+      guia={{ id: "mis-viajes", icono: "📄", titulo: "¿Para qué sirve esto?", texto: "Acá ves los trabajos que ya aceptaste. A medida que avanza el viaje, andá actualizando el estado (cargando, en camino, entregado) para que el cliente o la empresa lo vean en tiempo real." }}>
       {/* Panel: generar link para chofer */}
       {vehiculosConRemitos.length > 0 && (
         <div className="card" style={{ marginBottom: 20, border: "2px solid #0F6E56" }}>
@@ -3815,7 +3870,8 @@ function MiFlota({ onNav }) {
 
   return (
     <PageWrapper titulo="Mi flota" subtitulo="Cargá tus vehículos una vez y la app lleva el control de espacio disponible."
-      accion={!agregando && <button className="btn-primary" onClick={() => { setForm(FORM_VACIO); setEditandoId(null); setAgregando(true); }}>+ Agregar vehículo</button>}>
+      accion={!agregando && <button className="btn-primary" onClick={() => { setForm(FORM_VACIO); setEditandoId(null); setAgregando(true); }}>+ Agregar vehículo</button>}
+      guia={{ id: "mi-flota", icono: "🚛", titulo: "¿Para qué sirve esto?", texto: "Cargá acá tus vehículos con su capacidad. La app va a llevar el control de cuánto espacio te queda libre, y desde acá le podés mandar el acceso de la app al chofer de cada uno." }}>
 
       {esFlotaSemilla && !agregando && (
         <div className="card" style={{ background: "#FEF9E7", border: "1px solid #F5D57A", marginBottom: 16, padding: "12px 16px", display: "flex", alignItems: "flex-start", gap: 10 }}>
@@ -4240,7 +4296,10 @@ function SucursalesManager({ onNav }) {
     const ref = db.ref('sucursales');
     ref.on('value', snap => {
       const val = snap.val();
-      setSucursales(val ? Object.values(val) : []);
+      // Filtra por dueño; las sucursales viejas sin transportistaId asignado
+      // son las que ya existían antes de este cambio (cuenta original trans-001).
+      const todas = val ? Object.values(val) : [];
+      setSucursales(todas.filter(s => s.transportistaId ? s.transportistaId === USUARIO_TRANS.id : USUARIO_TRANS.id === 'trans-001'));
     });
     return () => ref.off();
   }, []);
@@ -4252,8 +4311,11 @@ function SucursalesManager({ onNav }) {
   function guardar() {
     if (!nombre.trim()) { alert("Ingresá un nombre para la sucursal."); return; }
     if (ciudadesSelec.length === 0) { alert("Seleccioná al menos una localidad."); return; }
-    const id = editandoId || nombre.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"");
-    const data = { id, nombre: nombre.trim(), ciudades: ciudadesSelec };
+    const idBase = nombre.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"");
+    // Las sucursales nuevas llevan el id de la empresa adelante, para que dos
+    // empresas no puedan pisarse si eligen un nombre de sucursal parecido.
+    const id = editandoId || `${USUARIO_TRANS.id}_${idBase}`;
+    const data = { id, nombre: nombre.trim(), ciudades: ciudadesSelec, transportistaId: USUARIO_TRANS.id };
     db.ref('sucursales/' + id).set(data);
     setCreando(false); setEditandoId(null); setNombre(""); setCiudadesSelec([]);
   }
@@ -4302,6 +4364,8 @@ function SucursalesManager({ onNav }) {
           </button>
         )}
       </div>
+
+      <GuiaSeccion id="sucursales" icono="🏢" titulo="¿Para qué sirve esto?" texto="Creá acá una sucursal por cada punto de atención de tu empresa. Cada una recibe solo los pedidos de las localidades que le asignes, y tiene su propio link para que el encargado del mostrador la use sin ver el resto de la operación." />
 
       {creando && (
         <div style={{ background: "#fff", border: "1px solid #DDE3EA", borderRadius: 12, padding: 20, marginBottom: 20 }}>
@@ -4522,6 +4586,7 @@ function RecepcionMostrador({ onNav, rutas, ciudadesRuta = {}, setRemitoActivo, 
       id,
       estado: esSucursal ? 'en-sucursal' : 'en-deposito',
       ...(esSucursal && sucursalActual ? { sucursalEntrega: { id: SUCURSAL_ID, nombre: sucursalActual.nombre } } : {}),
+      transportistaId: USUARIO_TRANS.id,
       transportistaNombre: USUARIO_TRANS.nombre,
       transportista: { nombre: USUARIO_TRANS.nombre, id: USUARIO_TRANS.id },
       remitente:    { nombre: remNombre, telefono: remTel, dni: remDni||null, ciudad: origen.ciudad, provincia: origen.provincia },
@@ -4624,6 +4689,7 @@ function RecepcionMostrador({ onNav, rutas, ciudadesRuta = {}, setRemitoActivo, 
              <div style={{ fontSize:12, color:'#999' }}>Paso 1 de 3</div></div>
       </div>
       {stepBar(1)}
+      <GuiaSeccion id="recibir-mostrador" icono="🧾" titulo="¿Para qué sirve esto?" texto="Usá esta sección cuando un cliente te trae el paquete en persona (sin haber pedido cotización online). En 3 pasos cargás remitente, destinatario y precio, y se genera el remito." />
       <div className="card" style={{ padding:20 }}>
         <div style={{ fontSize:14, fontWeight:700, color:'#1A1A1A', marginBottom:16 }}>👤 Remitente</div>
         <div style={{ marginBottom:14 }}>
@@ -5289,7 +5355,6 @@ function AppGate() {
 
 function App() {
   const [screen, setScreen] = useState("trans-dashboard");
-  const [mostrarTutorial, setMostrarTutorial] = useState(() => !storageGet(KEY_TUTORIAL_TRANS, false));
   const [cargaSeleccionada, setCargaSeleccionada] = useState(null);
   const [remitoActivo, setRemitoActivo] = useState(null);
   const [sucursales, setSucursales] = useState([]);
@@ -5369,8 +5434,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const key = USUARIO_TRANS.nombre.replace(/[.#$[\]]/g, '_');
-    const ref = db.ref('rutas/' + key);
+    migrarRutasLegacySiNecesario();
+    const ref = db.ref(keyRutasFB());
     ref.on('value', snap => {
       const val = snap.val();
       setRutasTransportista(val ? Object.values(val).sort((a, b) => (a.id || 0) - (b.id || 0)) : []);
@@ -5380,7 +5445,7 @@ function App() {
 
   useEffect(() => {
     return fbListen('remitos', arr => {
-      const mios = arr.filter(r => r.transportistaNombre === USUARIO_TRANS.nombre);
+      const mios = arr.filter(esMioPorId);
       // Promedio en vivo
       const califs = mios.filter(r => r.calificacionEmpresa > 0).map(r => r.calificacionEmpresa);
       if (califs.length > 0) setRatingPromedio(parseFloat((califs.reduce((a, b) => a + b, 0) / califs.length).toFixed(1)));
@@ -5461,13 +5526,6 @@ function App() {
           onCalificar={handleCalificar}
           onOmitir={handleOmitir}
           accentColor="#0F6E56"
-        />
-      )}
-
-      {mostrarTutorial && (
-        <TutorialInicial
-          pasos={PASOS_TUTORIAL_TRANS}
-          onCerrar={() => { storageSave(KEY_TUTORIAL_TRANS, true); setMostrarTutorial(false); }}
         />
       )}
     </div>
