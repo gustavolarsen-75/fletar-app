@@ -644,7 +644,7 @@ function TransportistaDashboard({ onNav, setCargaSeleccionada, setRemitoActivo, 
         setFlota(local);
       } else {
         // Si localStorage está vacío, intentar recuperar desde Firebase
-        db.ref(KEY_FLOTA_FB).get().then(snap => {
+        db.ref(keyFlotaFB()).get().then(snap => {
           const fbFlota = snap.val();
           if (fbFlota && Array.isArray(fbFlota) && fbFlota.length > 0) {
             storageSave(KEY_FLOTA, fbFlota);
@@ -3673,12 +3673,14 @@ function ChatScreen({ onNav }) {
 }
 
 // ─── MI FLOTA ────────────────────────────────────────────────────────────────
-const KEY_FLOTA_FB = `flota/${USUARIO_TRANS.id}`;
+// Nota: se calcula como función (no const fija) porque USUARIO_TRANS puede
+// cambiar recién al registrarse/loguearse, después de que el script ya corrió.
+function keyFlotaFB() { return `flota/${USUARIO_TRANS.id}`; }
 
 function guardarFlotaEnFB(nuevaFlota) {
   // Persiste en Firebase para sobrevivir cambios de URL en Vercel
   try {
-    db.ref(KEY_FLOTA_FB).set(nuevaFlota);
+    db.ref(keyFlotaFB()).set(nuevaFlota);
     // Nodo plano vehiculos/{id} para que el chofer lea datos por ID (link permanente)
     nuevaFlota.forEach(v => {
       db.ref(`vehiculos/${v.id}`).set({
@@ -3710,7 +3712,7 @@ function MiFlota({ onNav }) {
     const local = storageGet(KEY_FLOTA, null);
     const esSemilla = !local || (local.length <= 2 && local.every(v => v.id === 1 || v.id === 2));
     if (esSemilla) {
-      db.ref(KEY_FLOTA_FB).get().then(snap => {
+      db.ref(keyFlotaFB()).get().then(snap => {
         const fbFlota = snap.val();
         if (fbFlota && Array.isArray(fbFlota) && fbFlota.length > 0) {
           storageSave(KEY_FLOTA, fbFlota);
@@ -3809,9 +3811,20 @@ function MiFlota({ onNav }) {
     "Otro": "🚗",
   };
 
+  const esFlotaSemilla = flota.length > 0 && flota.length <= 2 && flota.every(v => v.id === 1 || v.id === 2);
+
   return (
     <PageWrapper titulo="Mi flota" subtitulo="Cargá tus vehículos una vez y la app lleva el control de espacio disponible."
       accion={!agregando && <button className="btn-primary" onClick={() => { setForm(FORM_VACIO); setEditandoId(null); setAgregando(true); }}>+ Agregar vehículo</button>}>
+
+      {esFlotaSemilla && !agregando && (
+        <div className="card" style={{ background: "#FEF9E7", border: "1px solid #F5D57A", marginBottom: 16, padding: "12px 16px", display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <span style={{ fontSize: 20 }}>💡</span>
+          <div style={{ fontSize: 13, color: "#7A5C00" }}>
+            <strong>Estos son vehículos de ejemplo.</strong> Todavía no cargaste los tuyos — editá ("✏️ Editar") cada uno con los datos reales de tu flota, o borralo ("🗑️") si no lo necesitás.
+          </div>
+        </div>
+      )}
 
       {/* Lista de vehículos */}
       {flota.length === 0 && !agregando && (
