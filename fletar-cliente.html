@@ -3249,35 +3249,50 @@ function RegistroFlow({ onDone, onLogueado }) {
   const [google, setGoogle] = useState(null); // { uid, email, nombre, apellido }
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
   const [errorGoogle, setErrorGoogle] = useState("");
+  const [verificandoRedirect, setVerificandoRedirect] = useState(true);
 
-  async function handleGoogle() {
-    setErrorGoogle(""); setCargandoGoogle(true);
-    try {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      const cred = await firebase.auth().signInWithPopup(provider);
-      const uid = cred.user.uid;
-      const telSnap = await firebase.database().ref(`clientesPorUid/${uid}`).get();
-      if (telSnap.exists()) {
-        const perfilSnap = await firebase.database().ref(`clientes/${telSnap.val()}`).get();
-        if (perfilSnap.exists()) {
-          setCargandoGoogle(false);
-          onLogueado(perfilSnap.val());
-          return;
-        }
+  async function procesarUsuarioGoogle(user) {
+    const uid = user.uid;
+    const telSnap = await firebase.database().ref(`clientesPorUid/${uid}`).get();
+    if (telSnap.exists()) {
+      const perfilSnap = await firebase.database().ref(`clientes/${telSnap.val()}`).get();
+      if (perfilSnap.exists()) {
+        onLogueado(perfilSnap.val());
+        return;
       }
-      // Cuenta nueva: falta elegir tipo y completar datos
-      const nombreCompleto = (cred.user.displayName || "").trim();
-      const partes = nombreCompleto.split(" ");
-      const nombre = partes[0] || "";
-      const apellido = partes.slice(1).join(" ") || "";
-      setGoogle({ uid, email: cred.user.email || "", nombre, apellido });
-      setCargandoGoogle(false);
-      setPaso("elegir-tipo");
-    } catch (e) {
-      setCargandoGoogle(false);
-      if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
-      setErrorGoogle("No pudimos continuar con Google. Probá de nuevo.");
     }
+    // Cuenta nueva: falta elegir tipo y completar datos
+    const nombreCompleto = (user.displayName || "").trim();
+    const partes = nombreCompleto.split(" ");
+    const nombre = partes[0] || "";
+    const apellido = partes.slice(1).join(" ") || "";
+    setGoogle({ uid, email: user.email || "", nombre, apellido });
+    setPaso("elegir-tipo");
+  }
+
+  // Al volver de la pantalla de Google (signInWithRedirect navega afuera y
+  // vuelve a esta misma página), hay que revisar si venimos de ese regreso.
+  useEffect(() => {
+    firebase.auth().getRedirectResult()
+      .then(result => {
+        if (result && result.user) {
+          setCargandoGoogle(true);
+          return procesarUsuarioGoogle(result.user).finally(() => setCargandoGoogle(false));
+        }
+      })
+      .catch(() => setErrorGoogle("No pudimos continuar con Google. Probá de nuevo."))
+      .finally(() => setVerificandoRedirect(false));
+  }, []);
+
+  function handleGoogle() {
+    setErrorGoogle("");
+    const provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithRedirect(provider);
+    // La página navega afuera acá — el resultado se procesa arriba, al volver.
+  }
+
+  if (verificandoRedirect) {
+    return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: "#888", fontSize: 13 }}>Cargando…</p></div>;
   }
 
   if (paso === "bienvenida") {

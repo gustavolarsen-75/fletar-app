@@ -561,31 +561,47 @@ function RegistroFletero({ onListo, onLogueado }) {
   const [errorGoogle, setErrorGoogle] = useState("");
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  async function handleGoogle() {
-    setErrorGoogle(""); setCargandoGoogle(true);
-    try {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      const cred = await firebase.auth().signInWithPopup(provider);
-      const uid = cred.user.uid;
-      const idSnap = await db.ref(`fleterosPorUid/${uid}`).get();
-      if (idSnap.exists()) {
-        const perfilSnap = await db.ref(`fleteros/${idSnap.val()}`).get();
-        if (perfilSnap.exists()) {
-          setCargandoGoogle(false);
-          onLogueado(perfilSnap.val());
-          return;
-        }
+  const [verificandoRedirect, setVerificandoRedirect] = useState(true);
+
+  async function procesarUsuarioGoogle(user) {
+    const uid = user.uid;
+    const idSnap = await db.ref(`fleterosPorUid/${uid}`).get();
+    if (idSnap.exists()) {
+      const perfilSnap = await db.ref(`fleteros/${idSnap.val()}`).get();
+      if (perfilSnap.exists()) {
+        onLogueado(perfilSnap.val());
+        return;
       }
-      // Cuenta nueva: prellenamos nombre/email y saltamos la contraseña
-      setGoogle({ uid, email: cred.user.email || "" });
-      setForm(f => ({ ...f, nombre: cred.user.displayName || f.nombre, email: cred.user.email || f.email }));
-      setModo("registro");
-      setCargandoGoogle(false);
-    } catch (e) {
-      setCargandoGoogle(false);
-      if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
-      setErrorGoogle("No pudimos continuar con Google. Probá de nuevo.");
     }
+    // Cuenta nueva: prellenamos nombre/email y saltamos la contraseña
+    setGoogle({ uid, email: user.email || "" });
+    setForm(f => ({ ...f, nombre: user.displayName || f.nombre, email: user.email || f.email }));
+    setModo("registro");
+  }
+
+  // Al volver de la pantalla de Google (signInWithRedirect navega afuera y
+  // vuelve a esta misma página), hay que revisar si venimos de ese regreso.
+  useEffect(() => {
+    firebase.auth().getRedirectResult()
+      .then(result => {
+        if (result && result.user) {
+          setCargandoGoogle(true);
+          return procesarUsuarioGoogle(result.user).finally(() => setCargandoGoogle(false));
+        }
+      })
+      .catch(() => setErrorGoogle("No pudimos continuar con Google. Probá de nuevo."))
+      .finally(() => setVerificandoRedirect(false));
+  }, []);
+
+  function handleGoogle() {
+    setErrorGoogle("");
+    const provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithRedirect(provider);
+    // La página navega afuera acá — el resultado se procesa arriba, al volver.
+  }
+
+  if (verificandoRedirect) {
+    return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: "#888", fontSize: 13 }}>Cargando…</p></div>;
   }
 
   if (modo === "login") {
