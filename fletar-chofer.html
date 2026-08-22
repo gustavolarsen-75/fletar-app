@@ -2166,7 +2166,6 @@ function render() {
           <div class="header-sub">${getFecha()} · ${getChofer()}</div>
         </div>
         <div style="display:flex;gap:6px;">
-          ${!scannerActivo ? `<button class="btn-scan" onclick="abrirScanner()">📷<span class="btn-lbl"> Escanear QR</span></button>` : ''}
           <button class="btn-deposito morado" onclick="abrirDepositoSucursal()">🏢<span class="btn-lbl"> Sucursales</span></button>
           <button class="btn-deposito" onclick="abrirDeposito()">🏭<span class="btn-lbl"> Depósito</span></button>
         </div>
@@ -2289,6 +2288,14 @@ function render() {
     <button onclick="abrirRendirAuto()" style="background:#185FA5;${_ICN}">💰<br>Rendir</button>
     ${tieneViajeActivo ? `<button onclick="abrirModalGasto()" style="background:#854F0B;${_ICN}">🧾<br>Gasto</button>` : ''}
   </div>`;
+
+  // Escanear QR — bajado de la cabecera a la pantalla principal (menos cosas arriba de todo)
+  if (!scannerActivo) {
+    html += `
+      <button onclick="abrirScanner()" style="width:100%;background:#0F6E56;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px;">
+        📷 Escanear QR
+      </button>`;
+  }
 
   // Botón global "Salir a ruta" cuando hay paquetes cargados esperando
   const enCargando = remitos.filter(r => r.estado === 'cargando-ruta').length;
