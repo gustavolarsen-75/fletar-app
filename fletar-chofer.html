@@ -2268,12 +2268,15 @@ function render() {
       </div>
     </div>`;
 
-  // ── 3 botones de acción principales ──────────────────────────────────────
-  const _BS = 'color:#fff;border:none;border-radius:14px;padding:16px 24px;font-size:17px;font-weight:700;width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;';
-  html += `
-    <button onclick="abrirDeposito()" style="background:#0F6E56;${_BS}">🏭 Depósito</button>
-    <button onclick="abrirDepositoSucursal()" style="background:#7C3AED;${_BS}">🏢 Depósito sucursales</button>
-    <button onclick="abrirRendirAuto()" style="background:#185FA5;${_BS}">💰 Rendir cobros al transportista</button>`;
+  // ── Fila de acciones principales (íconos compactos) ────────────────────────
+  const tieneViajeActivo = remitos.some(r => r.viajeId && ['pendiente-retiro','retirado','en-camino','cargando-ruta'].includes(r.estado));
+  const _ICN = 'color:#fff;border:none;border-radius:10px;padding:10px 2px;font-size:10px;font-weight:600;flex:1;cursor:pointer;text-align:center;line-height:1.3;';
+  html += `<div style="display:flex;gap:6px;margin-bottom:8px;">
+    <button onclick="abrirDeposito()" style="background:#0F6E56;${_ICN}">🏭<br>Depósito</button>
+    <button onclick="abrirDepositoSucursal()" style="background:#7C3AED;${_ICN}">🏢<br>Sucursales</button>
+    <button onclick="abrirRendirAuto()" style="background:#185FA5;${_ICN}">💰<br>Rendir</button>
+    ${tieneViajeActivo ? `<button onclick="abrirModalGasto()" style="background:#854F0B;${_ICN}">🧾<br>Gasto</button>` : ''}
+  </div>`;
 
   // Botón global "Salir a ruta" cuando hay paquetes cargados esperando
   const enCargando = remitos.filter(r => r.estado === 'cargando-ruta').length;
@@ -2281,15 +2284,6 @@ function render() {
     html += `
       <button class="btn-ruta-global" onclick="salirARutaGlobal()">
         🚛 Salir a ruta — ${enCargando} paquete${enCargando !== 1 ? 's' : ''} cargado${enCargando !== 1 ? 's' : ''}
-      </button>`;
-  }
-
-  // Botón cargar gasto — visible cuando hay viaje activo
-  const tieneViajeActivo = remitos.some(r => r.viajeId && ['pendiente-retiro','retirado','en-camino','cargando-ruta'].includes(r.estado));
-  if (tieneViajeActivo) {
-    html += `
-      <button onclick="abrirModalGasto()" style="width:100%;margin:4px 0 8px;padding:10px 14px;border-radius:10px;background:#FAEEDA;border:0.5px solid #FAC775;font-size:13px;font-weight:600;cursor:pointer;color:#633806;text-align:left;">
-        🧾 + Cargar gasto del viaje
       </button>`;
   }
 
@@ -2378,11 +2372,11 @@ function render() {
   if (completados.length > 0) {
     const colComp = secCollapsed.has('completados');
     html += `<div class="seccion">
-      <div onclick="toggleSec('completados')" style="display:flex;align-items:center;gap:8px;padding:12px 14px;background:#5F5E5A;border-radius:10px;cursor:pointer;user-select:none;margin-bottom:${colComp ? 0 : 8}px;">
-        <span style="font-size:14px;">✅</span>
-        <span style="font-size:14px;font-weight:700;color:#fff;flex:1;">Completados</span>
-        <span style="background:rgba(255,255,255,0.25);color:#fff;font-size:12px;font-weight:700;padding:2px 10px;border-radius:12px;">${completados.length}</span>
-        <span style="font-size:17px;color:rgba(255,255,255,0.8);margin-left:4px;">${colComp ? '›' : '⌄'}</span>
+      <div onclick="toggleSec('completados')" style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:transparent;border:1px solid #DDE3EA;border-radius:10px;cursor:pointer;user-select:none;margin-bottom:${colComp ? 0 : 8}px;">
+        <span style="font-size:13px;">✅</span>
+        <span style="font-size:13px;font-weight:600;color:#5A6A78;flex:1;">Completados</span>
+        <span style="background:#F0F4F8;color:#5A6A78;font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;">${completados.length}</span>
+        <span style="font-size:15px;color:#AAB4BE;margin-left:2px;">${colComp ? '›' : '⌄'}</span>
       </div>`;
     if (!colComp) {
       completados.forEach((r, i) => { html += renderPaquete(r, i + 1, r.esRetiro ? 'retiro' : 'entrega'); });
