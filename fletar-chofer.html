@@ -386,6 +386,80 @@ let rendirModo            = 'retiro'; // 'retiro' (en-deposito) | 'ruta' (entreg
 let rendirGastoTipoActivo = null;     // tipo seleccionado en el inline form
 let rendirGastoMontoStr   = '';       // monto que está escribiendo el chofer
 
+// ─── BOTÓN ATRÁS DE ANDROID (CloseWatcher) ────────────────────────────────────
+// Si hay una sub-pantalla o modal abierto, el botón atrás vuelve al manifiesto
+// principal en vez de cerrar la app. Si ya estás en el manifiesto principal,
+// el primer atrás muestra un aviso y solo el segundo (dentro de los próximos
+// 2 seg) cierra la app de verdad — mismo patrón que apps nativas tipo
+// WhatsApp/Instagram.
+let activeCloseWatcher  = null;
+let watcherVistaActual  = '__sin_inicializar__';
+let rootWatcherConsumido = false;
+
+function estadoVistaActual() {
+  if (modalGastoOpen) return 'gasto';
+  if (rendirModalOpen) return 'rendir';
+  if (modalSucursalAbierto) return 'modalSucursal';
+  if (modalAutopickup) return 'autopickup';
+  if (modalAbierto) return 'modalConfirmar';
+  if (scannerActivo) return 'scanner';
+  if (vistaSucDep) return 'sucDep';
+  if (vistaDeposito) return 'deposito';
+  return null; // pantalla principal (manifiesto)
+}
+
+function cerrarVistaActual() {
+  if (modalGastoOpen) { cerrarModalGasto(); return; }
+  if (rendirModalOpen) { rendirModalOpen = false; rendirGastoTipoActivo = null; rendirGastoMontoStr = ''; render(); return; }
+  if (modalSucursalAbierto) { modalSucursalAbierto = null; render(); return; }
+  if (modalAutopickup) { modalAutopickup = null; render(); return; }
+  if (modalAbierto) { cerrarModal(); return; }
+  if (scannerActivo) { cerrarScanner(); return; }
+  if (vistaSucDep) { vistaSucDep = false; selSucDep = new Set(); render(); return; }
+  if (vistaDeposito) { vistaDeposito = false; aDepositar = new Set(); render(); return; }
+  render();
+}
+
+function esAppInstalada() {
+  return typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches;
+}
+
+function sincronizarCloseWatcher() {
+  if (typeof CloseWatcher === 'undefined') return; // navegador sin soporte: se deja el comportamiento normal
+  if (!esAppInstalada()) return; // solo aplica cuando está instalada como app; en una pestaña normal el atrás debe funcionar como siempre
+  const vista = estadoVistaActual();
+
+  if (vista !== null) {
+    rootWatcherConsumido = false; // al volver al root después de esto, pedir el doble-atrás de nuevo
+    if (watcherVistaActual === vista) return;
+    if (activeCloseWatcher) { try { activeCloseWatcher.destroy(); } catch(e) {} }
+    const w = new CloseWatcher();
+    w.onclose = () => {
+      activeCloseWatcher = null;
+      watcherVistaActual = '__sin_inicializar__';
+      cerrarVistaActual();
+    };
+    activeCloseWatcher = w;
+    watcherVistaActual = vista;
+    return;
+  }
+
+  // Pantalla principal (manifiesto)
+  if (rootWatcherConsumido) return; // ya avisamos; el próximo atrás sale de verdad
+  if (watcherVistaActual === '__root__') return;
+  if (activeCloseWatcher) { try { activeCloseWatcher.destroy(); } catch(e) {} }
+  const w = new CloseWatcher();
+  w.onclose = () => {
+    activeCloseWatcher = null;
+    watcherVistaActual = '__sin_inicializar__';
+    rootWatcherConsumido = true;
+    mostrarToast('Tocá atrás de nuevo para salir', 'ok');
+    setTimeout(() => { rootWatcherConsumido = false; sincronizarCloseWatcher(); }, 2000);
+  };
+  activeCloseWatcher = w;
+  watcherVistaActual = '__root__';
+}
+
 // ─── COLORES DE RUTA ──────────────────────────────────────────────────────────
 const RUTA_COLORS_C = [
   { solid: "#185FA5", dark: "#0C447C" },
@@ -2599,6 +2673,8 @@ function render() {
     const inp = document.getElementById('inp-nombre');
     if (inp) setTimeout(() => inp.focus(), 100);
   }
+
+  sincronizarCloseWatcher();
 }
 
 function renderPaquete(r, num, tipo, opts = {}) {
