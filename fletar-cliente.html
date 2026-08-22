@@ -2453,7 +2453,7 @@ function estadoCliente(estado) {
 function QRCode({ value, size = 120 }) {
   const [imgOk, setImgOk] = useState(true);
   const encoded = encodeURIComponent(value);
-  const src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}&color=2C2C2A&bgcolor=ffffff&margin=4`;
+  const src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}&color=2C2C2A&bgcolor=ffffff&margin=8&qzone=2`;
   if (!imgOk) {
     return (
       <div style={{ width: size, height: size, background: "#F5F5F5", border: "2px dashed #ccc", borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, padding: 8 }}>

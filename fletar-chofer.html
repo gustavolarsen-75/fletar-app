@@ -407,18 +407,19 @@ const SUCURSAL_DEP_COLORS_C = [
 function sucDepColor(idx) { return SUCURSAL_DEP_COLORS_C[idx % SUCURSAL_DEP_COLORS_C.length]; }
 
 // Rutas del transportista (cargadas desde Firebase via vehiculoInfo.transportistaId)
-let rutasChofer        = [];   // Array de rutas ordenado
-let ciudadesRutaChofer = {};   // Mapa ciudad→ruta guardado por el transportista
-let asignandoRuta      = null; // remitoId del paquete al que se está asignando ruta manualmente
+let rutasChofer         = [];   // Array de rutas ordenado
+let ciudadesRutaChofer  = {};   // Mapa ciudad→ruta guardado por el transportista
+let asignandoRuta       = null; // remitoId del paquete al que se está asignando ruta manualmente
+let transportistaIdChofer = null; // uid del transportista dueño de las rutas cargadas (para guardar ciudadesRuta)
 
 // ─── RUTAS DEL TRANSPORTISTA ─────────────────────────────────────────────────
-// Las rutas se guardan en 'rutas/{nombre-sanitizado}' (mismo path que usa la app del transportista)
-// Las ciudadesRuta se guardan en 'ciudadesRuta/{id}' (id = "trans-001")
+// Las rutas se guardan en 'rutas/{transportistaId}' y ciudadesRuta en 'ciudadesRuta/{transportistaId}'
+// (mismo path que usa la app del transportista — keyRutasFB()/guardarCiudadEnRuta())
 function cargarRutasByUid(uid) {
-  const nombre = vehiculoInfo?.transportistaNombre || params.transportista || '';
-  const rutaKey = nombre.replace(/[.#$[\]]/g, '_');
-  const rutasPath = rutaKey ? `rutas/${rutaKey}` : `transportistas/${uid}/rutas`;
-  const ciudadesPath = uid ? `ciudadesRuta/${uid}` : `transportistas/${uid}/ciudadesRuta`;
+  transportistaIdChofer = uid || null;
+  if (!uid) return;
+  const rutasPath = `rutas/${uid}`;
+  const ciudadesPath = `ciudadesRuta/${uid}`;
 
   Promise.all([
     db.ref(rutasPath).get(),
@@ -1084,7 +1085,7 @@ function toggleSelectorRuta(remitoId) {
   asignandoRuta = asignandoRuta === remitoId ? null : remitoId;
   render();
 }
-function guardarRutaManual(remitoId, num, id, ciudadOrigen, ciudadDestino) {
+function guardarRutaManual(remitoId, num, id, ciudadOrigen, ciudadDestino, ciudadEnvio) {
   db.ref(`remitos/${remitoId}/rutaAsignada`).set({
     numero: num, id: id || null,
     ciudadOrigen: ciudadOrigen || null,
@@ -1092,6 +1093,17 @@ function guardarRutaManual(remitoId, num, id, ciudadOrigen, ciudadDestino) {
   }).then(() => {
     asignandoRuta = null;
     mostrarToast('✓ Ruta ' + num + ' asignada', 'ok');
+    // Recordar la ciudad para que los próximos paquetes a ese destino se asignen solos
+    // (mismo mecanismo que usa el transportista en "Mis rutas" / "En depósito")
+    if (transportistaIdChofer && ciudadEnvio) {
+      const ck = normStrC(ciudadEnvio.split(',')[0] || '');
+      if (ck) {
+        db.ref(`ciudadesRuta/${transportistaIdChofer}/${ck}`).set({
+          rutaId: id || null, rutaNumero: num,
+          ciudadOrigen: ciudadOrigen || null, ciudadDestino: ciudadDestino || null,
+        }).then(() => { ciudadesRutaChofer[ck] = { rutaId: id || null, rutaNumero: num }; });
+      }
+    }
   }).catch(() => mostrarToast('Error al guardar', 'error'));
 }
 function limpiarRutaChofer(remitoId) {
@@ -1491,7 +1503,7 @@ function abrirScanner() {
   setTimeout(() => {
     html5QrScanner = new Html5Qrcode("scanner-viewport");
     html5QrScanner.start(
-      { facingMode: "environment" },
+      { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
       { fps: 10, qrbox: { width: 240, height: 240 } },
       onQrLeido,
       () => {}
@@ -1924,7 +1936,7 @@ function renderDeposito() {
                       const num = rt.numero ?? i + 1;
                       const c = RUTA_COLORS_C[(num - 1) % RUTA_COLORS_C.length];
                       const esActual = !esSinRutaDep && r.rutaAsignada?.numero === num;
-                      return `<button onclick="event.stopPropagation();guardarRutaManual('${r.id}',${num},'${rt.id || ''}','${(rt.ciudadOrigen||'').replace(/'/g,"\\'")}','${(rt.ciudadDestino||'').replace(/'/g,"\\'")}');toggleSelectorRuta('${r.id}')" style="display:block;width:100%;text-align:left;margin-bottom:6px;background:${esActual ? c.light : '#fff'};border:2px solid ${c.dark};border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px;font-weight:600;color:${c.dark};">
+                      return `<button onclick="event.stopPropagation();guardarRutaManual('${r.id}',${num},'${rt.id || ''}','${(rt.ciudadOrigen||'').replace(/'/g,"\\'")}','${(rt.ciudadDestino||'').replace(/'/g,"\\'")}','${(r.destinatario?.ciudad||'').replace(/'/g,"\\'")}');toggleSelectorRuta('${r.id}')" style="display:block;width:100%;text-align:left;margin-bottom:6px;background:${esActual ? c.light : '#fff'};border:2px solid ${c.dark};border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px;font-weight:600;color:${c.dark};">
                         ${esActual ? '✓ ' : ''}Ruta ${num}${rt.ciudadOrigen && rt.ciudadDestino ? ` · ${rt.ciudadOrigen} → ${rt.ciudadDestino}` : ''}
                       </button>`;
                     }).join('')
@@ -2044,7 +2056,7 @@ function renderDeposito() {
                         const num = rt.numero ?? i + 1;
                         const c = RUTA_COLORS_C[(num - 1) % RUTA_COLORS_C.length];
                         const esActual = !esSinRuta && r.rutaAsignada?.numero === num;
-                        return `<button onclick="event.stopPropagation();guardarRutaManual('${r.id}',${num},'${rt.id || ''}','${(rt.ciudadOrigen||'').replace(/'/g,"\\'")}','${(rt.ciudadDestino||'').replace(/'/g,"\\'")}');toggleSelectorRuta('${r.id}')" style="display:block;width:100%;text-align:left;margin-bottom:6px;background:${esActual ? c.light : '#fff'};border:2px solid ${c.dark};border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px;font-weight:600;color:${c.dark};">
+                        return `<button onclick="event.stopPropagation();guardarRutaManual('${r.id}',${num},'${rt.id || ''}','${(rt.ciudadOrigen||'').replace(/'/g,"\\'")}','${(rt.ciudadDestino||'').replace(/'/g,"\\'")}','${(r.destinatario?.ciudad||'').replace(/'/g,"\\'")}');toggleSelectorRuta('${r.id}')" style="display:block;width:100%;text-align:left;margin-bottom:6px;background:${esActual ? c.light : '#fff'};border:2px solid ${c.dark};border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px;font-weight:600;color:${c.dark};">
                           ${esActual ? '✓ ' : ''}Ruta ${num}${rt.ciudadOrigen && rt.ciudadDestino ? ` · ${rt.ciudadOrigen} → ${rt.ciudadDestino}` : ''}
                         </button>`;
                       }).join('')
@@ -2405,10 +2417,33 @@ function render() {
           <button onclick="formaPago='digital';render();" style="flex:1;padding:10px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;${btnDigital}">📲 MP / transf.</button>
         </div>
       </div>`;
+    const rutaInfoModal = remitoModal?.rutaAsignada;
+    const mostrandoRutaModal = asignandoRuta === modalAbierto.remitoId;
+    const bloqueRutaModal = `
+      <div style="background:#F0F4F8;border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+        <div style="font-size:11px;color:#5A6A78;margin-bottom:3px;">Ruta</div>
+        ${rutaInfoModal && rutaInfoModal.numero ? `
+          <div style="font-size:13px;font-weight:700;color:#1A1A1A;">🚛 Ruta ${rutaInfoModal.numero}${rutaInfoModal.ciudadOrigen && rutaInfoModal.ciudadDestino ? ` · ${rutaInfoModal.ciudadOrigen} → ${rutaInfoModal.ciudadDestino}` : ''}</div>
+        ` : `
+          <button onclick="toggleSelectorRuta('${modalAbierto.remitoId}')" style="background:${mostrandoRutaModal ? '#E3F2FD' : '#fff'};color:#185FA5;border:1px solid #B3D4F5;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;">📍 Sin ruta asignada — Tocá para asignar</button>
+          ${mostrandoRutaModal ? `
+            <div style="margin-top:8px;">
+              ${rutasChofer.length === 0 ? `<div style="font-size:12px;color:#aaa;padding:6px 0;">No hay rutas cargadas. Pedile al transportista que abra su app.</div>` :
+                rutasChofer.map((rt, i) => {
+                  const num = rt.numero ?? i + 1;
+                  const c = RUTA_COLORS_C[(num - 1) % RUTA_COLORS_C.length];
+                  return `<button onclick="guardarRutaManual('${modalAbierto.remitoId}',${num},'${rt.id || ''}','${(rt.ciudadOrigen||'').replace(/'/g,"\\'")}','${(rt.ciudadDestino||'').replace(/'/g,"\\'")}','${(remitoModal?.destinatario?.ciudad||'').replace(/'/g,"\\'")}');toggleSelectorRuta('${modalAbierto.remitoId}')" style="display:block;width:100%;text-align:left;margin-top:6px;background:#fff;border:2px solid ${c.dark};border-radius:8px;padding:7px 11px;cursor:pointer;font-size:12px;font-weight:600;color:${c.dark};">Ruta ${num}${rt.ciudadOrigen && rt.ciudadDestino ? ` · ${rt.ciudadOrigen} → ${rt.ciudadDestino}` : ''}</button>`;
+                }).join('')
+              }
+            </div>
+          ` : ''}
+        `}
+      </div>`;
     html += `
       <div class="modal-overlay" onclick="cerrarModal(event)">
         <div class="modal">
           <div class="modal-titulo">${esRetiro ? '📥 Confirmar retiro' : '✅ Confirmar entrega'}</div>
+          ${bloqueRutaModal}
           ${esFleteCobrar ? `
           <div style="background:#FEF3EC;border:1.5px solid #E85D20;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
             <span style="font-size:22px;">💰</span>

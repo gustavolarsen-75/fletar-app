@@ -2729,6 +2729,25 @@ function encontrarRuta(destino, rutas, ciudadesRutaMap) {
   return null;
 }
 
+// Auto-asigna rutaAsignada a remitos propios que todavía no la tienen, sin intervención manual.
+// rutaAsignada == null → nunca se intentó. Si es {sinRuta:true} el transportista lo desasignó
+// a propósito, así que no se vuelve a tocar. No corre sobre remitos ya entregados/retirados.
+function intentarAutoAsignarRuta(remitosArr, rutas, ciudadesRutaMap) {
+  if (!rutas || !rutas.length) return;
+  (remitosArr || []).forEach(r => {
+    if (r.rutaAsignada || !r.destinatario?.ciudad) return;
+    if (r.estado === 'entregado' || r.estado === 'retirado') return;
+    const destStr = r.destinatario.ciudad + (r.destinatario.provincia ? ', ' + r.destinatario.provincia : '');
+    const ruta = encontrarRuta(destStr, rutas, ciudadesRutaMap || {});
+    if (ruta) {
+      db.ref(`remitos/${r.id}/rutaAsignada`).set({
+        numero: ruta.numero, id: ruta.id,
+        ciudadOrigen: ruta.ciudadOrigen || null, ciudadDestino: ruta.ciudadDestino || null,
+      });
+    }
+  });
+}
+
 // Sugiere la ruta más probable por provincia cuando encontrarRuta() devuelve null
 function sugerirRutaPorProvincia(destino, rutas) {
   if (!destino || !rutas || rutas.length === 0) return null;
@@ -4090,7 +4109,7 @@ function MiFlota({ onNav }) {
 // ─── QR + REMITO ─────────────────────────────────────────────────────────────
 function QRCode({ value, size = 120 }) {
   const [imgOk, setImgOk] = useState(true);
-  const src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}&color=2C2C2A&bgcolor=ffffff&margin=4`;
+  const src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}&color=2C2C2A&bgcolor=ffffff&margin=8&qzone=2`;
   if (!imgOk) return (
     <div style={{ width: size, height: size, background: "#F5F5F5", border: "2px dashed #ccc", borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
       <div style={{ fontSize: 28 }}>📱</div>
@@ -5536,6 +5555,9 @@ function App() {
   const shownRating = useRef(new Set());
   const initialLoadDone = useRef(false);
   const cargasVistas = useRef(null);       // null = primera carga todavía no procesada
+  const rutasRef = useRef([]);             // espejo de rutasTransportista para evitar closures obsoletas en fbListen
+  const ciudadesRutaRef = useRef({});      // espejo de ciudadesRuta, mismo motivo
+  const miosRef = useRef([]);              // espejo de los remitos propios, para reintentar el auto-match cuando cargan las rutas
 
   // Pedir permiso de notificaciones al abrir la app
   useEffect(() => { pedirPermisoNotificaciones(); }, []);
@@ -5598,7 +5620,7 @@ function App() {
 
   useEffect(() => {
     const crRef = db.ref(`ciudadesRuta/${USUARIO_TRANS.id}`);
-    crRef.on('value', snap => setCiudadesRuta(snap.val() || {}));
+    crRef.on('value', snap => { const v = snap.val() || {}; setCiudadesRuta(v); ciudadesRutaRef.current = v; });
     return () => crRef.off();
   }, []);
 
@@ -5607,14 +5629,25 @@ function App() {
     const ref = db.ref(keyRutasFB());
     ref.on('value', snap => {
       const val = snap.val();
-      setRutasTransportista(val ? Object.values(val).sort((a, b) => (a.id || 0) - (b.id || 0)) : []);
+      const arr = val ? Object.values(val).sort((a, b) => (a.id || 0) - (b.id || 0)) : [];
+      setRutasTransportista(arr);
+      rutasRef.current = arr;
     });
     return () => ref.off();
   }, []);
 
+  // Reintento: si los remitos ya habían llegado antes de que cargaran las rutas
+  // (o el transportista recién configuró/editó una ruta), reprocesar los remitos
+  // propios que quedaron sin ruta asignada.
+  useEffect(() => {
+    intentarAutoAsignarRuta(miosRef.current, rutasTransportista, ciudadesRuta);
+  }, [rutasTransportista, ciudadesRuta]);
+
   useEffect(() => {
     return fbListen('remitos', arr => {
       const mios = arr.filter(esMioPorId);
+      miosRef.current = mios;
+      intentarAutoAsignarRuta(mios, rutasRef.current, ciudadesRutaRef.current);
       // Promedio en vivo
       const califs = mios.filter(r => r.calificacionEmpresa > 0).map(r => r.calificacionEmpresa);
       if (califs.length > 0) setRatingPromedio(parseFloat((califs.reduce((a, b) => a + b, 0) / califs.length).toFixed(1)));
