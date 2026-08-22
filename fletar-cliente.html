@@ -468,9 +468,9 @@ function Navbar({ onNav, screen, notifCount = 0 }) {
   );
 }
 
-function PageWrapper({ children, titulo, subtitulo, accion }) {
+function PageWrapper({ children, titulo, subtitulo, accion, onVolver }) {
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: "16px 12px", width: "100%" }}>
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "16px 12px", width: "100%", paddingBottom: onVolver ? 76 : "16px" }}>
       {(titulo || accion) && (
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -481,6 +481,19 @@ function PageWrapper({ children, titulo, subtitulo, accion }) {
         </div>
       )}
       {children}
+      {onVolver && <BarraAtras onClick={onVolver} />}
+    </div>
+  );
+}
+
+// ─── BARRA "ATRÁS" FIJA ABAJO (para no depender del botón físico del teléfono) ─
+function BarraAtras({ onClick, texto = "Atrás" }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0F6E56", color: "#fff", textAlign: "center", padding: "15px 0", fontSize: 15, fontWeight: 600, cursor: "pointer", zIndex: 250 }}
+    >
+      ← {texto}
     </div>
   );
 }
@@ -1058,7 +1071,7 @@ function HistorialEnvios({ onNav, onVerOfertas, onVerSeguimiento }) {
   }
 
   return (
-    <PageWrapper titulo="Mis envíos">
+    <PageWrapper titulo="Mis envíos" onVolver={() => onNav("empresa-dashboard")}>
 
       {/* ── Grupo 1: Cotizados / esperando ofertas ── */}
       {cotizados.length > 0 && (<>
@@ -1177,7 +1190,7 @@ function NuevoEnvio({ onNav }) {
   if (tipoElegido === "expres-local") return <PublicarEnvioExpres onNav={onNav} onVolverSelector={() => setTipoElegido(null)} onLlevarALargaDistancia={irALargaDistanciaConDatos} />;
 
   return (
-    <PageWrapper titulo="Nuevo envío" subtitulo="Elegí una opción para empezar">
+    <PageWrapper titulo="Nuevo envío" subtitulo="Elegí una opción para empezar" onVolver={() => onNav("empresa-dashboard")}>
       <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 460 }}>
         <div className="card" onClick={() => setTipoElegido("larga-distancia")}
           style={{ cursor: "pointer", border: "2px solid #E85D20", display: "flex", gap: 14, alignItems: "flex-start" }}>
@@ -1196,7 +1209,6 @@ function NuevoEnvio({ onNav }) {
           </div>
         </div>
       </div>
-      <button className="btn-secondary" onClick={() => onNav("empresa-dashboard")} style={{ marginTop: 20 }}>Cancelar</button>
     </PageWrapper>
   );
 }
@@ -2333,7 +2345,7 @@ function VerOfertas({ onNav, cargaSeleccionada, onAceptar }) {
   const maxRating   = ofertasConRating.length > 0 ? Math.max(...ofertasConRating.map(o => o.ratingCalculado || 0)) : 0;
 
   return (
-    <PageWrapper titulo="Comparar ofertas" subtitulo={`${carga.origen} → ${carga.destino} · ${carga.tipo}`}>
+    <PageWrapper titulo="Comparar ofertas" subtitulo={`${carga.origen} → ${carga.destino} · ${carga.tipo}`} onVolver={() => onNav("empresa-dashboard")}>
       <div style={{ maxWidth: 700 }}>
         <div style={{ display: "flex", gap: 10, marginBottom: 20, padding: 14, background: "#fff", borderRadius: 10, border: "1px solid #E0E0E0" }}>
           <div style={{ flex: 1 }}><div style={{ fontSize: 11, color: "#888" }}>Retiro deseado</div><div style={{ fontWeight: 500, fontSize: 14 }}>{carga.retiro}</div></div>
@@ -2488,7 +2500,7 @@ function RemitoScreen({ onNav, remito }) {
   }
 
   if (!remito) return (
-    <PageWrapper titulo="Remito">
+    <PageWrapper titulo="Remito" onVolver={() => onNav("historial-envios")}>
       <div className="card" style={{ textAlign: "center", padding: 40 }}>
         <div style={{ fontSize: 40, marginBottom: 12 }}>📄</div>
         <p style={{ color: "#666" }}>No hay remito activo. Aceptá una oferta para generar el remito.</p>
@@ -2499,7 +2511,7 @@ function RemitoScreen({ onNav, remito }) {
 
   return (
     <PageWrapper titulo={`Remito ${remito.id}`} subtitulo={`${remito.remitente.ciudad} → ${remito.destinatario.ciudad}`}
-      accion={null}>
+      accion={null} onVolver={() => onNav("historial-envios")}>
       <div style={{ maxWidth: 680 }}>
 
         {/* Header */}
@@ -2612,7 +2624,6 @@ function RemitoScreen({ onNav, remito }) {
                 {copiado ? "✓ Link copiado" : "🔗 Copiar link"}
               </button>
             </div>
-            <button className="btn-ghost" onClick={() => onNav("historial-envios")} style={{ fontSize: 13 }}>← Volver a mis envíos</button>
           </div>
         </div>
       </div>
@@ -2653,7 +2664,7 @@ function SeguimientoEnvio({ onNav, cargaSeleccionada, onVerRemito }) {
   const estadoIdx = ESTADOS_CLIENTE.findIndex(e => e.id === estadoClienteActual);
 
   return (
-    <PageWrapper titulo="Seguimiento del envío" subtitulo={`${carga.origen} → ${carga.destino}`}>
+    <PageWrapper titulo="Seguimiento del envío" subtitulo={`${carga.origen} → ${carga.destino}`} onVolver={() => onNav("empresa-dashboard")}>
       <div style={{ maxWidth: 600 }}>
 
         {remito && (
@@ -2732,7 +2743,7 @@ function ChatScreen({ onNav }) {
   }
 
   return (
-    <PageWrapper titulo="Chat" subtitulo="Posadas → Buenos Aires · Transportes Norte SA">
+    <PageWrapper titulo="Chat" subtitulo="Posadas → Buenos Aires · Transportes Norte SA" onVolver={() => onNav("empresa-dashboard")}>
       <div style={{ maxWidth: 600 }}>
         <div style={{ marginBottom: 12, padding: "6px 10px", background: "#FEF3EC", borderRadius: 8, fontSize: 12, color: "#C44A0F" }}>
           💬 Los mensajes son compartidos con el transportista en tiempo real.

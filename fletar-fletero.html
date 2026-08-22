@@ -785,7 +785,7 @@ function PedidosDisponibles({ onNav, onCotizar }) {
     .sort((a, b) => b.id - a.id);
 
   return (
-    <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 16px" }}>
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 16px", paddingBottom: 76 }}>
       <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 4 }}>Pedidos disponibles</h1>
       <p style={{ fontSize: 13, color: "#888", marginBottom: 20 }}>A menos de 30 km de {USUARIO_FLETERO?.ciudad || "tu ciudad"}</p>
 
@@ -813,6 +813,7 @@ function PedidosDisponibles({ onNav, onCotizar }) {
           </div>
         ))}
       </div>
+      <BarraAtras onClick={() => onNav("inicio")} />
     </div>
   );
 }
@@ -866,8 +867,7 @@ function CotizarPedido({ carga, onNav }) {
   );
 
   return (
-    <div style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px" }}>
-      <button className="btn-ghost" style={{ marginBottom: 12, padding: "6px 0" }} onClick={() => onNav("pedidos-disponibles")}>← Volver</button>
+    <div style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px", paddingBottom: 76 }}>
       <div className="card">
         <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 4 }}>{carga.tipo}</h2>
         <p style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>{carga.descripcion}</p>
@@ -891,6 +891,7 @@ function CotizarPedido({ carga, onNav }) {
         </div>
       </div>
       <button className="btn-primary" style={{ width: "100%", marginTop: 16, padding: "13px 0", fontSize: 15 }} onClick={enviarCotizacion}>Enviar cotización</button>
+      <BarraAtras onClick={() => onNav("pedidos-disponibles")} />
     </div>
   );
 }
@@ -901,6 +902,18 @@ function CotizarPedido({ carga, onNav }) {
 function mapsUrl(domicilio, ciudad) {
   if (!domicilio) return null;
   return `https://maps.google.com/?q=${encodeURIComponent((domicilio || '') + ' ' + (ciudad || ''))}`;
+}
+
+// ─── BARRA "ATRÁS" FIJA ABAJO (para no depender del botón físico del teléfono) ─
+function BarraAtras({ onClick, texto = "Atrás" }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0F6E56", color: "#fff", textAlign: "center", padding: "15px 0", fontSize: 15, fontWeight: 600, cursor: "pointer", zIndex: 250 }}
+    >
+      ← {texto}
+    </div>
+  );
 }
 
 // ─── CARTEL DE CONFIRMACIÓN (amigable, con logo Fletar) ──────────────────────
@@ -958,7 +971,7 @@ function TutorialInicial({ pasos, onCerrar }) {
 }
 
 // ─── MIS TRABAJOS ──────────────────────────────────────────────────────────────
-function MisTrabajos() {
+function MisTrabajos({ onNav }) {
   const [remitos, setRemitos] = useState([]);
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
   const [confirmAccion, setConfirmAccion] = useState(null);
@@ -996,7 +1009,7 @@ function MisTrabajos() {
 
   return (
     <>
-    <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 16px" }}>
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 16px", paddingBottom: 76 }}>
       <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 20 }}>Mis trabajos</h1>
 
       {activos.length === 0 && entregados.length === 0 && (
@@ -1065,6 +1078,7 @@ function MisTrabajos() {
           )}
         </div>
       )}
+      <BarraAtras onClick={() => onNav("inicio")} />
     </div>
     {confirmAccion && (
       <ConfirmModal
@@ -1212,7 +1226,7 @@ function App() {
       {screen === "inicio" && <InicioFletero onNav={onNav} />}
       {screen === "pedidos-disponibles" && <PedidosDisponibles onNav={onNav} onCotizar={onCotizar} />}
       {screen === "cotizar" && cargaCotizando && <CotizarPedido carga={cargaCotizando} onNav={onNav} />}
-      {screen === "mis-trabajos" && <MisTrabajos />}
+      {screen === "mis-trabajos" && <MisTrabajos onNav={onNav} />}
 
       {remitoACalificar && (
         <RatingModal

@@ -160,7 +160,7 @@
     /* Pantalla depósito — contenedor propio para aislar el scroll del window */
     .dep-fullscreen { position: fixed; inset: 0; z-index: 50; background: #F0F4F8; display: flex; flex-direction: column; overflow: hidden; }
     .dep-fullscreen > .header { position: relative; flex-shrink: 0; }
-    .dep-body-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px; padding-bottom: 32px; }
+    .dep-body-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px; padding-bottom: 70px; }
     .dep-tab-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(0,0,0,0.3); border-radius: 8px; overflow: hidden; margin-top: 8px; }
     .dep-tab { padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.07); cursor: pointer; border: none; }
     .dep-tab.active { background: #0F6E56; color: #fff; }
@@ -479,6 +479,12 @@ const SUCURSAL_DEP_COLORS_C = [
   { solid: "#047857", dark: "#064E3B", light: "#D1FAE5" },
 ];
 function sucDepColor(idx) { return SUCURSAL_DEP_COLORS_C[idx % SUCURSAL_DEP_COLORS_C.length]; }
+
+// ─── BARRA "ATRÁS" FIJA ABAJO (para no depender del botón físico del teléfono) ─
+function barraAtrasHTML(onclickJs, texto) {
+  texto = texto || 'Atrás';
+  return `<div onclick="${onclickJs}" style="position:fixed;bottom:0;left:0;right:0;background:#0F6E56;color:#fff;text-align:center;padding:15px 0;font-size:15px;font-weight:600;cursor:pointer;z-index:250;">← ${texto}</div>`;
+}
 
 // Rutas del transportista (cargadas desde Firebase via vehiculoInfo.transportistaId)
 let rutasChofer         = [];   // Array de rutas ordenado
@@ -1069,7 +1075,7 @@ function renderDepositoSucursal() {
         : `✓ Cargar ${totalSel} paquete${totalSel !== 1 ? 's' : ''} seleccionados`}
     </button>
     <div class="dep-hint">Los paquetes confirmados quedan listos para salir a ruta</div>
-  </div>
+  </div>` + barraAtrasHTML("vistaSucDep=false;selSucDep=new Set();render()") + `
   </div>`;
 
   return html;
@@ -2210,6 +2216,8 @@ function renderDeposito() {
 
   html += `</div>`; // cierra dep-body-scroll
 
+  html += barraAtrasHTML("vistaDeposito=false;aDepositar=new Set();render()");
+
   html += `</div>`; // cierra dep-fullscreen
 
   // ── Modal: Rendir turno ────────────────────────────────────────────────────
@@ -2273,7 +2281,7 @@ function render() {
           <button class="btn-cancelar-scan" onclick="cerrarScanner()">✕ Cancelar</button>
         </div>
         <div id="scanner-viewport"></div>
-      </div>`;
+      </div>` + barraAtrasHTML("cerrarScanner()");
     return;
   }
 
