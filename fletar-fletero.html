@@ -876,7 +876,7 @@ function CotizarPedido({ carga, onNav }) {
           <label>Tu precio</label>
           <div style={{ position: "relative" }}>
             <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#666", fontWeight: 500 }}>$</span>
-            <input type="number" inputMode="numeric" value={form.precio} onChange={e => setForm(f => ({ ...f, precio: e.target.value }))} placeholder="8000" style={{ paddingLeft: 28, fontSize: 18, fontWeight: 600 }} />
+            <input type="text" inputMode="numeric" value={form.precio} onChange={e => setForm(f => ({ ...f, precio: e.target.value.replace(/\D/g, '') }))} placeholder="8000" style={{ paddingLeft: 28, fontSize: 18, fontWeight: 600 }} />
           </div>
           {form.precio && parseInt(form.precio) > 0 && (
             <div style={{ marginTop: 8, background: "#E8F5E9", borderRadius: 8, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>

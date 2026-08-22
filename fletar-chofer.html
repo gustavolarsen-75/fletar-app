@@ -1756,9 +1756,9 @@ function buildRendirModalHTML() {
       <div style="display:flex;gap:8px;align-items:center;">
         <div style="position:relative;flex:1;">
           <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;color:#5A6A78;pointer-events:none;">$</span>
-          <input id="rendir-gasto-input" type="number" inputmode="numeric"
+          <input id="rendir-gasto-input" type="text" inputmode="numeric"
             value="${rendirGastoMontoStr}"
-            oninput="rendirGastoMontoStr=this.value"
+            oninput="rendirGastoMontoStr=this.value.replace(/\D/g,'');this.value=rendirGastoMontoStr;"
             onkeydown="if(event.key==='Enter'){rendirConfirmarGasto();}"
             placeholder="0"
             style="width:100%;padding:11px 11px 11px 26px;border-radius:9px;border:1.5px solid #9FE1CB;font-size:16px;box-sizing:border-box;-webkit-appearance:none;background:#fff;"
@@ -2527,8 +2527,8 @@ function render() {
           <div style="font-size:11px;font-weight:600;color:#5A6A78;margin-bottom:6px;">Monto ($)</div>
           <div style="position:relative;">
             <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#888;font-weight:500;font-size:15px;">$</span>
-            <input id="inp-gasto-monto" type="number" min="0" placeholder="0" value="${gastoMonto}"
-              oninput="gastoMonto=this.value; const t=document.getElementById('gasto-total-preview'); if(t){const v=Number(this.value); t.style.display=v>0?'flex':'none'; document.getElementById('gasto-total-val').textContent='$'+v.toLocaleString('es-AR');}"
+            <input id="inp-gasto-monto" type="text" inputmode="numeric" placeholder="0" value="${gastoMonto}"
+              oninput="gastoMonto=this.value.replace(/\D/g,''); this.value=gastoMonto; const t=document.getElementById('gasto-total-preview'); if(t){const v=Number(gastoMonto); t.style.display=v>0?'flex':'none'; document.getElementById('gasto-total-val').textContent='$'+v.toLocaleString('es-AR');}"
               style="width:100%;padding:10px 12px 10px 26px;border-radius:8px;border:1px solid #DDE3EA;font-size:16px;font-weight:600;box-sizing:border-box;" />
           </div>
           <div id="gasto-total-preview" style="display:${gastoMonto && Number(gastoMonto)>0?'flex':'none'};margin-top:8px;margin-bottom:4px;background:#E8F5E9;border-radius:8px;padding:9px 13px;justify-content:space-between;align-items:center;">
