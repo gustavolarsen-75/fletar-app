@@ -2166,8 +2166,7 @@ function render() {
           <div class="header-sub">${getFecha()} · ${getChofer()}</div>
         </div>
         <div style="display:flex;gap:6px;">
-          <button class="btn-deposito morado" onclick="abrirDepositoSucursal()">🏢<span class="btn-lbl"> Sucursales</span></button>
-          <button class="btn-deposito" onclick="abrirDeposito()">🏭<span class="btn-lbl"> Depósito</span></button>
+          <button class="btn-deposito morado" onclick="abrirDepositoSucursal()" style="padding:9px 14px;font-size:14px;border-radius:9px;">🏢<span class="btn-lbl"> Sucursales</span></button>
         </div>
       </div>
       ${getAlias() ? `
